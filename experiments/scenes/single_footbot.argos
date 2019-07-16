@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<argos-configuration>
+
+  <!-- General configuration -->
+  <framework>
+    <system threads="2" />
+    <experiment length="0"
+                ticks_per_second="10"
+                random_seed="124" />
+  </framework>
+
+  <!-- Controllers -->
+  <controllers>
+    <single_footbot_controller id="sfc" library="build/controllers/single_footbot/libsingle_footbot.so">
+      <actuators>
+        <differential_steering implementation="default" />
+      </actuators>
+      <sensors>
+        <footbot_proximity implementation="default" show_rays="true" />
+      </sensors>
+      <!-- Insert parameters here -->
+      <params velocity="15" />
+    </single_footbot_controller>
+  </controllers>
+
+  <!-- Arena configuration -->
+  <arena size="5, 5, 1" center="0,0,0.5">
+
+    <box id="wall_east" size="0.1,4,0.5" movable="false">
+      <body position="2,0,0" orientation="0,0,0" />
+    </box>
+    <foot-bot id="fb">
+      <body position="0,0,0" orientation="0,0,0" />
+      <controller config="sfc" />
+    </foot-bot>
+  </arena>
+
+  <!-- Physics engines -->
+  <physics_engines>
+    <dynamics2d id="dyn2d" />
+  </physics_engines>
+
+  <!-- Media -->
+  <media />
+
+  <!-- Visualization -->
+  <visualization>
+    <qt-opengl />
+  </visualization>
+
+</argos-configuration>

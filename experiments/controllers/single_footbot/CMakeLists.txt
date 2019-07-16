@@ -1,0 +1,5 @@
+add_library(single_footbot MODULE single_footbot.h single_footbot.cpp)
+target_link_libraries(single_footbot
+  argos3core_simulator
+  argos3plugin_simulator_footbot
+  argos3plugin_simulator_genericrobot)

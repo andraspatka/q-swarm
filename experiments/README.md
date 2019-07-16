@@ -28,3 +28,12 @@ Directory structure:
     - contains special hook functions to be able to customize the simulation
  - scenes: 
     - contains the *.argos experiment files which describes the simulation and references the required controller and loop function files
+
+# Experiments
+
+### diffusion_10: Argos3 example
+### foraging: Argos3 example
+### trajectory: Argos3 example
+### single_footbot: 
+One footbot that currently can only move forward. Written based on diffusion_10.
+TODO: Obstacle avoidance
