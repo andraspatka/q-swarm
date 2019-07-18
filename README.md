@@ -9,7 +9,7 @@ You can find instructions for downloading and installing ARGoS here:
 
 https://www.argos-sim.info/core.php
 
-Note: It's important to install the correct package for your distribution. Otherwise you might get an error when trying to run experiments which work with loop functions:
+**Note:** It's important to install the correct package for your distribution. Otherwise you might get an error when trying to run experiments which work with loop functions:
 
 ```
 [FATAL] Error initializing loop functions
@@ -32,7 +32,7 @@ sudo apt-get install cmake libfreeimage-dev libfreeimageplus-dev \
 
 ### Optional step - installing GALIB: Genetic Algorithms Library
 
-**Note: Although the build finishes without a problem, running the argos3-examples which require GALIB result in a Segmentation fault error.**
+**Note:** Although the build finishes without a problem, running the argos3-examples which require GALIB result in a Segmentation fault error. Unfortunate. A solution for this problem is yet to be found.
 
 First download distribution 247 from the following link: http://lancet.mit.edu/ga/dist/
 
@@ -189,15 +189,62 @@ Then copy the following files from your QT installation directory **5.9.1/gcc_64
  - libQt5Gui.so.5  
  - libQt5Widgets.so.5
 
-## Setting up Eclipse IDE for ARGoS
+## Setting up Jetbrains CLion for development
 
-Download Eclipse IDE: https://www.eclipse.org/downloads/
+Download CLion from the following link: https://www.jetbrains.com/clion/download/
 
-Install for C++.
+**Note:** Clion is a *premium* Jetbrains product, meaning that you can't download it and use it for free beyond a 30 day trial. However, students and teachers can use it for free. Learn more at: https://www.jetbrains.com/student/
 
-Optionally install CMake editor from the Eclipse Marketplace.
 
-**TODO:** Debugging in Eclipse
+Choose **Open** then navigate to the *experiments* directory.
+
+**Note:** A number of debugging configurations will automatically be detected.
+
+Go to: **Run** -> **Edit configurations**
+
+*Optionally* you can delete the configurations which end with **autogen** and **loop_functions**. These will not be needed since if you configure debugging for an experiment which uses loop functions, you can just simply set breakpoints in the loop function source code and the debugging process will function as expected.
+
+To set up a debugging configuration, choose one from the list under **CMake Application** and then set the following fields:
+
+ - **Executable** -> **Select Other** -> *select the ARGoS executable (Ubuntu default usr/bin/argos3)*
+ - **Program arguments**: -c scenes/\<name of the scene\>.argos
+ - **Working directory**: Input the project root path
+
+Note: The **Working Directory** field is optional. You can leave it blank, but then you will have to fill the **Program arguments** section with the absolute path to the experiment file, such as: -c \<absolute_path>.argos
+
+You can set up the **run configurations** the same way.
+
+### Recommendation: Add *.argos as an xml file association
+
+Files with .argos file extensions use the XML structure. It makes editing them a whole lot easier, if the editor recognizes them as XML files.
+
+To do this in CLion, do the following:
+
+ - Go to **File** -> **Settings** (ctrl+alt+s)
+ - Go to **Editor** -> **File Types**
+ - Choose **XML** from the **Recognized File Types** list
+ - Press the **+** button in the **Registered Patterns** pane
+ - Type in **\*.argos**, press **OK**
+
+Now CLion recognizes .argos files as XML. You now get syntax highlighting, auto complete and hints.
+
+### Possible errors
+
+```
+Couldn't load scenes/single_footbot <ticpp.cpp@823>
+Description: Failed to open file
+File: scenes/single_footbot
+Line: 0
+Column: 0
+```
+
+**Solution:** Check if you specified the path to the experiment correctly. Maybe you forgot to add the **.argos** file extension to the end of the experiment name.
+
+```
+[FATAL] No --help, --version, --config-file or --query options specified.
+```
+
+**Solution:** Check if you specified the **Program arguments** correctly.
 
 # Directory structure - what to find where
 

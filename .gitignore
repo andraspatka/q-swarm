@@ -1,2 +1,4 @@
 experiments/build
 experiments/.project
+experiments/.idea
+experiments/cmake-build-debug
