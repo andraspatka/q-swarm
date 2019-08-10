@@ -11,7 +11,7 @@
 
   <!-- Controllers -->
   <controllers>
-    <single_footbot_controller id="sfc" library="build/controllers/single_footbot/libsingle_footbot.so">
+    <single_footbot_controller id="sfc" library="cmake-build-debug/controllers/single_footbot/libsingle_footbot.so">
       <actuators>
         <differential_steering implementation="default" />
       </actuators>
@@ -26,8 +26,8 @@
   <!-- Arena configuration -->
   <arena size="5, 5, 1" center="0,0,0.5">
 
-    <box id="wall_east" size="0.1,4,0.5" movable="false">
-      <body position="2,0,0" orientation="0,0,0" />
+    <box id="wall_east" size="0.1,0.4,0.5" movable="false">
+      <body position="0.5,0,0" orientation="0,0,0" />
     </box>
     <foot-bot id="fb">
       <body position="0,0,0" orientation="0,0,0" />

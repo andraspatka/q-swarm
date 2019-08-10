@@ -214,6 +214,14 @@ Note: The **Working Directory** field is optional. You can leave it blank, but t
 
 You can set up the **run configurations** the same way.
 
+**Note:** If you want to build and run the project from CLion, then you need to make some changes to the .argos file. 
+In each *library* attribute, replace the root folder **build** with **cmake-build-debug**
+
+So basically the root folder in the *library* attribute should be:
+
+ - **build** if you want to build and run with the help of qswarm.sh
+ - **cmake-build-debug** if you want to build and run from CLion
+
 ### Recommendation: Add *.argos as an xml file association
 
 Files with .argos file extensions use the XML structure. It makes editing them a whole lot easier, if the editor recognizes them as XML files.

@@ -35,5 +35,10 @@ Directory structure:
 ### foraging: Argos3 example
 ### trajectory: Argos3 example
 ### single_footbot: 
-One footbot that currently can only move forward. Written based on diffusion_10.
-TODO: Obstacle avoidance
+One footbot that can do some basic obstacle avoidance, albeit in quite a strange manner. 
+
+Inspired from diffusion_10 controller example written by Carlo Pinciroli. 
+
+The example shows how to work with vectors using the Argos3 framework.
+
+[Description of the experiment](https://github.com/andraspatka/q-swarm/tree/master/docs/experiment.md)
