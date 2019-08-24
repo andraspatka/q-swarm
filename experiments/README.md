@@ -41,4 +41,4 @@ Inspired from diffusion_10 controller example written by Carlo Pinciroli.
 
 The example shows how to work with vectors using the Argos3 framework.
 
-[Description of the experiment](https://github.com/andraspatka/q-swarm/tree/master/docs/experiment.md)
+[Description of the experiment](https://github.com/andraspatka/q-swarm/blob/master/docs/environment.md)
