@@ -5,6 +5,9 @@
 # This script makes it easier to clean, build, debug and run the ARGoS experiment
 # 
 # Arguments:$1	The job to execute, can be:
+#                   capture     takes the frames created from an argos capture,
+#                               creates a video from them and then deletes them.
+#                               filename is equal to $2
 #					build 		builds the project
 #					run			runs the experiment
 #					build-run   builds the project and runs the experiment	
@@ -51,6 +54,23 @@ function f_build_debug {
 	f_run
 }
 
+# Capture subtask.
+function f_capture {
+    frames=$(ls | egrep "^frame_[0-9]{5}.png")
+    dir_name=$(echo "capture_$cap_output")
+    cd captures
+    mkdir $dir_name
+    mkdir $dir_name/frames
+    cd ..
+    for frame in $frames;
+    do
+        mv $frame captures/$dir_name/frames/$frame
+    done
+    ffmpeg -framerate 24 -i captures/$dir_name/frames/frame_%05d.png \
+        -vf scale=1280:-2 -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p \
+        captures/$dir_name/$cap_output.mp4
+}
+
 # ================================================================================
 if (( $# < 1 || $# > 2 )); then # Invalid number of arguments
 	echo "Invalid usage. Correct usage: qswarm <job> [<scene_name>]"
@@ -58,20 +78,25 @@ if (( $# < 1 || $# > 2 )); then # Invalid number of arguments
 fi
 
 job=$1
-scene_name="scenes/$2.argos"
-
-if [ "$1" != "build" ]; then
-		if ! [ -a $scene_name ]; then
-			echo "Could not find the scene: $scene_name"
-			exit 1;
-		fi
-	elif ! [ -z $2 ]; then
-		echo "Invalid usage. Correct usage: qswarm build"
-		exit 1;
+cap_output=$2
+if [[ "$job" != "build" && "$job" != "capture" ]]; then
+    scene_name="scenes/$2.argos"
+    if ! [ -a $scene_name ]; then
+        echo "Could not find the scene: $scene_name"
+        exit 1;
+    fi
+fi
+if [[ "$1" == "capture" && -z $cap_output ]]; then
+    echo "Invalid usage. Correct usage: qswarm capture [output_file_name]"
+    exit 1;
 fi
 
+
 case $job in
-	build) 
+    capture)
+        f_capture
+        ;;
+	build)
 		f_build
 		;;
 	run)
