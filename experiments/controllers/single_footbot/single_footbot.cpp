@@ -59,15 +59,15 @@ void SingleFootBot::ControlStep() {
     // If the dot product of the vectorSum and the "straight" vector is negative
     // in other words: the angle between them is higher than 90 degrees.
     // This is needed, so the robot tries to go around the obstacle instead of turning around.
-    if (vectorSum.DotProduct(straightVector) < std::numeric_limits<Real>::epsilon() && vectorSum.Length() < 0.1f) {
+    if ((vectorSum.DotProduct(straightVector) < std::numeric_limits<Real>::epsilon()) && vectorSum.Length() < 0.1f) {
         mLeftWheelVelocity = mWheelVelocity;
         mRightWheelVelocity = mWheelVelocity;
     } else if (vectorSum.Angle().GetValue() < 0) {
-        // Angle is negative, turn to the right.
+        // Angle is negative, turn to the left.
         mLeftWheelVelocity = 0;
         mRightWheelVelocity = mWheelVelocity;
     } else {
-        // Angle is positive, turn to the left.
+        // Angle is positive, turn to the right.
         mLeftWheelVelocity = mWheelVelocity;
         mRightWheelVelocity = 0;
     }

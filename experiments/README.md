@@ -35,10 +35,10 @@ Directory structure:
 ### foraging: Argos3 example
 ### trajectory: Argos3 example
 ### single_footbot: 
-One footbot that can do some basic obstacle avoidance, albeit in quite a strange manner. 
+One footbot can avoid obstacles and progress towards an end destination. The experiment contains multiple footbots. For one footbot, other footbots are considered obstacles.
 
 Inspired from diffusion_10 controller example written by Carlo Pinciroli. 
 
 The example shows how to work with vectors using the Argos3 framework.
 
-[Description of the experiment](https://github.com/andraspatka/q-swarm/blob/master/docs/environment.md)
+[Description of the experiment](https://github.com/andraspatka/q-swarm/blob/master/docs/push_pull.md)

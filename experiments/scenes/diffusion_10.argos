@@ -17,7 +17,7 @@
   <controllers>
 
     <footbot_diffusion_controller id="fdc"
-                                  library="build/controllers/footbot_diffusion/libfootbot_diffusion.so">
+                                  library="cmake-build-debug/controllers/footbot_diffusion/libfootbot_diffusion.so">
       <actuators>
         <differential_steering implementation="default" />
       </actuators>
