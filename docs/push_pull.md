@@ -83,7 +83,7 @@ The angles from the readings can be in the [-180, 180] interval, where:
  - Sensors 0 - 11 represent the [0, 180] interval (positive)
  - Sensors 12 - 23 represent the [-180, 0) interval (negative)
 
-The sum of all of these vectors (from now on: **vecSum**) can be used to determine what action the agent should make. The **vecSum**'s angle can tell us where the obstacle is detected.
+The sum of all of these vectors (from now on: **vecSum**) can be used to determine what action the agent should take. The **vecSum**'s angle can tell us where the obstacle is detected.
 
 Deciding when to turn left or right can be decided rather easily, from the **vecSum**'s angle:
 
