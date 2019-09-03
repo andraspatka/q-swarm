@@ -267,3 +267,7 @@ Contains all of the files needed for building and running an ARGoS experiment
 ### measurements
 
 Contains the logs from the experiments.
+
+### proto
+
+Contains algorithm prototypes written in higher level languagse (JavaScript, Python).
