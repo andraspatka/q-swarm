@@ -52,14 +52,14 @@ let Q = [
     [0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0],
 ];
-const gamma = 0.8;
-const goal_state = 5;
-const number_of_states = 6;
-const episodes = 100;
+const GAMMA = 0.8;
+const GOAL_STATE = 5;
+const NUMBER_OF_STATES = 6;
+const EPISODES = 100;
 
 // Training phase.
-for (let i = 0; i < episodes; ++i) {
-    qLearnTrainEpisode(Math.floor(Math.random() * number_of_states));
+for (let i = 0; i < EPISODES; ++i) {
+    qLearnTrainEpisode(Math.floor(Math.random() * NUMBER_OF_STATES));
 }
 // Prettify the Q matrix (only have 2 decimal places for float numbers).
 const QPretty = Q.map(q =>
@@ -68,7 +68,7 @@ const QPretty = Q.map(q =>
 console.log(QPretty);
 
 // Generate all the states [0, number_of_states).
-const states = [...Array(number_of_states)].map((v, i) => i);
+const states = [...Array(NUMBER_OF_STATES)].map((v, i) => i);
 // Call the utilize function for every state.
 states.forEach(s => qLearnUtilize(s));
 
@@ -97,10 +97,10 @@ function qLearnTrainEpisode(initial_state) {
         // Choose a random action. 
         let action = possibleActions[Math.floor(Math.random() * possibleActions.length)].action;
         // Calculate the quality of the move.
-        Q[state][action] = R[state][action] + gamma * Math.max(...Q[action]);
+        Q[state][action] = R[state][action] + GAMMA * Math.max(...Q[action]);
         // Move to the next action.
         state = action;
-    } while (state != goal_state);
+    } while (state != GOAL_STATE);
 }
 
 /**
@@ -125,6 +125,6 @@ function qLearnUtilize(initial_state) {
         let nextState = Q[state].reduce((iMax, x, i, arr) => x > arr[iMax] ? i : iMax, 0);
         state = nextState;
         path.push(state);
-    } while (state != goal_state);
+    } while (state != GOAL_STATE);
     console.log("Path towards the end goal: " + path);
 }

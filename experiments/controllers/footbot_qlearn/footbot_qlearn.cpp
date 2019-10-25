@@ -1,4 +1,4 @@
-#include "single_footbot.h"
+#include "footbot_qlearn.h"
 
 SingleFootBot::SingleFootBot() :
         mDiffSteering(NULL),
@@ -22,8 +22,6 @@ void SingleFootBot::Init(TConfigurationNode &t_node) {
 /**
  * Obstacle avoidance. Inspired from footbot_diffusion.cpp by Carlo Pinciroli
  * The robot avoids obstacles and progresses towards the end goal, marked by the LED light.
- *
- * TODO: find best condition for acceptable obstacle distance
  */
 void SingleFootBot::ControlStep() {
     CVector2 vectorSum;
@@ -83,4 +81,4 @@ void SingleFootBot::ControlStep() {
  * Register the controller.
  * This is needed in order for argos to be able to bind the scene to this controller.
  */
-REGISTER_CONTROLLER(SingleFootBot, "single_footbot_controller")
+REGISTER_CONTROLLER(SingleFootBot, "footbot_qlearn_controller")

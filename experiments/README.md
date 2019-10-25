@@ -20,6 +20,8 @@ Usage:
 ./qswarm.sh build-debug <experiment_name> 
 ```
 
+Used library for RL: https://fidoproject.github.io/
+
 Directory structure:
 
  - controllers: 
