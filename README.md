@@ -146,6 +146,18 @@ make
 sudo make install
 ```
 
+### Installing Fido: C++ Reinforcement learning library
+
+Download the library from the following link: https://fidoproject.github.io/
+
+Before running **make**, be sure to add the following compiler option in the **Makefile**: **-fPIC**
+
+The first line of the **Makefile** should look like this:
+
+```
+CXXFLAGS += -std=c++11 -fPIC
+```
+
 ### Downloading and compiling the examples
 
 Follow this manual: https://www.argos-sim.info/user_manual.php

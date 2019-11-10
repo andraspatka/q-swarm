@@ -19,17 +19,17 @@
 
 using namespace argos;
 
-class SingleFootBot : public CCI_Controller {
+class FootbotQLearn : public CCI_Controller {
 
 public:
     /** Used for initializations. */
-    SingleFootBot();
+    FootbotQLearn();
 
     /**
-      * Caution: Using the destructor is not recommended.
+     * Caution: Using the destructor is not recommended.
      * Allocate and free all memory in Init() and Destroy()
      */
-    virtual ~SingleFootBot() {}
+    virtual ~FootbotQLearn() {}
 
     /**
      * Function for initialization.
@@ -65,12 +65,18 @@ private:
     /* Wheel speed. */
     Real mWheelVelocity;
 
-    /* Turn left value. */
-    Real mLeftWheelVelocity;
-
-    /* Turn right value. */
-    Real mRightWheelVelocity;
-
     /* Acceptable distance to the nearest obstacle. */
     Real mMinDistance;
+
+    // The action that the agent can take is moving, using its differential steering actuator.
+    rl::Action minAction = {0, 0};
+    rl::Action maxAction = {2.5f, 2.5f};
+    // How many values the state vector can take.
+    const int STATE_DIMENSIONS = 24;
+    const int BASE_OF_DIMENSIONS = 2;
+    // Exploration constant. Defines how much the agent should exploit vs explore.
+    const double EPSILON = 0.2;
+
+    /* Fido Control System*/
+    rl::FidoControlSystem mLearner;
 };

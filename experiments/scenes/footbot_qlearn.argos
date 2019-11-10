@@ -71,17 +71,6 @@
             <controller config="fqc" />
         </foot-bot>
 
-        <!-- Additional footbots distributed uniformly, their orientation is distributed using the gaussian method. -->
-        <distribute>
-            <position method="uniform" min="-2,-2,0" max="2,2,0" />
-            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="100" max_trials="100">
-                <foot-bot id="fb">
-                    <controller config="fqc" />
-                </foot-bot>
-            </entity>
-        </distribute>
-
     </arena>
 
     <!-- Physics engines -->
