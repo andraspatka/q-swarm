@@ -3,3 +3,10 @@ experiments/.project
 experiments/.idea
 experiments/cmake-build-debug
 experiments/captures
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.synctex.gz
+main.log
