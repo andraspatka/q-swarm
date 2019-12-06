@@ -4,7 +4,6 @@ FootbotQLearn::FootbotQLearn() :
         mDiffSteering(NULL),
         mProximity(NULL),
         mWheelVelocity(2.5f),
-        mMinDistance(0.25f),
         mLearner(STATE_DIMENSIONS, minAction, maxAction, BASE_OF_DIMENSIONS) {}
 
 /**
