@@ -2,7 +2,7 @@
 
 FootbotQLearn::FootbotQLearn() :
         mDiffSteering(NULL),
-        mProximity(NULL),
+        mProximitySensor(NULL),
         mWheelVelocity(2.5f),
         mLearner(STATE_DIMENSIONS, minAction, maxAction, BASE_OF_DIMENSIONS) {}
 
@@ -13,7 +13,7 @@ FootbotQLearn::FootbotQLearn() :
 void FootbotQLearn::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
-    mProximity = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
+    mProximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
 
     GetNodeAttributeOrDefault(t_node, "velocity", mWheelVelocity, mWheelVelocity);
@@ -21,24 +21,43 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
 
 void FootbotQLearn::ControlStep() {
     rl::State states;
-    double distance = 0;
+    rl::State newStates;
+    double distanceToGoal = 0;
+    double distanceToObstacle = 0;
+    int i = 1;
+    CVector2 vectorSumGoal, vectorSumObstacle;
     for (auto reading : mLightSensor->GetReadings()) {
-        states.push_back(reading.Value);
-        if (reading.Value > distance) {
-            distance = reading.Value;
+        vectorSumGoal += CVector2(reading.Value, reading.Angle);
+        if ( i % 6 == 0  && i != 0) {
+            states.push_back(vectorSumGoal.Length());
+            vectorSumGoal = CVector2(0, 0);
+        }
+        ++i;
+        if (reading.Value > distanceToGoal) {
+            distanceToGoal = reading.Value;
         }
     }
+    /*for (auto reading : mProximitySensor->GetReadings()) {
+        //states.push_back(reading.Value);
+        vectorSumObstacle += CVector2(reading.Value, reading.Angle);
+        if (reading.Value > distanceToGoal) {
+            distanceToObstacle = reading.Value;
+        }
+    }*/
 
     rl::Action action = mLearner.chooseBoltzmanAction(states, EPSILON);
+    //CVector2 actionVector(action[0], action[1]);
+    //CVector2 newPositionGoal = actionVector + vectorSumGoal;
+    //CVector2 newPositionObstacle = actionVector + vectorSumObstacle;
+    //TODO: calculate the reward
+    double rewardValue = -distanceToGoal;
+    if (k == 5) {
+        mLearner.applyReinforcementToLastAction(rewardValue, states);
+        states = newStates;
+        k = 0;
+    }
+    ++k;
 
-    /* TODO: calculate the reward
-    sf::Vector2f displacement =  sf::Vector2f(action[0], action[1]);
-    sf::Vector2f newPosition = simulator.robot.getPosition() + displacement;
-    simulator.robot.setPosition(newPosition);
-
-    double newDistance = simulator.distanceFromLine();
-    double rewardValue = (fabs(distance) - fabs(newDistance - distance)) / sqrt(2);
-    mLearner.applyReinforcementToLastAction(-distance, states);*/
 
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
 }

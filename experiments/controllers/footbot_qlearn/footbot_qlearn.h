@@ -57,7 +57,7 @@ private:
     CCI_DifferentialSteeringActuator *mDiffSteering;
 
     /* Pointer to the foot-bot proximity sensor. */
-    CCI_FootBotProximitySensor *mProximity;
+    CCI_FootBotProximitySensor *mProximitySensor;
 
     /* Pointer to the foot-bot light sensor. */
     CCI_FootBotLightSensor *mLightSensor;
@@ -71,8 +71,9 @@ private:
     // The action that the agent can take is moving, using its differential steering actuator.
     rl::Action minAction = {0, 0};
     rl::Action maxAction = {2.5f, 2.5f};
+    int k = 0;
     // How many values the state vector can take.
-    const int STATE_DIMENSIONS = 24;
+    const int STATE_DIMENSIONS = 4;
     const int BASE_OF_DIMENSIONS = 2;
     // Exploration constant. Defines how much the agent should exploit vs explore.
     const double EPSILON = 0.2;
