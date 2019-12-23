@@ -1,6 +1,6 @@
 # Single/multiple footbot obstacle avoidance using push and pull forces
 
-The experiment contains a single/multiple footbot(s), obstacles and an end destionation. The footbot strives towards avoiding collisions with obstacles and proceeds towards the end destination.
+The experiment contains a single/multiple footbot(s), obstacles and an end destination. The footbot strives towards avoiding collisions with obstacles and proceeds towards the end destination.
 
 The scene is a rectangular arena with obstacles, an end goal and a starting position.
 
