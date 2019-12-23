@@ -2,6 +2,7 @@
 # ================================================================================
 # Created by: Patka Zsolt-András
 # On: 13.07.2019
+# Last revision: 23.12.2019
 # This script makes it easier to clean, build, debug and run the ARGoS experiment
 # 
 # Arguments:$1	The job to execute, can be:
@@ -23,21 +24,21 @@
 
 # Clean subtask
 function f_clean {
-	rm -r build
-	mkdir build
+	rm -r cmake-build-debug
+	mkdir cmake-build-debug
 }
 
 # Build subtask
 function f_build {
 	f_clean
-	cd build
+	cd cmake-build-debug
 	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
 }
 
 # Run subtask
 function f_run {
-	isBuild=$(pwd | grep build)
+	isBuild=$(pwd | grep cmake-build-debug)
 	if ! [ -z $isBuild ]; then
 		cd ..
 	fi
@@ -48,7 +49,7 @@ function f_run {
 # Debug subtask
 function f_build_debug {
 	f_clean
-	cd build
+	cd cmake-build-debug
 	cmake -DCMAKE_BUILD_TYPE=Debug ..
 	make
 	f_run
