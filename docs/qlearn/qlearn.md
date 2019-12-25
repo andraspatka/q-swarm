@@ -60,4 +60,4 @@ With this in mind, the defined actions are:
 
 ## Rewards
 
-The reward is the negative of the distance to the goal.
+The reward is the negative of the distance to the goal. SO the positive of the light sensor's maximal reading value.

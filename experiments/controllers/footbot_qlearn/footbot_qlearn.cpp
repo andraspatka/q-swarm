@@ -22,7 +22,7 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
 void FootbotQLearn::ControlStep() {
     rl::State states;
     rl::State newStates;
-    double distanceToGoal = 0;
+    double maxLightReading = 0.0f;
     int i = 1;
     CVector2 vectorSumGoal(0, 0);
     for (auto reading : mLightSensor->GetReadings()) {
@@ -32,20 +32,21 @@ void FootbotQLearn::ControlStep() {
             vectorSumGoal = CVector2(0, 0);
         }
         ++i;
-        if (reading.Value > distanceToGoal) {
-            distanceToGoal = reading.Value;
+        if (reading.Value > maxLightReading) {
+            maxLightReading = reading.Value;
         }
     }
 
     rl::Action action = mLearner.chooseBoltzmanAction(states, EPSILON);
-    double rewardValue = -distanceToGoal;
-    if (k == 5) {
+    double rewardValue = maxLightReading;
+    if (k == 3) {
         mLearner.applyReinforcementToLastAction(rewardValue, states);
         k = 0;
     }
     ++k;
 
-    std::cout<< "Action taken: "<< action[0] << " " << action[1]; 
+    std::cout<< "Action taken: "<< action[0] << " " << action[1] << std::endl; 
+    std::cout<< "Reward: " << rewardValue << std::endl;
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
 }
 

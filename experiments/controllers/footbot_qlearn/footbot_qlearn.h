@@ -69,8 +69,8 @@ private:
     Real mMinDistance;
 
     // The action that the agent can take is moving, using its differential steering actuator.
-    rl::Action minAction = {-2.5f, -2.5f};
-    rl::Action maxAction = {2.5f, 2.5f};
+    rl::Action minAction = {0.0f, 0.0f};
+    rl::Action maxAction = {30.0f, 30.0f};
     int k = 0;
     // How many values the state vector can take.
     const int STATE_DIMENSIONS = 4;

@@ -3,7 +3,7 @@
 
     <!-- General configuration -->
     <framework>
-        <system threads="4" />
+        <system threads="6" />
         <experiment length="0" ticks_per_second="10" random_seed="124" />
     </framework>
 
@@ -15,7 +15,7 @@
             </actuators>
             <sensors>
                 <footbot_light implementation="rot_z_only" show_rays="true" />
-                <footbot_proximity implementation="default" show_rays="true" />
+                <footbot_proximity implementation="default" show_rays="false" />
             </sensors>
             <!-- Velocity parameter -->
             <params velocity="15" />
