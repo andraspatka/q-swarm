@@ -79,4 +79,5 @@ private:
 
     net::Trainer * mTrainer;
 
+    void initWireFitQLearn();
 };

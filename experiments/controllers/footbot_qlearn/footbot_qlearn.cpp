@@ -17,7 +17,10 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
 
     GetNodeAttributeOrDefault(t_node, "velocity", mWheelVelocity, mWheelVelocity);
     GetNodeAttributeOrDefault(t_node, "explore_exploit", EPSILON, EPSILON);
+    initWireFitQLearn();
+}
 
+void FootbotQLearn::initWireFitQLearn() {
     // The action that the agent can take is moving, using its differential steering actuator.
     rl::Action minAction = {0.0f, 0.0f};
     rl::Action maxAction = {mWheelVelocity, mWheelVelocity};
@@ -31,25 +34,29 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
     mLearner = new rl::FidoControlSystem(STATE_DIMENSIONS, minAction, maxAction, BASE_OF_DIMENSIONS);
 
     // Initialize the backpropagation NN trainer
-    double learningRate = 0.5f;
-    double momentumTerm = 0.5f;
-    double targetErrorLevel = 0.3f;
-    int maxEpochs = 100;
+    double learningRate = 0.05f;
+    double momentumTerm = 0.9f; // between 0 and 1, rec: 0.9 tunable: 0.8 - 0.999
+    double targetErrorLevel = 0.0025f;
+    int maxEpochs = 1000;
+    // Todo: Use Adadelta instead? => Adaptive learning rate
     mTrainer = new net::Backpropagation(learningRate, momentumTerm, targetErrorLevel, maxEpochs);
+    double rho = 0.25f;
+    //mTrainer = new net::Adadelta(rho, targetErrorLevel, maxEpochs);
 
     // Initialize the Least Square Interpolator
     double smoothingFactor = 0.4;
-    double e = 0.0001f;
+    double e = 0.1f;
     mLSInterpolator = new rl::LSInterpolator(smoothingFactor, e);
 
-    unsigned int numHiddenLayers = 4;
+    unsigned int numHiddenLayers = 2;
     unsigned int numNeuronsPerHiddenLayer = 3;
-    unsigned int numberOfWires = 2;
+    unsigned int numberOfWires = 12;
     double wireFitQLearningRate = 0.5f;
-    double discountFactor = 0.2f;
+    double discountFactor = 0.5f; // 0 - immediate reward, 1 - long term reward
 
     mWireFitQLearner = new rl::WireFitQLearn(STATE_DIMENSIONS, ACTION_LENGTH, numHiddenLayers, numNeuronsPerHiddenLayer,
-            numberOfWires, minAction, maxAction, BASE_OF_DIMENSIONS, mLSInterpolator, mTrainer, wireFitQLearningRate, discountFactor);
+                                             numberOfWires, minAction, maxAction, BASE_OF_DIMENSIONS, mLSInterpolator,
+                                             mTrainer, wireFitQLearningRate, discountFactor);
 }
 
 void FootbotQLearn::ControlStep() {
@@ -70,6 +77,7 @@ void FootbotQLearn::ControlStep() {
     }
 
     rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, EPSILON);
+
     double rewardValue = maxLightReading;
     if (k == 1) {
         mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
@@ -77,11 +85,11 @@ void FootbotQLearn::ControlStep() {
     }
     ++k;
 
-    if (action[0] == 0.0f && action[1] == 0.0f) { //{0, 0} action does nothing.
+    /*if (action[0] == 0.0f && action[1] == 0.0f) { //{0, 0} action does nothing.
         action[0] = mWheelVelocity;
         action[1] = mWheelVelocity;
-    }
-    LOG<< "Action taken: "<< action[0] << " " << action[1] << std::endl;
+    }*/
+    //LOG<< "Action taken: "<< action[0] << " " << action[1] << std::endl;
     LOG<< "Reward: " << rewardValue << std::endl;
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
 }
