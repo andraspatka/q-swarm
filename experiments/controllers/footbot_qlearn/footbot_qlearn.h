@@ -68,7 +68,7 @@ private:
     int k = 0;
     // Exploration constant. Defines how much the agent should exploit vs explore.
     // This value might be overridden from the argos file
-    double EPSILON = 0.2f;
+    double exploreExploit = 0.2f;
 
     /* Fido Control System*/
     rl::FidoControlSystem * mLearner;

@@ -16,7 +16,7 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
     mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
 
     GetNodeAttributeOrDefault(t_node, "velocity", mWheelVelocity, mWheelVelocity);
-    GetNodeAttributeOrDefault(t_node, "explore_exploit", EPSILON, EPSILON);
+    GetNodeAttributeOrDefault(t_node, "explore_exploit", exploreExploit, exploreExploit);
     initWireFitQLearn();
 }
 
@@ -36,23 +36,24 @@ void FootbotQLearn::initWireFitQLearn() {
     // Initialize the backpropagation NN trainer
     double learningRate = 0.05f;
     double momentumTerm = 0.9f; // between 0 and 1, rec: 0.9 tunable: 0.8 - 0.999
-    double targetErrorLevel = 0.0025f;
-    int maxEpochs = 1000;
+    double targetErrorLevel = 0.001f;
+    int maxEpochs = 5000;
     // Todo: Use Adadelta instead? => Adaptive learning rate
     mTrainer = new net::Backpropagation(learningRate, momentumTerm, targetErrorLevel, maxEpochs);
     double rho = 0.25f;
     //mTrainer = new net::Adadelta(rho, targetErrorLevel, maxEpochs);
 
     // Initialize the Least Square Interpolator
-    double smoothingFactor = 0.4;
-    double e = 0.1f;
+    double smoothingFactor = 0.85;
+    double e = 0.001f;
     mLSInterpolator = new rl::LSInterpolator(smoothingFactor, e);
 
-    unsigned int numHiddenLayers = 2;
-    unsigned int numNeuronsPerHiddenLayer = 3;
-    unsigned int numberOfWires = 12;
-    double wireFitQLearningRate = 0.5f;
-    double discountFactor = 0.5f; // 0 - immediate reward, 1 - long term reward
+    unsigned int numHiddenLayers = 2; // 2 hidden layers => can learn an arbitrary decision boundary
+    // 12 neurons input, 4 neurons output => 2/3 inputN + outputN = 12 (rule of thumb, Jeff Heaton)
+    unsigned int numNeuronsPerHiddenLayer = 12;
+    unsigned int numberOfWires = 4;
+    double wireFitQLearningRate = 1.5f;
+    double discountFactor = 0.4f; // 0 - immediate reward, 1 - long term reward
 
     mWireFitQLearner = new rl::WireFitQLearn(STATE_DIMENSIONS, ACTION_LENGTH, numHiddenLayers, numNeuronsPerHiddenLayer,
                                              numberOfWires, minAction, maxAction, BASE_OF_DIMENSIONS, mLSInterpolator,
@@ -76,20 +77,16 @@ void FootbotQLearn::ControlStep() {
         }
     }
 
-    rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, EPSILON);
+    rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, exploreExploit);
 
     double rewardValue = maxLightReading;
-    if (k == 1) {
-        mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
-        k = 0;
-    }
-    ++k;
+    mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
 
     /*if (action[0] == 0.0f && action[1] == 0.0f) { //{0, 0} action does nothing.
         action[0] = mWheelVelocity;
         action[1] = mWheelVelocity;
     }*/
-    //LOG<< "Action taken: "<< action[0] << " " << action[1] << std::endl;
+    LOG<< "Action taken: "<< action[0] << " " << action[1] << std::endl;
     LOG<< "Reward: " << rewardValue << std::endl;
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
 }
