@@ -3,8 +3,7 @@
 FootbotQLearn::FootbotQLearn() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
-        mWheelVelocity(2.5f),
-        mLearner(STATE_DIMENSIONS, minAction, maxAction, BASE_OF_DIMENSIONS) {}
+        mWheelVelocity(30.0f) {}
 
 /**
  * Get the pointer to the actuator and the sensor.
@@ -17,17 +16,28 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
     mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
 
     GetNodeAttributeOrDefault(t_node, "velocity", mWheelVelocity, mWheelVelocity);
+    GetNodeAttributeOrDefault(t_node, "explore_exploit", EPSILON, EPSILON);
+
+    // The action that the agent can take is moving, using its differential steering actuator.
+    rl::Action minAction = {0.0f, 0.0f};
+    rl::Action maxAction = {mWheelVelocity, mWheelVelocity};
+
+    // How many values the state vector can take.
+    const int STATE_DIMENSIONS = 12;
+    // number of possible discrete values between minAction and maxAction
+    const int BASE_OF_DIMENSIONS = 2;
+
+    mLearner = new rl::FidoControlSystem(STATE_DIMENSIONS, minAction, maxAction, BASE_OF_DIMENSIONS);
 }
 
 void FootbotQLearn::ControlStep() {
     rl::State states;
-    rl::State newStates;
     double maxLightReading = 0.0f;
     int i = 1;
     CVector2 vectorSumGoal(0, 0);
     for (auto reading : mLightSensor->GetReadings()) {
         vectorSumGoal += CVector2(reading.Value, reading.Angle);
-        if ( i % 6 == 0  && i != 0) {
+        if ( i % 2 == 0  && i != 0) {
             states.push_back(vectorSumGoal.Length());
             vectorSumGoal = CVector2(0, 0);
         }
@@ -37,17 +47,25 @@ void FootbotQLearn::ControlStep() {
         }
     }
 
-    rl::Action action = mLearner.chooseBoltzmanAction(states, EPSILON);
+    rl::Action action = mLearner->chooseBoltzmanAction(states, EPSILON);
     double rewardValue = maxLightReading;
-    if (k == 3) {
-        mLearner.applyReinforcementToLastAction(rewardValue, states);
+    if (k == 1) {
+        mLearner->applyReinforcementToLastAction(rewardValue, states);
         k = 0;
     }
     ++k;
 
-    std::cout<< "Action taken: "<< action[0] << " " << action[1] << std::endl; 
-    std::cout<< "Reward: " << rewardValue << std::endl;
+    if (action[0] == 0.0f && action[1] == 0.0f) { //{0, 0} action does nothing.
+        action[0] = mWheelVelocity;
+        action[1] = mWheelVelocity;
+    }
+    LOG<< "Action taken: "<< action[0] << " " << action[1] << std::endl;
+    LOG<< "Reward: " << rewardValue << std::endl;
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
+}
+
+void FootbotQLearn::Destroy() {
+    delete mLearner;
 }
 
 /**

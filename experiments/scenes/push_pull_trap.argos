@@ -9,7 +9,8 @@
 
     <!-- Controllers -->
     <controllers>
-        <single_footbot_controller id="sfc" library="cmake-build-debug/controllers/single_footbot/libsingle_footbot.so">
+        <!-- <single_footbot_controller id="sfc" library="cmake-build-debug/controllers/single_footbot/libsingle_footbot.so"> -->
+        <footbot_qlearn_controller id="sfc" library="cmake-build-debug/controllers/footbot_qlearn/libfootbot_qlearn.so">
             <actuators>
                 <differential_steering implementation="default" />
             </actuators>
@@ -19,7 +20,8 @@
             </sensors>
             <!-- Velocity parameter -->
             <params velocity="15" />
-        </single_footbot_controller>
+        </footbot_qlearn_controller>
+        <!-- </single_footbot_controller> -->
     </controllers>
 
     <!-- Arena configuration -->

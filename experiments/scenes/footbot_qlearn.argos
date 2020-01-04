@@ -3,7 +3,7 @@
 
     <!-- General configuration -->
     <framework>
-        <system threads="6" />
+        <system threads="1" />
         <experiment length="0" ticks_per_second="10" random_seed="124" />
     </framework>
 
@@ -18,7 +18,8 @@
                 <footbot_proximity implementation="default" show_rays="false" />
             </sensors>
             <!-- Velocity parameter -->
-            <params velocity="15" />
+            <params velocity="25" />
+            <params explore_exploit="0.2" />
         </footbot_qlearn_controller>
     </controllers>
 
@@ -70,6 +71,17 @@
             <body position="0,0,0" orientation="0,0,0" />
             <controller config="fqc" />
         </foot-bot>
+
+        <!-- Additional footbots distributed uniformly, their orientation is distributed using the gaussian method. -->
+        <distribute>
+            <position method="uniform" min="-2,-2,0" max="2,2,0" />
+            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
+            <entity quantity="1" max_trials="100">
+                <foot-bot id="fb">
+                    <controller config="fqc" />
+                </foot-bot>
+            </entity>
+        </distribute>
 
     </arena>
 
