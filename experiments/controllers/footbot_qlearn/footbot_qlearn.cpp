@@ -26,8 +26,30 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
     const int STATE_DIMENSIONS = 12;
     // number of possible discrete values between minAction and maxAction
     const int BASE_OF_DIMENSIONS = 2;
+    const int ACTION_LENGTH = 2;
 
     mLearner = new rl::FidoControlSystem(STATE_DIMENSIONS, minAction, maxAction, BASE_OF_DIMENSIONS);
+
+    // Initialize the backpropagation NN trainer
+    double learningRate = 0.5f;
+    double momentumTerm = 0.5f;
+    double targetErrorLevel = 0.3f;
+    int maxEpochs = 100;
+    mTrainer = new net::Backpropagation(learningRate, momentumTerm, targetErrorLevel, maxEpochs);
+
+    // Initialize the Least Square Interpolator
+    double smoothingFactor = 0.4;
+    double e = 0.0001f;
+    mLSInterpolator = new rl::LSInterpolator(smoothingFactor, e);
+
+    unsigned int numHiddenLayers = 4;
+    unsigned int numNeuronsPerHiddenLayer = 3;
+    unsigned int numberOfWires = 2;
+    double wireFitQLearningRate = 0.5f;
+    double discountFactor = 0.2f;
+
+    mWireFitQLearner = new rl::WireFitQLearn(STATE_DIMENSIONS, ACTION_LENGTH, numHiddenLayers, numNeuronsPerHiddenLayer,
+            numberOfWires, minAction, maxAction, BASE_OF_DIMENSIONS, mLSInterpolator, mTrainer, wireFitQLearningRate, discountFactor);
 }
 
 void FootbotQLearn::ControlStep() {
@@ -47,10 +69,10 @@ void FootbotQLearn::ControlStep() {
         }
     }
 
-    rl::Action action = mLearner->chooseBoltzmanAction(states, EPSILON);
+    rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, EPSILON);
     double rewardValue = maxLightReading;
     if (k == 1) {
-        mLearner->applyReinforcementToLastAction(rewardValue, states);
+        mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
         k = 0;
     }
     ++k;
@@ -66,6 +88,9 @@ void FootbotQLearn::ControlStep() {
 
 void FootbotQLearn::Destroy() {
     delete mLearner;
+    delete mWireFitQLearner;
+    delete mTrainer;
+    delete mLSInterpolator;
 }
 
 /**

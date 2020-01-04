@@ -72,4 +72,11 @@ private:
 
     /* Fido Control System*/
     rl::FidoControlSystem * mLearner;
+
+    rl::WireFitQLearn * mWireFitQLearner;
+
+    rl::Interpolator * mLSInterpolator;
+
+    net::Trainer * mTrainer;
+
 };
