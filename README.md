@@ -148,7 +148,9 @@ sudo make install
 
 ### Installing Fido: C++ Reinforcement learning library
 
-Download the library from the following link: https://fidoproject.github.io/
+Clone the following repository: https://github.com/andraspatka/Fido (Forked from FidoProject/Fido).
+
+Checkout the release/NoSimulator branch.
 
 Before running **make**, be sure to add the following compiler option in the **Makefile**: **-fPIC**
 
@@ -156,6 +158,11 @@ The first line of the **Makefile** should look like this:
 
 ```
 CXXFLAGS += -std=c++11 -fPIC
+```
+
+Then just simply: 
+```
+sudo make install
 ```
 
 ### Downloading and compiling the examples
