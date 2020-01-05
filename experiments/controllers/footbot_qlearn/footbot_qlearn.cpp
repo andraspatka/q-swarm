@@ -31,8 +31,6 @@ void FootbotQLearn::initWireFitQLearn() {
     const int BASE_OF_DIMENSIONS = 2;
     const int ACTION_LENGTH = 2;
 
-    mLearner = new rl::FidoControlSystem(STATE_DIMENSIONS, minAction, maxAction, BASE_OF_DIMENSIONS);
-
     // Initialize the backpropagation NN trainer
     double learningRate = 0.05f;
     double momentumTerm = 0.9f; // between 0 and 1, rec: 0.9 tunable: 0.8 - 0.999
@@ -52,12 +50,12 @@ void FootbotQLearn::initWireFitQLearn() {
     // 12 neurons input, 4 neurons output => 2/3 inputN + outputN = 12 (rule of thumb, Jeff Heaton)
     unsigned int numNeuronsPerHiddenLayer = 12;
     unsigned int numberOfWires = 4;
-    double wireFitQLearningRate = 1.5f;
+    double wireFitQLearningRate = 0.4f; // between 0 and 1 - how fast the agent should learn from the reinforcement
     double discountFactor = 0.4f; // 0 - immediate reward, 1 - long term reward
 
-    mWireFitQLearner = new rl::WireFitQLearn(STATE_DIMENSIONS, ACTION_LENGTH, numHiddenLayers, numNeuronsPerHiddenLayer,
-                                             numberOfWires, minAction, maxAction, BASE_OF_DIMENSIONS, mLSInterpolator,
-                                             mTrainer, wireFitQLearningRate, discountFactor);
+    mWireFitQLearner = new rl::WireFitQLearn(
+                    STATE_DIMENSIONS, ACTION_LENGTH, numHiddenLayers, numNeuronsPerHiddenLayer, numberOfWires, minAction,
+                    maxAction, BASE_OF_DIMENSIONS, mLSInterpolator, mTrainer, wireFitQLearningRate, discountFactor);
 }
 
 void FootbotQLearn::ControlStep() {
@@ -78,7 +76,6 @@ void FootbotQLearn::ControlStep() {
     }
 
     rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, exploreExploit);
-
     double rewardValue = maxLightReading;
     mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
 
@@ -92,7 +89,6 @@ void FootbotQLearn::ControlStep() {
 }
 
 void FootbotQLearn::Destroy() {
-    delete mLearner;
     delete mWireFitQLearner;
     delete mTrainer;
     delete mLSInterpolator;

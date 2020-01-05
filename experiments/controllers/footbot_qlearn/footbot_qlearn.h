@@ -70,14 +70,11 @@ private:
     // This value might be overridden from the argos file
     double exploreExploit = 0.2f;
 
-    /* Fido Control System*/
-    rl::FidoControlSystem * mLearner;
-
     rl::WireFitQLearn * mWireFitQLearner;
 
-    rl::Interpolator * mLSInterpolator;
+    rl::LSInterpolator * mLSInterpolator;
 
-    net::Trainer * mTrainer;
+    net::Backpropagation * mTrainer;
 
     void initWireFitQLearn();
 };
