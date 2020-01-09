@@ -26,7 +26,7 @@ void FootbotQLearn::initWireFitQLearn() {
     rl::Action maxAction = {mWheelVelocity, mWheelVelocity};
 
     // How many values the state vector can take.
-    const int STATE_DIMENSIONS = 12;
+    const int STATE_DIMENSIONS = 8;
     // number of possible discrete values between minAction and maxAction
     const int BASE_OF_DIMENSIONS = 2;
     const int ACTION_LENGTH = 2;
@@ -51,7 +51,7 @@ void FootbotQLearn::initWireFitQLearn() {
     unsigned int numNeuronsPerHiddenLayer = 12;
     unsigned int numberOfWires = 4;
     double wireFitQLearningRate = 0.4f; // between 0 and 1 - how fast the agent should learn from the reinforcement
-    double discountFactor = 0.4f; // 0 - immediate reward, 1 - long term reward
+    double discountFactor = 0.6f; // 0 - immediate reward, 1 - long term reward
 
     mWireFitQLearner = new rl::WireFitQLearn(
                     STATE_DIMENSIONS, ACTION_LENGTH, numHiddenLayers, numNeuronsPerHiddenLayer, numberOfWires, minAction,
@@ -62,21 +62,82 @@ void FootbotQLearn::ControlStep() {
     rl::State states;
     double maxLightReading = 0.0f;
     int i = 1;
-    CVector2 vectorSumGoal(0, 0);
-    for (auto reading : mLightSensor->GetReadings()) {
-        vectorSumGoal += CVector2(reading.Value, reading.Angle);
-        if ( i % 2 == 0  && i != 0) {
-            states.push_back(vectorSumGoal.Length());
-            vectorSumGoal = CVector2(0, 0);
-        }
-        ++i;
-        if (reading.Value > maxLightReading) {
-            maxLightReading = reading.Value;
-        }
-    }
+    double rewardValue = 0;
 
+//      *              front
+//  *
+//  *              0 23
+//  *            1     22
+//  *          2         21
+//  *        3             20      r
+//  * l    4                 19    i
+//  * e  5                     18  g
+//  * f  6                     17  h
+//  * t    7                 16    t
+//  *        8             15
+//  *          9         14
+//  *            10     13
+//  *              11 12
+//  *
+//  *              back
+
+    CVector2 vectorSumGoal(0, 0);
+    auto readings = mLightSensor->GetReadings();
+    // forward
+    vectorSumGoal = CVector2(readings.at(0).Value, readings.at(0).Angle) + CVector2(readings.at(23).Value, readings.at(23).Angle);
+    states.push_back(vectorSumGoal.Length());
+    // left 1
+    vectorSumGoal = CVector2(0,0);
+    vectorSumGoal = CVector2(readings.at(1).Value, readings.at(1).Angle) + CVector2(readings.at(2).Value, readings.at(2).Angle);
+    states.push_back(vectorSumGoal.Length());
+    // left 2
+    vectorSumGoal = CVector2(0,0);
+    vectorSumGoal = CVector2(readings.at(3).Value, readings.at(3).Angle) + CVector2(readings.at(4).Value, readings.at(4).Angle);
+    states.push_back(vectorSumGoal.Length());
+    // leftmost
+    vectorSumGoal = CVector2(0,0);
+    vectorSumGoal = CVector2(readings.at(5).Value, readings.at(5).Angle) + CVector2(readings.at(6).Value, readings.at(6).Angle);
+    states.push_back(vectorSumGoal.Length());
+
+    // right 1
+    vectorSumGoal = CVector2(0,0);
+    vectorSumGoal = CVector2(readings.at(21).Value, readings.at(21).Angle) + CVector2(readings.at(22).Value, readings.at(22).Angle);
+    states.push_back(vectorSumGoal.Length());
+
+    // right 2
+    vectorSumGoal = CVector2(0,0);
+    vectorSumGoal = CVector2(readings.at(19).Value, readings.at(19).Angle) + CVector2(readings.at(20).Value, readings.at(20).Angle);
+    states.push_back(vectorSumGoal.Length());
+
+    // rightmost
+    vectorSumGoal = CVector2(0,0);
+    vectorSumGoal = CVector2(readings.at(17).Value, readings.at(17).Angle) + CVector2(readings.at(18).Value, readings.at(18).Angle);
+    states.push_back(vectorSumGoal.Length());
+
+    // back
+    vectorSumGoal = CVector2(0,0);
+    for (int i=7; i <= 16; ++i) {
+        vectorSumGoal += CVector2(readings.at(i).Value, readings.at(i).Angle);    
+    }
+    states.push_back(vectorSumGoal.Length());
+
+    for (int i = 0; i <= 3; ++i) {
+        if (readings.at(i).Value > maxLightReading) {
+             maxLightReading = readings.at(i).Value;
+         }
+    }
+    for (int i = 20; i < 23; ++i) {
+        if (readings.at(i).Value > maxLightReading) {
+             maxLightReading = readings.at(i).Value;
+         }
+    }
+    k++;
+    //if epocszam > 1000 favor experience 
+    if (exploreExploit >= 0.1f && k % 500) {
+        exploreExploit -= 0.1f;
+    }
     rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, exploreExploit);
-    double rewardValue = maxLightReading;
+    rewardValue = maxLightReading;
     mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
 
     /*if (action[0] == 0.0f && action[1] == 0.0f) { //{0, 0} action does nothing.
