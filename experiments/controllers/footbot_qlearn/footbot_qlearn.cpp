@@ -16,7 +16,7 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
     mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
 
     GetNodeAttributeOrDefault(t_node, "velocity", mWheelVelocity, mWheelVelocity);
-    GetNodeAttributeOrDefault(t_node, "explore_exploit", exploreExploit, exploreExploit);
+//    GetNodeAttributeOrDefault(t_node, "explore_exploit", exploreExploit, exploreExploit);
     initWireFitQLearn();
 }
 
@@ -47,10 +47,10 @@ void FootbotQLearn::initWireFitQLearn() {
     mLSInterpolator = new rl::LSInterpolator(smoothingFactor, e);
 
     unsigned int numHiddenLayers = 2; // 2 hidden layers => can learn an arbitrary decision boundary
-    // 12 neurons input, 4 neurons output => 2/3 inputN + outputN = 12 (rule of thumb, Jeff Heaton)
-    unsigned int numNeuronsPerHiddenLayer = 12;
+    // 8 neurons input, 4 neurons output => 2/3 inputN + outputN = 9 (rule of thumb, Jeff Heaton)
+    unsigned int numNeuronsPerHiddenLayer = 9;
     unsigned int numberOfWires = 4;
-    double wireFitQLearningRate = 0.4f; // between 0 and 1 - how fast the agent should learn from the reinforcement
+    double wireFitQLearningRate = 0.6f; // between 0 and 1 - how fast the agent should learn from the reinforcement
     double discountFactor = 0.6f; // 0 - immediate reward, 1 - long term reward
 
     mWireFitQLearner = new rl::WireFitQLearn(
@@ -61,10 +61,9 @@ void FootbotQLearn::initWireFitQLearn() {
 void FootbotQLearn::ControlStep() {
     rl::State states;
     double maxLightReading = 0.0f;
-    int i = 1;
     double rewardValue = 0;
 
-//      *              front
+//  *              front
 //  *
 //  *              0 23
 //  *            1     22
@@ -87,30 +86,24 @@ void FootbotQLearn::ControlStep() {
     vectorSumGoal = CVector2(readings.at(0).Value, readings.at(0).Angle) + CVector2(readings.at(23).Value, readings.at(23).Angle);
     states.push_back(vectorSumGoal.Length());
     // left 1
-    vectorSumGoal = CVector2(0,0);
     vectorSumGoal = CVector2(readings.at(1).Value, readings.at(1).Angle) + CVector2(readings.at(2).Value, readings.at(2).Angle);
     states.push_back(vectorSumGoal.Length());
     // left 2
-    vectorSumGoal = CVector2(0,0);
     vectorSumGoal = CVector2(readings.at(3).Value, readings.at(3).Angle) + CVector2(readings.at(4).Value, readings.at(4).Angle);
     states.push_back(vectorSumGoal.Length());
     // leftmost
-    vectorSumGoal = CVector2(0,0);
     vectorSumGoal = CVector2(readings.at(5).Value, readings.at(5).Angle) + CVector2(readings.at(6).Value, readings.at(6).Angle);
     states.push_back(vectorSumGoal.Length());
 
     // right 1
-    vectorSumGoal = CVector2(0,0);
     vectorSumGoal = CVector2(readings.at(21).Value, readings.at(21).Angle) + CVector2(readings.at(22).Value, readings.at(22).Angle);
     states.push_back(vectorSumGoal.Length());
 
     // right 2
-    vectorSumGoal = CVector2(0,0);
     vectorSumGoal = CVector2(readings.at(19).Value, readings.at(19).Angle) + CVector2(readings.at(20).Value, readings.at(20).Angle);
     states.push_back(vectorSumGoal.Length());
 
     // rightmost
-    vectorSumGoal = CVector2(0,0);
     vectorSumGoal = CVector2(readings.at(17).Value, readings.at(17).Angle) + CVector2(readings.at(18).Value, readings.at(18).Angle);
     states.push_back(vectorSumGoal.Length());
 
@@ -126,18 +119,20 @@ void FootbotQLearn::ControlStep() {
              maxLightReading = readings.at(i).Value;
          }
     }
-    for (int i = 20; i < 23; ++i) {
+    for (int i = 20; i <= 23; ++i) {
         if (readings.at(i).Value > maxLightReading) {
              maxLightReading = readings.at(i).Value;
          }
     }
-    k++;
-    //if epocszam > 1000 favor experience 
-    if (exploreExploit >= 0.1f && k % 500) {
+    epoch++;
+    if (exploreExploit > 0.4f && epoch % 250 == 0) { // Every 500 epochs it decreases the exploreExploit parameter
         exploreExploit -= 0.1f;
     }
     rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, exploreExploit);
     rewardValue = maxLightReading;
+    if (maxReward < rewardValue) {
+        maxReward = rewardValue;
+    }
     mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
 
     /*if (action[0] == 0.0f && action[1] == 0.0f) { //{0, 0} action does nothing.
@@ -146,6 +141,8 @@ void FootbotQLearn::ControlStep() {
     }*/
     LOG<< "Action taken: "<< action[0] << " " << action[1] << std::endl;
     LOG<< "Reward: " << rewardValue << std::endl;
+    LOG<< "ExploreExploit: " << exploreExploit << std::endl;
+    LOG<< "Max reward: " << maxReward << std::endl;
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
 }
 
