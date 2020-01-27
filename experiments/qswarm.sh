@@ -9,6 +9,7 @@
 #                   capture     takes the frames created from an argos capture,
 #                               creates a video from them and then deletes them.
 #                               filename is equal to $2
+#                   clean       removes the ${build_dir} directory
 #					build 		builds the project
 #					run			runs the experiment
 #					build-run   builds the project and runs the experiment	
@@ -21,35 +22,35 @@
 
 # Subtasks implemented as functions
 
+build_dir="cmake-build-debug"
 
 # Clean subtask
 function f_clean {
-	rm -r cmake-build-debug
-	mkdir cmake-build-debug
+	rm -r ${build_dir}
+	mkdir ${build_dir}
 }
 
 # Build subtask
 function f_build {
-	f_clean
-	cd cmake-build-debug
+	cd ${build_dir}
 	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
 }
 
 # Run subtask
 function f_run {
-	isBuild=$(pwd | grep cmake-build-debug)
-	if ! [ -z $isBuild ]; then
+	isBuild=$(pwd | grep ${build_dir})
+	if ! [[ -z ${isBuild} ]]; then
 		cd ..
 	fi
 	
-	argos3 -c $scene_name
+	argos3 -c ${scene_name}
 }
 
 # Debug subtask
 function f_build_debug {
 	f_clean
-	cd cmake-build-debug
+	cd ${build_dir}
 	cmake -DCMAKE_BUILD_TYPE=Debug ..
 	make
 	f_run
@@ -60,16 +61,16 @@ function f_capture {
     frames=$(ls | egrep "^frame_[0-9]{5}.png")
     dir_name=$(echo "capture_$cap_output")
     cd captures
-    mkdir $dir_name
-    mkdir $dir_name/frames
+    mkdir ${dir_name}
+    mkdir ${dir_name}/frames
     cd ..
-    for frame in $frames;
+    for frame in ${frames};
     do
-        mv $frame captures/$dir_name/frames/$frame
+        mv ${frame} captures/${dir_name}/frames/${frame}
     done
-    ffmpeg -framerate 24 -i captures/$dir_name/frames/frame_%05d.png \
+    ffmpeg -framerate 24 -i captures/${dir_name}/frames/frame_%05d.png \
         -vf scale=1280:-2 -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p \
-        captures/$dir_name/$cap_output.mp4
+        captures/${dir_name}/${cap_output}.mp4
 }
 
 # ================================================================================
@@ -80,20 +81,23 @@ fi
 
 job=$1
 cap_output=$2
-if [[ "$job" != "build" && "$job" != "capture" ]]; then
+if [[ "$job" != "build" && "$job" != "capture" && "$job" != "clean" ]]; then
     scene_name="scenes/$2.argos"
-    if ! [ -a $scene_name ]; then
+    if ! [[ -a ${scene_name} ]]; then
         echo "Could not find the scene: $scene_name"
         exit 1;
     fi
 fi
-if [[ "$1" == "capture" && -z $cap_output ]]; then
+if [[ "$1" == "capture" && -z ${cap_output} ]]; then
     echo "Invalid usage. Correct usage: qswarm capture [output_file_name]"
     exit 1;
 fi
 
 
 case $job in
+    clean)
+        f_clean
+        ;;
     capture)
         f_capture
         ;;
