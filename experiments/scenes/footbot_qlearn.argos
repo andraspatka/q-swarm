@@ -15,7 +15,7 @@
             </actuators>
             <sensors>
                 <footbot_light implementation="rot_z_only" show_rays="true" />
-                <footbot_proximity implementation="default" show_rays="false" />
+                <footbot_proximity implementation="default" show_rays="true" />
             </sensors>
             <!-- Velocity parameter -->
             <params velocity="25" explore_exploit="0.15"/>

@@ -26,7 +26,7 @@ void FootbotQLearn::initWireFitQLearn() {
     rl::Action maxAction = {mWheelVelocity, mWheelVelocity};
 
     // How many values the state vector can take.
-    const int STATE_DIMENSIONS = 8;
+    const int STATE_DIMENSIONS = 4;
     // number of possible discrete values between minAction and maxAction
     const int BASE_OF_DIMENSIONS = 2;
     const int ACTION_LENGTH = 2;
@@ -61,6 +61,8 @@ void FootbotQLearn::initWireFitQLearn() {
 void FootbotQLearn::ControlStep() {
     rl::State states;
     double maxLightReading = 0.0f;
+    double maxProxReading = 0.0f;
+    double backwardsProxReading = 0.0f;
     double backwardsLightReading = 0.0f;
     double rewardValue = 0;
 
@@ -81,62 +83,67 @@ void FootbotQLearn::ControlStep() {
 //  *
 //  *              back
 
-    CVector2 vectorSumGoal(0, 0);
-    auto readings = mLightSensor->GetReadings();
-    // forward
-    vectorSumGoal = CVector2(readings.at(0).Value, readings.at(0).Angle) + CVector2(readings.at(23).Value, readings.at(23).Angle);
-    states.push_back(vectorSumGoal.Length());
-    // left 1
-    vectorSumGoal = CVector2(readings.at(1).Value, readings.at(1).Angle) + CVector2(readings.at(2).Value, readings.at(2).Angle);
-    states.push_back(vectorSumGoal.Length());
-    // left 2
-    vectorSumGoal = CVector2(readings.at(3).Value, readings.at(3).Angle) + CVector2(readings.at(4).Value, readings.at(4).Angle);
-    states.push_back(vectorSumGoal.Length());
-    // leftmost
-    vectorSumGoal = CVector2(readings.at(5).Value, readings.at(5).Angle) + CVector2(readings.at(6).Value, readings.at(6).Angle);
-    states.push_back(vectorSumGoal.Length());
-
-    // right 1
-    vectorSumGoal = CVector2(readings.at(21).Value, readings.at(21).Angle) + CVector2(readings.at(22).Value, readings.at(22).Angle);
-    states.push_back(vectorSumGoal.Length());
-
-    // right 2
-    vectorSumGoal = CVector2(readings.at(19).Value, readings.at(19).Angle) + CVector2(readings.at(20).Value, readings.at(20).Angle);
-    states.push_back(vectorSumGoal.Length());
-
-    // rightmost
-    vectorSumGoal = CVector2(readings.at(17).Value, readings.at(17).Angle) + CVector2(readings.at(18).Value, readings.at(18).Angle);
-    states.push_back(vectorSumGoal.Length());
-
+    auto lightReadings = mLightSensor->GetReadings();
+    auto proxReadings = mProximitySensor->GetReadings();
     // back
-    vectorSumGoal = CVector2(0,0);
-    for (int i=7; i <= 16; ++i) {
-        vectorSumGoal += CVector2(readings.at(i).Value, readings.at(i).Angle);    
+    CVector2 vectorSumGoal = CVector2(0, 0);
+    CVector2 vectorSumObst = CVector2(0, 0);
+    for (int i = 9; i <= 14; ++i) {
+        vectorSumGoal += CVector2(lightReadings.at(i).Value, lightReadings.at(i).Angle);    
+        vectorSumObst += CVector2(proxReadings.at(i).Value, proxReadings.at(i).Angle);    
     }
     backwardsLightReading = vectorSumGoal.Length();
-    states.push_back(vectorSumGoal.Length());
-
+    backwardsProxReading = vectorSumObst.Length();
 
     for (int i = 0; i <= 3; ++i) {
-        if (readings.at(i).Value > maxLightReading) {
-             maxLightReading = readings.at(i).Value;
+        if (lightReadings.at(i).Value > maxLightReading) {
+             maxLightReading = lightReadings.at(i).Value;
+         }
+         if (proxReadings.at(i).Value > maxProxReading) {
+             maxProxReading = proxReadings.at(i).Value;
          }
     }
     for (int i = 20; i <= 23; ++i) {
-        if (readings.at(i).Value > maxLightReading) {
-             maxLightReading = readings.at(i).Value;
-         }
+        if (lightReadings.at(i).Value > maxLightReading) {
+             maxLightReading = lightReadings.at(i).Value;
+        }
+        if (proxReadings.at(i).Value > maxProxReading) {
+             maxProxReading = proxReadings.at(i).Value;
+        }
     }
+
+    // States
+    if (backwardsLightReading < 0.1f && maxProxReading == 0 && backwardsProxReading == 0) {
+        states.push_back(1); // WANDER state
+        rewardValue = 0.1f;
+    } else {
+        states.push_back(0);
+    }
+    if (backwardsLightReading > 0 && maxProxReading == 0 && backwardsProxReading == 0) {
+        states.push_back(1); // BACK state
+        rewardValue = -0.3f;
+    } else {
+        states.push_back(0);
+    }
+    if (maxProxReading > 0) {
+        states.push_back(1); // OBSTACLE_DETECTED state
+        rewardValue = -1;
+    } else {
+        states.push_back(0);
+    }
+    if (maxLightReading > 0.25f) {
+        states.push_back(1); // GOAL state
+        rewardValue = 1;
+    } else {
+        states.push_back(0);
+    }
+
+
     epoch++;
     if (exploreExploit > 0.4f && epoch % 250 == 0) { // Every 250 epochs it decreases the exploreExploit parameter
         exploreExploit -= 0.1f;
     }
     rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, exploreExploit);
-    if (maxLightReading == 0.0f) {
-        rewardValue = -backwardsLightReading;
-    } else {
-        rewardValue = maxLightReading;
-    }
     
     if (maxReward < rewardValue) {
         maxReward = rewardValue;
@@ -147,6 +154,11 @@ void FootbotQLearn::ControlStep() {
         action[0] = mWheelVelocity;
         action[1] = mWheelVelocity;
     }*/
+    LOG<< "BackwProx: " << backwardsProxReading << std::endl; 
+    LOG<< "MaxProx: " << maxProxReading << std::endl;
+    LOG<< "BackwLight: " << backwardsLightReading << std::endl;
+    LOG<< "MaxLight: " << maxLightReading << std::endl;
+
     LOG<< "Action taken: "<< action[0] << " " << action[1] << std::endl;
     LOG<< "Reward: " << rewardValue << std::endl;
     LOG<< "ExploreExploit: " << exploreExploit << std::endl;
