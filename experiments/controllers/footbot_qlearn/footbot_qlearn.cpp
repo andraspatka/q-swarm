@@ -50,8 +50,8 @@ void FootbotQLearn::initWireFitQLearn() {
     // 8 neurons input, 4 neurons output => 2/3 inputN + outputN = 9 (rule of thumb, Jeff Heaton)
     unsigned int numNeuronsPerHiddenLayer = 9;
     unsigned int numberOfWires = 4;
-    double wireFitQLearningRate = 0.6f; // between 0 and 1 - how fast the agent should learn from the reinforcement
-    double discountFactor = 0.6f; // 0 - immediate reward, 1 - long term reward
+    double wireFitQLearningRate = 0.7f; // between 0 and 1 - how fast the agent should learn from the reinforcement
+    double discountFactor = 0.9f; // 0 - immediate reward, 1 - long term reward
 
     mWireFitQLearner = new rl::WireFitQLearn(
                     STATE_DIMENSIONS, ACTION_LENGTH, numHiddenLayers, numNeuronsPerHiddenLayer, numberOfWires, minAction,
@@ -61,6 +61,7 @@ void FootbotQLearn::initWireFitQLearn() {
 void FootbotQLearn::ControlStep() {
     rl::State states;
     double maxLightReading = 0.0f;
+    double backwardsLightReading = 0.0f;
     double rewardValue = 0;
 
 //  *              front
@@ -112,7 +113,9 @@ void FootbotQLearn::ControlStep() {
     for (int i=7; i <= 16; ++i) {
         vectorSumGoal += CVector2(readings.at(i).Value, readings.at(i).Angle);    
     }
+    backwardsLightReading = vectorSumGoal.Length();
     states.push_back(vectorSumGoal.Length());
+
 
     for (int i = 0; i <= 3; ++i) {
         if (readings.at(i).Value > maxLightReading) {
@@ -125,11 +128,16 @@ void FootbotQLearn::ControlStep() {
          }
     }
     epoch++;
-    if (exploreExploit > 0.4f && epoch % 250 == 0) { // Every 500 epochs it decreases the exploreExploit parameter
+    if (exploreExploit > 0.4f && epoch % 250 == 0) { // Every 250 epochs it decreases the exploreExploit parameter
         exploreExploit -= 0.1f;
     }
     rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, exploreExploit);
-    rewardValue = maxLightReading;
+    if (maxLightReading == 0.0f) {
+        rewardValue = -backwardsLightReading;
+    } else {
+        rewardValue = maxLightReading;
+    }
+    
     if (maxReward < rewardValue) {
         maxReward = rewardValue;
     }
