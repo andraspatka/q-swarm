@@ -18,7 +18,7 @@
                 <footbot_proximity implementation="default" show_rays="true" />
             </sensors>
             <!-- Velocity parameter -->
-            <params velocity="25" explore_exploit="0.15"/>
+            <params velocity="25" explore_exploit="0.15" threshold="0.24"/>
         </footbot_qlearn_controller>
     </controllers>
 

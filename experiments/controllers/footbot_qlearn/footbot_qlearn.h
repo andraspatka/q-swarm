@@ -51,6 +51,9 @@ public:
       */
     virtual void Destroy();
 
+    // Small value, close to 0. Used for floating point comparisons to "0".
+    constexpr double static EXP_EPSILON = 0.01;
+
 private:
 
     /* Pointer to the differential steering actuator. */
@@ -69,6 +72,9 @@ private:
     // Exploration constant. Defines how much the agent should exploit vs explore.
     // This value might be overridden from the argos file
     double exploreExploit = 0.8f;
+
+    // Threshold value for IDLE state
+    double mThreshold = 0.24f;
 
     double maxReward = 0.0f;
 
