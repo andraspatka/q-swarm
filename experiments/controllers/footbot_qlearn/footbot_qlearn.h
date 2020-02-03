@@ -71,12 +71,12 @@ private:
     int epoch = 0;
     // Exploration constant. Defines how much the agent should exploit vs explore.
     // This value might be overridden from the argos file
-    double exploreExploit = 0.8f;
+    double exploreExploit;
 
     // Threshold value for IDLE state
-    double mThreshold = 0.24f;
+    double mThreshold;
 
-    double maxReward = 0.0f;
+    double maxReward;
 
     rl::WireFitQLearn * mWireFitQLearner;
 

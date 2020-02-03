@@ -18,6 +18,10 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
     GetNodeAttributeOrDefault(t_node, "velocity", mWheelVelocity, mWheelVelocity);
     GetNodeAttributeOrDefault(t_node, "threshold", mThreshold, mThreshold);
 //    GetNodeAttributeOrDefault(t_node, "explore_exploit", exploreExploit, exploreExploit);
+    exploreExploit = 0.8f;
+    mThreshold = 0.24f;
+    maxReward = 0.0f;
+    epoch = 0;
     initWireFitQLearn();
 }
 
@@ -159,20 +163,20 @@ void FootbotQLearn::ControlStep() {
     }
     if (maxProx > 0 || backMaxProx > 0) {
         states.push_back(1); // AVOID state
-        rewardValue = -2 * maxProx - 2 * backMaxProx;
+        rewardValue = -2 * maxProx - 2 * backMaxProx - backMaxLight;
     } else {
         states.push_back(0);
     }
     if (maxLight > mThreshold) { // Threshold value is initialized from .argos file
         states.push_back(1); // IDLE state
-        rewardValue = 1;
+        rewardValue = maxLight * 10;
     } else {
         states.push_back(0);
     }
 
     epoch++;
-    if (exploreExploit > 0.4f && epoch % 250 == 0) { // Every 250 epochs it decreases the exploreExploit parameter
-        exploreExploit -= 0.1f;
+    if (exploreExploit > 0.4f && epoch % 50 == 0) { // Every 250 epochs it decreases the exploreExploit parameter
+        exploreExploit -= 0.05f;
     }
     rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, exploreExploit);
     mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
