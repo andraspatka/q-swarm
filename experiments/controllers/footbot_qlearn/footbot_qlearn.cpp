@@ -149,13 +149,13 @@ void FootbotQLearn::ControlStep() {
     }
 
     // States
-    if (closeToZero(backMaxLight) && closeToZero(maxProx)) {
+    if (closeToZero(backMaxLight) && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < mThreshold) {
         states.push_back(1); // WANDER state
         rewardValue = 0.1f;
     } else {
         states.push_back(0);
     }
-    if (backMaxLight > 0.01) {
+    if (backMaxLight > 0.01 && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < mThreshold) {
         states.push_back(1); // TURN state
         rewardValue = -backMaxLight;
     } else {
@@ -167,7 +167,7 @@ void FootbotQLearn::ControlStep() {
     } else {
         states.push_back(0);
     }
-    if (maxLight > mThreshold) { // Threshold value is initialized from .argos file
+    if (maxLight > mThreshold && closeToZero(maxProx)) { // Threshold value is initialized from .argos file
         states.push_back(1); // IDLE state
         rewardValue = maxLight * 10;
     } else {
@@ -187,10 +187,16 @@ void FootbotQLearn::ControlStep() {
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
 
     int statei = 0;
+    int statesum = 0;
     for (int i = 0; i < states.size(); ++i) {
         if (states.at(i) == 1) {
             statei = i;
+            ++statesum;
         }
+    }
+    // Debugging only -> check that the agent is only in one state at a time
+    if (statesum > 1) {
+        int debug = 4; // Needed for setting a breakpoint
     }
     std::string actualState;
     switch (statei) {
