@@ -63,7 +63,7 @@
         </box> -->
 
         <!-- End goal for the footbots marked by a light -->
-        <light id="light" position="1,0.4,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
+        <light id="light" position="-1,0.4,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
         <!-- The guinea pig footbot. -->
         <foot-bot id="fb">

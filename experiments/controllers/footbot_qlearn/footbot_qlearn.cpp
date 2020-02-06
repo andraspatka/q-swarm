@@ -19,7 +19,7 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
     GetNodeAttributeOrDefault(t_node, "threshold", mThreshold, mThreshold);
 //    GetNodeAttributeOrDefault(t_node, "explore_exploit", exploreExploit, exploreExploit);
     exploreExploit = 0.8f;
-    mThreshold = 0.24f;
+    mThreshold = 0.25f;
     maxReward = 0.0f;
     epoch = 0;
     initWireFitQLearn();
@@ -130,7 +130,8 @@ void FootbotQLearn::ControlStep() {
 
     // back
     for (int i = 10; i <= 13; ++i) {
-        backMaxLight = std::max(backMaxLight, lightReadings.at(i).Value);
+        //backMaxLight = std::max(backMaxLight, lightReadings.at(i).Value);
+        backMaxLight += lightReadings.at(i).Value;
         backMaxProx = std::max(backMaxProx, proxReadings.at(i).Value);
     }
 
@@ -157,26 +158,27 @@ void FootbotQLearn::ControlStep() {
     }
     if (backMaxLight > 0.01 && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < mThreshold) {
         states.push_back(1); // TURN state
-        rewardValue = -backMaxLight;
+        rewardValue = -0.4;
     } else {
         states.push_back(0);
     }
     if (maxProx > 0 || backMaxProx > 0) {
         states.push_back(1); // AVOID state
-        rewardValue = -2 * maxProx - 2 * backMaxProx - backMaxLight;
+        rewardValue = -1;
     } else {
         states.push_back(0);
     }
     if (maxLight > mThreshold && closeToZero(maxProx)) { // Threshold value is initialized from .argos file
         states.push_back(1); // IDLE state
-        rewardValue = maxLight * 10;
+        exploreExploit = 0.2f;
+        rewardValue = 2;
     } else {
         states.push_back(0);
     }
 
     epoch++;
-    if (exploreExploit > 0.4f && epoch % 50 == 0) { // Every 250 epochs it decreases the exploreExploit parameter
-        exploreExploit -= 0.05f;
+    if (exploreExploit > 0.3f && epoch % 250 == 0) { // Every 250 epochs it decreases the exploreExploit parameter
+        exploreExploit -= 0.10f;
     }
     rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, exploreExploit);
     mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
