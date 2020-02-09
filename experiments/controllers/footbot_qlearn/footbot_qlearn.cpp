@@ -127,6 +127,7 @@ void FootbotQLearn::ControlStep() {
     double maxFrontLight = 0.0f;
     double maxLight = 0.0f;
     double backMaxLight = 0.0f;
+    double turningBackMaxLight = 0.0f;
 
     double maxProx = 0.0f;
     double backMaxProx = 0.0f;
@@ -138,8 +139,13 @@ void FootbotQLearn::ControlStep() {
 
     // back
     for (int i = 10; i <= 13; ++i) {
-        backMaxLight = std::max(backMaxLight, lightReadings.at(i).Value);
         backMaxProx = std::max(backMaxProx, proxReadings.at(i).Value);
+        backMaxLight = std::max(backMaxLight, lightReadings.at(i).Value);
+    }
+
+    for (int i = 5; i <= 8; ++i) {
+        turningBackMaxLight = std::max(turningBackMaxLight, lightReadings.at(i).Value);
+        turningBackMaxLight = std::max(turningBackMaxLight, lightReadings.at(i + 10).Value);
     }
 
     // Left front values
@@ -165,7 +171,7 @@ void FootbotQLearn::ControlStep() {
     }
     if (backMaxLight > 0.01 && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < mThreshold) {
         states.push_back(1); // TURN state
-        rewardValue = -0.1;
+        rewardValue = (turningBackMaxLight > backMaxLight) ? -0.1 : -0.4;
     } else {
         states.push_back(0);
     }
@@ -184,8 +190,8 @@ void FootbotQLearn::ControlStep() {
     }
 
     epoch++;
-    if (exploreExploit > 0.3f && epoch % 250 == 0) { // Every 250 epochs it decreases the exploreExploit parameter
-        exploreExploit -= 0.10f;
+    if (exploreExploit > 0.3f && epoch % 50 == 0) { // Every 250 epochs it decreases the exploreExploit parameter
+        exploreExploit -= 0.05f;
     }
     rl::Action action = mWireFitQLearner->chooseBoltzmanAction(states, exploreExploit);
     mWireFitQLearner->applyReinforcementToLastAction(rewardValue, states);
@@ -234,6 +240,7 @@ void FootbotQLearn::ControlStep() {
     LOG << "BackwProx: " << backMaxProx << std::endl;
     LOG << "MaxProx: " << maxProx << std::endl;
     LOG << "BackwLight: " << backMaxLight << std::endl;
+    LOG << "TurningLight: " << turningBackMaxLight << std::endl;
     LOG << "MaxFrontLight: " << maxFrontLight << std::endl;
     LOG << "MaxLight: " << maxLight << std::endl;
 
