@@ -56,6 +56,8 @@ public:
 
 private:
 
+    std::string getActionName(double x, double y);
+
     /* Pointer to the differential steering actuator. */
     CCI_DifferentialSteeringActuator *mDiffSteering;
 

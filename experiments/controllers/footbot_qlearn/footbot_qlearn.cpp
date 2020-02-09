@@ -18,7 +18,7 @@ void FootbotQLearn::Init(TConfigurationNode &t_node) {
     GetNodeAttributeOrDefault(t_node, "velocity", mWheelVelocity, mWheelVelocity);
     GetNodeAttributeOrDefault(t_node, "threshold", mThreshold, mThreshold);
 //    GetNodeAttributeOrDefault(t_node, "explore_exploit", exploreExploit, exploreExploit);
-    exploreExploit = 0.8f;
+    exploreExploit = 0.9f;
     mThreshold = 0.25f;
     maxReward = 0.0f;
     epoch = 0;
@@ -65,6 +65,14 @@ void FootbotQLearn::initWireFitQLearn() {
 
 bool closeToZero(double value) {
     return value < FootbotQLearn::EXP_EPSILON;
+}
+
+std::string FootbotQLearn::getActionName(double x, double y) {
+    if (x == 0.0 && y == 0.0) return "STOP";
+    if (x == mWheelVelocity && y == mWheelVelocity) return "FORWARD";
+    if (x == 0.0 && y == mWheelVelocity) return "TURN LEFT";
+    if (x == mWheelVelocity && y == 0.0f) return "TURN RIGHT";
+    return "INVALID";
 }
 
 /**
@@ -130,8 +138,7 @@ void FootbotQLearn::ControlStep() {
 
     // back
     for (int i = 10; i <= 13; ++i) {
-        //backMaxLight = std::max(backMaxLight, lightReadings.at(i).Value);
-        backMaxLight += lightReadings.at(i).Value;
+        backMaxLight = std::max(backMaxLight, lightReadings.at(i).Value);
         backMaxProx = std::max(backMaxProx, proxReadings.at(i).Value);
     }
 
@@ -158,7 +165,7 @@ void FootbotQLearn::ControlStep() {
     }
     if (backMaxLight > 0.01 && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < mThreshold) {
         states.push_back(1); // TURN state
-        rewardValue = -0.4;
+        rewardValue = -0.1;
     } else {
         states.push_back(0);
     }
@@ -230,7 +237,7 @@ void FootbotQLearn::ControlStep() {
     LOG << "MaxFrontLight: " << maxFrontLight << std::endl;
     LOG << "MaxLight: " << maxLight << std::endl;
 
-    LOG << "Action taken: " << action[0] << " " << action[1] << std::endl;
+    LOG << "Action taken: " << getActionName(action[0], action[1]) << std::endl;
     LOG << "Reward: " << rewardValue << std::endl;
     LOG << "State: " << actualState << std::endl;
     LOG << "ExploreExploit: " << exploreExploit << std::endl;
