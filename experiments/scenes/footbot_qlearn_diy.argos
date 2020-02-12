@@ -1,0 +1,107 @@
+<?xml version="1.0" ?>
+<argos-configuration>
+
+    <!-- General configuration -->
+    <framework>
+        <system threads="4" />
+        <experiment length="0" ticks_per_second="10" random_seed="124" />
+    </framework>
+
+    <!-- Controllers -->
+    <controllers>
+        <footbot_qlearn_diy_controller id="fqc" library="cmake-build-debug/controllers/footbot_qlearn_diy/libfootbot_qlearn_diy.so">
+            <actuators>
+                <differential_steering implementation="default" />
+            </actuators>
+            <sensors>
+                <footbot_light implementation="rot_z_only" show_rays="true" />
+                <footbot_proximity implementation="default" show_rays="true" />
+            </sensors>
+            <!-- Velocity parameter -->
+            <params velocity="25" explore_exploit="0.15" threshold="0.23" train="false"/>
+        </footbot_qlearn_diy_controller>
+    </controllers>
+
+    <!-- Arena configuration -->
+    <arena size="5, 5, 4" center="0,0,0.5">
+
+        <!-- Arena walls -->
+        <box id="wall_north" size="5,0.1,0.5" movable="false">
+            <body position="0,2.5,0" orientation="0,0,0" />
+        </box>
+        <box id="wall_south" size="5,0.1,0.5" movable="false">
+            <body position="0,-2.5,0" orientation="0,0,0" />
+        </box>
+        <box id="wall_east" size="0.1,5,0.5" movable="false">
+            <body position="2.5,0,0" orientation="0,0,0" />
+        </box>
+        <box id="wall_west" size="0.1,5,0.5" movable="false">
+            <body position="-2.5,0,0" orientation="0,0,0" />
+        </box>
+
+        <!-- 5 boxes distributed uniformly in position and rotation around Z. -->
+        <!--<distribute>
+            <position method="uniform" min="-2,-2,0" max="2,2,0" />
+            <orientation method="uniform" min="0,0,0" max="360,0,0" />
+            <entity quantity="5" max_trials="100">
+                <box id="b" size="0.3,0.3,0.5" movable="false" />
+            </entity>
+        </distribute> -->
+
+
+        <!-- Additional wall obstacle -->
+<!--         <box id="wall_obstacle_n" size="0.1,1.1,0.4" movable="false">
+            <body position="0.5,0,0" orientation="0,0,0" />
+        </box>
+
+        <box id="wall_obstacle_w" size="0.1,1.0,0.4" movable="false">
+            <body position="0,0.5,0" orientation="90,0,0" />
+        </box>
+
+        <box id="wall_obstacle_e" size="0.1,1.0,0.4" movable="false">
+            <body position="0,-0.5,0" orientation="90,0,0" />
+        </box>-->
+
+        <!-- End goal for the footbots marked by a light -->
+        <light id="light" position="-1,0.4,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
+
+        <!-- The guinea pig footbot. -->
+        <foot-bot id="fb">
+            <body position="0,0,0" orientation="0,0,0" />
+            <controller config="fqc" />
+        </foot-bot>
+
+        <!-- Additional footbots distributed uniformly, their orientation is distributed using the gaussian method. -->
+        <distribute>
+            <position method="uniform" min="-2,-2,0" max="2,2,0" />
+            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
+            <entity quantity="0" max_trials="100">
+                <foot-bot id="fb">
+                    <controller config="fqc" />
+                </foot-bot>
+            </entity>
+        </distribute>
+
+    </arena>
+
+    <!-- Physics engines -->
+    <physics_engines>
+        <dynamics2d id="dyn2d" />
+    </physics_engines>
+
+    <!-- Media -->
+    <media>
+        <led id="leds" />
+    </media>
+
+    <!-- Visualization -->
+    <visualization>
+        <qt-opengl>
+            <!-- Camera position, bird-eye view. -->
+            <camera>
+                <placement idx="0" position="0,1,4.34" look_at="0,0,0" lens_focal_length="20" />
+            </camera>
+        </qt-opengl>
+    </visualization>
+
+</argos-configuration>
