@@ -70,7 +70,7 @@ public:
     constexpr int static NUM_ACTIONS = 4;
 private:
 
-    Stage getStageFromString(std::string);
+    static Stage parseStageFromString(const std::string& stageString);
 
     std::string getActionName(double x, double y);
 

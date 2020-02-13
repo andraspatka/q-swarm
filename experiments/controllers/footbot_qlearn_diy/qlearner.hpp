@@ -44,6 +44,15 @@ namespace ql {
             }
         }
 
+        double getExploreExploit() const {
+            return exploreExploit;
+        }
+
+        void setExploreExploit(double exploreExploit) {
+            QLearner::exploreExploit = exploreExploit;
+        }
+
+
         void initR(const std::vector<std::tuple<int, int>> &impossibleStateActions,
                    const std::vector<std::tuple<int, int, double>> &rewards) {
             for (auto impState : impossibleStateActions) {
@@ -98,9 +107,11 @@ namespace ql {
             return actionWithMaxQ;
         }
 
-        // TODO: based on the exploreExploit hyperparam, either explore or exploit
-        int exploreOrExploit() {
+        int exploreOrExploit(int state, int nextState) {
+            ql::ThreadSafeRandom randGen(0, 100);
+            double randomValue = ((double)randGen.getRandomNumber()) / 100;
 
+            return (randomValue < exploreExploit) ? explore(state, nextState) : exploit(nextState);
         }
 
 

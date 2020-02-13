@@ -6,15 +6,6 @@ FootbotQLearnDiy::FootbotQLearnDiy() :
         globalMaxLightReading(0),
         epoch(0) {}
 
-FootbotQLearnDiy::Stage parseStageFromString(const std::string& stageString) {
-    if (stageString == "explore") return FootbotQLearnDiy::Stage::EXPLORE;
-    if (stageString == "exploit") return FootbotQLearnDiy::Stage::EXPLOIT;
-    if (stageString == "exploreExploit") return FootbotQLearnDiy::Stage::EXPLORE_EXPLOIT;
-    std::cerr << "Invalid Stage value: " << stageString;
-    exit(1);
-}
-
-
 void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
@@ -46,6 +37,8 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
         mQLearner->readQ("Qmat.txt");
     }
 }
+
+
 
 bool closeToZero(double value) {
     return value < FootbotQLearnDiy::EXP_EPSILON;
@@ -168,8 +161,8 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     epoch++;
-    if (parExploreExploit > 0.3f && epoch % 50 == 0) { // Every 250 epochs it decreases the parExploreExploit parameter
-        parExploreExploit -= 0.05f;
+    if (mQLearner->getExploreExploit() > 0.05f && epoch % 100 == 0) { // Every 250 epochs it decreases the parExploreExploit parameter
+        mQLearner->setExploreExploit(mQLearner->getExploreExploit() - 0.05f);
     }
 
     if (globalMaxLightReading < rewardValue) {
@@ -185,7 +178,7 @@ void FootbotQLearnDiy::ControlStep() {
             actionIndex = mQLearner->exploit(state);
             break;
         case Stage::EXPLORE_EXPLOIT:
-            actionIndex = mQLearner->exploreOrExploit();
+            actionIndex = mQLearner->exploreOrExploit(mPrevState, state);
             break;
         case Stage::INVALID:
             actionIndex = 0;
@@ -252,13 +245,21 @@ void FootbotQLearnDiy::ControlStep() {
 
     LOG << "Action taken: " << getActionName(action[0], action[1]) << std::endl;
     LOG << "State: " << actualState << std::endl;
-    LOG << "ExploreExploit: " << parExploreExploit << std::endl;
+    LOG << "ExploreExploit: " << mQLearner->getExploreExploit() << std::endl;
     LOG << "Max max light: " << globalMaxLightReading << std::endl;
 }
 
 void FootbotQLearnDiy::Destroy() {
     mQLearner->printQ("Qmat.txt");
     delete mQLearner;
+}
+
+FootbotQLearnDiy::Stage FootbotQLearnDiy::parseStageFromString(const std::string &stageString) {
+    if (stageString == "explore") return FootbotQLearnDiy::Stage::EXPLORE;
+    if (stageString == "exploit") return FootbotQLearnDiy::Stage::EXPLOIT;
+    if (stageString == "exploreExploit") return FootbotQLearnDiy::Stage::EXPLORE_EXPLOIT;
+    std::cerr << "Invalid Stage value: " << stageString;
+    exit(1);
 }
 
 /**
