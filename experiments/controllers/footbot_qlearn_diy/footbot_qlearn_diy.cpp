@@ -47,7 +47,7 @@ void FootbotQLearnDiy::initQLearn() {
 }
 
 int FootbotQLearnDiy::train(int state, int nextState) {
-    ThreadSafeRandom threadSafeRandom(0, NUM_ACTIONS);
+    ql::ThreadSafeRandom threadSafeRandom(0, NUM_ACTIONS);
     int possibleAction;
     do {
         possibleAction = threadSafeRandom.getRandomNumber();
@@ -77,10 +77,10 @@ void FootbotQLearnDiy::printQ(const std::string& fileName) {
     std::ofstream file;
     file.open (fileName);
     for (int i = 0; i < 4; ++i) {
-        file << "\n";
         for (int j = 0; j < 4; ++j) {
             file << Q.at(i).at(j) << " ";
         }
+        file << "\n";
     }
     file.close();
 }
@@ -230,7 +230,7 @@ void FootbotQLearnDiy::ControlStep() {
     }
     int actionIndex = 0;
     actionIndex = (isTraining) ? train(mPrevState, state) : exploit(state);
-
+    maxReward = std::max(maxReward, maxLight);
     mPrevState = state;
     switch (actionIndex) {
         case 0:
@@ -292,7 +292,7 @@ void FootbotQLearnDiy::ControlStep() {
     LOG << "Reward: " << rewardValue << std::endl;
     LOG << "State: " << actualState << std::endl;
     LOG << "ExploreExploit: " << exploreExploit << std::endl;
-    LOG << "Max reward: " << maxReward << std::endl;
+    LOG << "Max max light: " << maxReward << std::endl;
 }
 
 void FootbotQLearnDiy::Destroy() {
