@@ -11,11 +11,15 @@
 #define assertm(exp, msg) assert(((void)msg, exp))
 
 namespace ql {
+    // TODO: write docs for this and for the methods
+    // TODO: write getters and setters for the hyperparams so they can be tuned on the fly
     class QLearner {
     private:
         // hyperparameters
         double discountFactor;
+        // TODO: use this value
         double learningRate;
+        // TODO: use this value
         double exploreExploit;
 
         const int NUM_STATES;
@@ -56,7 +60,7 @@ namespace ql {
                 double reward = std::get<2>(r);
                 assertm(stateIndex < NUM_STATES, "Invalid state index!");
                 assertm(actionIndex < NUM_ACTIONS, "Invalid action index!");
-                assertm(reward < 1, "Reward value can not be negative!");
+                assertm(reward > 0, "Reward value can not be negative!");
                 R[stateIndex][actionIndex] = reward;
             }
         }
@@ -68,7 +72,7 @@ namespace ql {
             }
         }
 
-        int train(int state, int nextState) {
+        int explore(int state, int nextState) {
             ql::ThreadSafeRandom threadSafeRandom(0, NUM_ACTIONS);
             int possibleAction;
             do {
@@ -92,6 +96,11 @@ namespace ql {
                 }
             }
             return actionWithMaxQ;
+        }
+
+        // TODO: based on the exploreExploit hyperparam, either explore or exploit
+        int exploreOrExploit() {
+
         }
 
 

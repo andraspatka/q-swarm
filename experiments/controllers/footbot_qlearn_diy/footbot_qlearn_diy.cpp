@@ -3,101 +3,48 @@
 FootbotQLearnDiy::FootbotQLearnDiy() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
-        mWheelVelocity(30.0f) {}
+        globalMaxLightReading(0),
+        epoch(0) {}
 
-/**
- * Get the pointer to the actuator and the sensor.
- * Also get the velocity parameter.
- */
+FootbotQLearnDiy::Stage parseStageFromString(const std::string& stageString) {
+    if (stageString == "explore") return FootbotQLearnDiy::Stage::EXPLORE;
+    if (stageString == "exploit") return FootbotQLearnDiy::Stage::EXPLOIT;
+    if (stageString == "exploreExploit") return FootbotQLearnDiy::Stage::EXPLORE_EXPLOIT;
+    std::cerr << "Invalid Stage value: " << stageString;
+    exit(1);
+}
+
+
 void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mProximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
 
-    GetNodeAttributeOrDefault(t_node, "velocity", mWheelVelocity, mWheelVelocity);
-    GetNodeAttributeOrDefault(t_node, "threshold", mThreshold, mThreshold);
-    GetNodeAttributeOrDefault(t_node, "train", isTraining, isTraining);
-//    GetNodeAttributeOrDefault(t_node, "explore_exploit", exploreExploit, exploreExploit);
-    exploreExploit = 0.9f;
-    mThreshold = 0.25f;
-    maxReward = 0.0f;
-    epoch = 0;
-    initQLearn();
-    if (!isTraining) {
-        readQ("Qmat.txt");
-    }
+    std::string parStageString;
 
-}
+    GetNodeAttributeOrDefault(t_node, "velocity", parWheelVelocity, parWheelVelocity);
+    GetNodeAttributeOrDefault(t_node, "explore_exploit", parExploreExploit, parExploreExploit);
+    GetNodeAttributeOrDefault(t_node, "learning_rate", parLearnRate, parLearnRate);
+    GetNodeAttributeOrDefault(t_node, "discount_factor", parDiscountFactor, parDiscountFactor);
+    GetNodeAttributeOrDefault(t_node, "threshold", parThreshold, parThreshold);
+    GetNodeAttributeOrDefault(t_node, "stage", parStageString, parStageString);
 
-void FootbotQLearnDiy::initQLearn() {
-    R = {
-            {-1, 0, 0, 1},
-            {-1, 0, 0, 0},
-            {-1, 0, 0, 0},
-            {1, 0, 0, 0}
+    parStage = parseStageFromString(parStageString);
+    mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, parExploreExploit);
+    std::vector<std::tuple<int, int>> impossibleStates = {
+            std::make_tuple(0, 0), // WANDER state, STOP action
+            std::make_tuple(1, 0), // TURN state, STOP action
+            std::make_tuple(2, 0) // AVOID state, STOP action
     };
-
-    Q = {
-            {0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {0, 0, 0, 0}
+    std::vector<std::tuple<int, int, double>> rewards = {
+            std::make_tuple(0, 3, 1), // WANDER state, FORWARD action
+            std::make_tuple(3, 0, 1) // IDLE state, STOP action
     };
-}
-
-int FootbotQLearnDiy::train(int state, int nextState) {
-    ql::ThreadSafeRandom threadSafeRandom(0, NUM_ACTIONS);
-    int possibleAction;
-    do {
-        possibleAction = threadSafeRandom.getRandomNumber();
-    } while (R.at(state).at(possibleAction) == -1);
-    double nextStateMaxValue = 0;
-    for (int i = 0; i < NUM_ACTIONS; ++i) {
-        nextStateMaxValue = std::max(nextStateMaxValue, Q.at(nextState).at(i));
+    mQLearner->initR(impossibleStates, rewards);
+    if (parStage == Stage::EXPLOIT) {
+        mQLearner->readQ("Qmat.txt");
     }
-    Q.at(state).at(possibleAction) = R.at(state).at(possibleAction) + DISCOUNT_FACTOR * nextStateMaxValue;
-    return possibleAction;
-}
-
-int FootbotQLearnDiy::exploit(int state) {
-    int actionWithMaxQ = 0;
-    double maxQValue = 0;
-    for (int i = 0; i < NUM_ACTIONS; ++i) {
-        if (Q.at(state).at(i) > maxQValue) {
-            maxQValue = Q.at(state).at(i);
-            actionWithMaxQ = i;
-        }
-    }
-    return actionWithMaxQ;
-}
-
-
-void FootbotQLearnDiy::printQ(const std::string& fileName) {
-    std::ofstream file;
-    file.open (fileName);
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            file << Q.at(i).at(j) << " ";
-        }
-        file << "\n";
-    }
-    file.close();
-}
-
-void FootbotQLearnDiy::readQ(const std::string& fileName) {
-    std::ifstream file(fileName);
-    if (!file.is_open()) {
-        std::cerr << "There was a problem opening the input file!\n";
-        exit(1);//exit or do additional error checking
-    }
-
-    for (int i = 0; i < NUM_STATES; ++i) {
-        for (int j = 0; j < NUM_ACTIONS; ++j) {
-            file >> Q.at(i).at(j);
-        }
-    }
-    file.close();
 }
 
 bool closeToZero(double value) {
@@ -106,9 +53,9 @@ bool closeToZero(double value) {
 
 std::string FootbotQLearnDiy::getActionName(double x, double y) {
     if (x == 0.0 && y == 0.0) return "STOP";
-    if (x == mWheelVelocity && y == mWheelVelocity) return "FORWARD";
-    if (x == 0.0 && y == mWheelVelocity) return "TURN LEFT";
-    if (x == mWheelVelocity && y == 0.0f) return "TURN RIGHT";
+    if (x == parWheelVelocity && y == parWheelVelocity) return "FORWARD";
+    if (x == 0.0 && y == parWheelVelocity) return "TURN LEFT";
+    if (x == parWheelVelocity && y == 0.0f) return "TURN RIGHT";
     return "INVALID";
 }
 
@@ -203,11 +150,11 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     // States
-    if (closeToZero(backMaxLight) && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < mThreshold) {
+    if (closeToZero(backMaxLight) && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < parThreshold) {
          // WANDER state
         state = 0;
     }
-    if (backMaxLight > 0.01 && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < mThreshold) {
+    if (backMaxLight > 0.01 && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < parThreshold) {
          // TURN state
         state = 1;
     }
@@ -215,22 +162,37 @@ void FootbotQLearnDiy::ControlStep() {
          // AVOID state
         state = 2;
     }
-    if (maxLight > mThreshold && closeToZero(maxProx)) {
+    if (maxLight > parThreshold && closeToZero(maxProx)) {
          // IDLE state
          state = 3;
     }
 
     epoch++;
-    if (exploreExploit > 0.3f && epoch % 50 == 0) { // Every 250 epochs it decreases the exploreExploit parameter
-        exploreExploit -= 0.05f;
+    if (parExploreExploit > 0.3f && epoch % 50 == 0) { // Every 250 epochs it decreases the parExploreExploit parameter
+        parExploreExploit -= 0.05f;
     }
 
-    if (maxReward < rewardValue) {
-        maxReward = rewardValue;
+    if (globalMaxLightReading < rewardValue) {
+        globalMaxLightReading = rewardValue;
     }
     int actionIndex = 0;
-    actionIndex = (isTraining) ? train(mPrevState, state) : exploit(state);
-    maxReward = std::max(maxReward, maxLight);
+
+    switch (parStage) {
+        case Stage::EXPLORE:
+            actionIndex = mQLearner->explore(mPrevState, state);
+            break;
+        case Stage::EXPLOIT:
+            actionIndex = mQLearner->exploit(state);
+            break;
+        case Stage::EXPLORE_EXPLOIT:
+            actionIndex = mQLearner->exploreOrExploit();
+            break;
+        case Stage::INVALID:
+            actionIndex = 0;
+            break;
+    }
+
+    globalMaxLightReading = std::max(globalMaxLightReading, maxLight);
     mPrevState = state;
     switch (actionIndex) {
         case 0:
@@ -239,15 +201,15 @@ void FootbotQLearnDiy::ControlStep() {
             break;
         case 1:
             action[0] = 0;
-            action[1] = mWheelVelocity;
+            action[1] = parWheelVelocity;
             break;
         case 2:
-            action[0] = mWheelVelocity;
+            action[0] = parWheelVelocity;
             action[1] = 0;
             break;
         case 3:
-            action[0] = mWheelVelocity;
-            action[1] = mWheelVelocity;
+            action[0] = parWheelVelocity;
+            action[1] = parWheelVelocity;
             break;
         default:
             action[0] = 0;
@@ -289,14 +251,14 @@ void FootbotQLearnDiy::ControlStep() {
     LOG << "MaxLight: " << maxLight << std::endl;
 
     LOG << "Action taken: " << getActionName(action[0], action[1]) << std::endl;
-    LOG << "Reward: " << rewardValue << std::endl;
     LOG << "State: " << actualState << std::endl;
-    LOG << "ExploreExploit: " << exploreExploit << std::endl;
-    LOG << "Max max light: " << maxReward << std::endl;
+    LOG << "ExploreExploit: " << parExploreExploit << std::endl;
+    LOG << "Max max light: " << globalMaxLightReading << std::endl;
 }
 
 void FootbotQLearnDiy::Destroy() {
-    printQ("Qmat.txt");
+    mQLearner->printQ("Qmat.txt");
+    delete mQLearner;
 }
 
 /**

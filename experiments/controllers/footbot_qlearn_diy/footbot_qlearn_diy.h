@@ -17,7 +17,7 @@
 #include <limits>
 #include <fstream>
 
-#include "thread_safe_random.hpp"
+#include "qlearner.hpp"
 
 using namespace argos;
 
@@ -53,34 +53,36 @@ public:
       */
     virtual void Destroy();
 
+    enum Stage {
+        EXPLORE,
+        EXPLOIT,
+        EXPLORE_EXPLOIT,
+        INVALID
+    };
+
     // Small value, close to 0. Used for floating point comparisons to "0".
     constexpr double static EXP_EPSILON = 0.01;
 
-    constexpr int static GOAL_STATE = 4;
+    constexpr int static GOAL_STATE = 3;
 
     constexpr int static NUM_STATES = 4;
 
     constexpr int static NUM_ACTIONS = 4;
-
-    constexpr double static DISCOUNT_FACTOR = 0.8f;
 private:
+
+    Stage getStageFromString(std::string);
 
     std::string getActionName(double x, double y);
 
-    int train(int state, int nextState);
-
-    int exploit(int state);
-
-    void printQ(const std::string& fileName);
-
-    void readQ(const std::string& fileName);
+    ql::QLearner * mQLearner;
 
     int mPrevState = 0;
 
-    std::vector<std::vector<double>> Q;
-    std::vector<std::vector<double>> R;
+    int epoch = 0;
 
+    double globalMaxLightReading;
 
+    /** ACTUATORS AND SENSORS */
     /* Pointer to the differential steering actuator. */
     CCI_DifferentialSteeringActuator *mDiffSteering;
 
@@ -90,20 +92,23 @@ private:
     /* Pointer to the foot-bot light sensor. */
     CCI_FootBotLightSensor *mLightSensor;
 
+    /** PARAMETERS FROM THE ARGOS FILE */
+
     /* Wheel speed. */
-    Real mWheelVelocity;
+    Real parWheelVelocity;
 
-    int epoch = 0;
     // Exploration constant. Defines how much the agent should exploit vs explore.
-    // This value might be overridden from the argos file
-    double exploreExploit;
+    double parExploreExploit;
 
-    bool isTraining;
+    // If true then learning phase, if false, then exploit phase.
+    Stage parStage;
 
     // Threshold value for IDLE state
-    double mThreshold;
+    double parThreshold;
 
-    double maxReward;
+    // Learning rate. Close to 0: nothing new will be learnt, close to 1: the old value will be completely discarded.
+    double parLearnRate;
 
-    void initQLearn();
+    // Discount factor. If close to zero, then the agent prefers the immediate reward, otherwise the long term reward.
+    double parDiscountFactor;
 };
