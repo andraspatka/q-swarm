@@ -51,17 +51,17 @@
 
 
         <!-- Additional wall obstacle -->
-<!--         <box id="wall_obstacle_n" size="0.1,1.1,0.4" movable="false">
-            <body position="0.5,0,0" orientation="0,0,0" />
-        </box>
+        <!--         <box id="wall_obstacle_n" size="0.1,1.1,0.4" movable="false">
+                    <body position="0.5,0,0" orientation="0,0,0" />
+                </box>
 
-        <box id="wall_obstacle_w" size="0.1,1.0,0.4" movable="false">
-            <body position="0,0.5,0" orientation="90,0,0" />
-        </box>
+                <box id="wall_obstacle_w" size="0.1,1.0,0.4" movable="false">
+                    <body position="0,0.5,0" orientation="90,0,0" />
+                </box>
 
-        <box id="wall_obstacle_e" size="0.1,1.0,0.4" movable="false">
-            <body position="0,-0.5,0" orientation="90,0,0" />
-        </box>-->
+                <box id="wall_obstacle_e" size="0.1,1.0,0.4" movable="false">
+                    <body position="0,-0.5,0" orientation="90,0,0" />
+                </box>-->
 
         <!-- End goal for the footbots marked by a light -->
         <light id="light" position="0.5,1,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
@@ -76,7 +76,7 @@
         <distribute>
             <position method="uniform" min="-2,-2,0" max="2,2,0" />
             <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="10" max_trials="100">
+            <entity quantity="0" max_trials="100">
                 <foot-bot id="fb">
                     <controller config="fqc" />
                 </foot-bot>

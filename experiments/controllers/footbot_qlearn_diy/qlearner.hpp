@@ -19,8 +19,6 @@ namespace ql {
         double discountFactor;
         // TODO: use this value
         double learningRate;
-        // TODO: use this value
-        double exploreExploit;
 
         const int NUM_STATES;
         const int NUM_ACTIONS;
@@ -33,23 +31,22 @@ namespace ql {
                  const double learningRate = 0.6f, const double exploreExploit = 0.3f) : NUM_STATES(NUM_STATES),
                                                                                          NUM_ACTIONS(NUM_ACTIONS),
                                                                                          discountFactor(discountFactor),
-                                                                                         learningRate(learningRate),
-                                                                                         exploreExploit(
-                                                                                                 exploreExploit) {
+                                                                                         learningRate(learningRate){
             Q = std::vector<std::vector<double>>(NUM_STATES);
             R = std::vector<std::vector<double>>(NUM_STATES);
             for (int i = 0; i < NUM_STATES; ++i) {
                 Q[i] = std::vector<double>(NUM_ACTIONS, 0.0f);
                 R[i] = std::vector<double>(NUM_ACTIONS, 0.0f);
             }
+            srand(10);
         }
 
-        double getExploreExploit() const {
-            return exploreExploit;
+        double getLearningRate() const {
+            return learningRate;
         }
 
-        void setExploreExploit(double exploreExploit) {
-            QLearner::exploreExploit = exploreExploit;
+        void setLearningRate(double learningRate) {
+            QLearner::learningRate = learningRate;
         }
 
 
@@ -108,10 +105,31 @@ namespace ql {
         }
 
         int exploreOrExploit(int state, int nextState) {
-            ql::ThreadSafeRandom randGen(0, 100);
-            double randomValue = ((double)randGen.getRandomNumber()) / 100;
+            int possibleAction = 0;
+            if (learningRate > 0.1f) {
 
-            return (randomValue < exploreExploit) ? explore(state, nextState) : exploit(nextState);
+//                ql::ThreadSafeRandom threadSafeRandom(0, NUM_ACTIONS);
+                do {
+//                    possibleAction = threadSafeRandom.getRandomNumber();
+                    possibleAction = rand() % 4;
+                } while (R[state][possibleAction] == -1);
+            } else {
+                double maxQValue = 0;
+                for (int i = 0; i < NUM_ACTIONS; ++i) {
+                    if (Q[state][i] > maxQValue) {
+                        maxQValue = Q[state][i];
+                        possibleAction = i;
+                    }
+                }
+            }
+
+            double nextStateMaxValue = 0;
+            for (int i = 0; i < NUM_ACTIONS; ++i) {
+                nextStateMaxValue = std::max(nextStateMaxValue, Q[nextState][i]);
+            }
+            Q[state][possibleAction] = Q[state][possibleAction]
+                    + learningRate * (R[state][possibleAction] + discountFactor * nextStateMaxValue - Q[state][possibleAction]);
+            return possibleAction;
         }
 
 

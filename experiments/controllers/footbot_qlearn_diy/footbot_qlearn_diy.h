@@ -97,9 +97,6 @@ private:
     /* Wheel speed. */
     Real parWheelVelocity;
 
-    // Exploration constant. Defines how much the agent should exploit vs explore.
-    double parExploreExploit;
-
     // If true then learning phase, if false, then exploit phase.
     Stage parStage;
 

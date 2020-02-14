@@ -15,14 +15,13 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
     std::string parStageString;
 
     GetNodeAttributeOrDefault(t_node, "velocity", parWheelVelocity, parWheelVelocity);
-    GetNodeAttributeOrDefault(t_node, "explore_exploit", parExploreExploit, parExploreExploit);
     GetNodeAttributeOrDefault(t_node, "learning_rate", parLearnRate, parLearnRate);
     GetNodeAttributeOrDefault(t_node, "discount_factor", parDiscountFactor, parDiscountFactor);
     GetNodeAttributeOrDefault(t_node, "threshold", parThreshold, parThreshold);
     GetNodeAttributeOrDefault(t_node, "stage", parStageString, parStageString);
 
     parStage = parseStageFromString(parStageString);
-    mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, parExploreExploit);
+    mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate);
     std::vector<std::tuple<int, int>> impossibleStates = {
             std::make_tuple(0, 0), // WANDER state, STOP action
             std::make_tuple(1, 0), // TURN state, STOP action
@@ -161,8 +160,8 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     epoch++;
-    if (mQLearner->getExploreExploit() > 0.05f && epoch % 100 == 0) { // Every 250 epochs it decreases the parExploreExploit parameter
-        mQLearner->setExploreExploit(mQLearner->getExploreExploit() - 0.05f);
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 100 == 0) { // Every 250 epochs it decreases the parExploreExploit parameter
+        mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
     if (globalMaxLightReading < rewardValue) {
@@ -245,7 +244,7 @@ void FootbotQLearnDiy::ControlStep() {
 
     LOG << "Action taken: " << getActionName(action[0], action[1]) << std::endl;
     LOG << "State: " << actualState << std::endl;
-    LOG << "ExploreExploit: " << mQLearner->getExploreExploit() << std::endl;
+    LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     LOG << "Max max light: " << globalMaxLightReading << std::endl;
 }
 
