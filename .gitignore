@@ -11,4 +11,5 @@ experiments/captures
 *.synctex.gz
 *.bbl
 *.blg
+*.qlmat
 main.log

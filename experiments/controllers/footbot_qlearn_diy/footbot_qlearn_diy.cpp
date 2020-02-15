@@ -33,7 +33,7 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
     };
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
-        mQLearner->readQ("Qmat.txt");
+        mQLearner->readQ("Qmat.qlmat");
     }
 }
 
@@ -249,7 +249,7 @@ void FootbotQLearnDiy::ControlStep() {
 }
 
 void FootbotQLearnDiy::Destroy() {
-    mQLearner->printQ("Qmat.txt");
+    mQLearner->printQ("Qmat.qlmat");
     delete mQLearner;
 }
 
