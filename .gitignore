@@ -9,4 +9,6 @@ experiments/captures
 *.out
 *.toc
 *.synctex.gz
+*.bbl
+*.blg
 main.log
