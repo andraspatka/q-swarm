@@ -17,7 +17,6 @@ namespace ql {
     private:
         // hyperparameters
         double discountFactor;
-        // TODO: use this value
         double learningRate;
 
         const int NUM_STATES;
@@ -46,7 +45,7 @@ namespace ql {
         }
 
         void setLearningRate(double learningRate) {
-            QLearner::learningRate = learningRate;
+            this->learningRate = learningRate;
         }
 
 

@@ -68,99 +68,92 @@ std::string FootbotQLearnDiy::getActionName(double x, double y) {
  *              11 12
  *
  *              back
+ * Function for aggregating multiple sensor values: max
  * Aggregate of sensor values:
  *      f:  0 23
  *      lm: 5 6
  *      rm: 17 18
  *      lf: 1 2 3 4
  *      rf: 19 20 21 22
- *      b:  7 8 9 10 11 12 13 14 15 16
+ *      b:  8 9 10 11 12 13 14 15
  *
  * States:
- *      WANDER - explorational phase
- *          reward: 0.1
+ *      FOLLOW - the goal is visible from the front
  *          sensors:
  *              prox: 0
  *              light: b=0
- *      IDLE - end destination reached
- *          reward: 1
- *          sensors:
- *              prox: ?
- *              light: max(sensor values) > THRESHOLD
- *      TURN - facing in the wrong direction
- *          reward: -0.2
+ *      UTURN - facing in the wrong direction, should turn around
  *          sensors:
  *              prox: ?
  *              light: b > 0 && front == 0
  *      AVOID - obstacle detected
- *          reward: -1
  *          sensors:
- *              prox: != 0
+ *              prox: front != 0
  *              light: ?
+ *      IDLE - end destination reached, GOAL state
+ *          sensors:
+ *              prox: ?
+ *              light: max(sensor values) > THRESHOLD
  */
 void FootbotQLearnDiy::ControlStep() {
-    double maxFrontLight = 0.0f;
+    double frontMaxLight = 0.0f;
     double maxLight = 0.0f;
     double backMaxLight = 0.0f;
-    double turningBackMaxLight = 0.0f;
 
-    double maxProx = 0.0f;
-    double backMaxProx = 0.0f;
+    double frontMaxProx = 0.0f;
 
     double rewardValue = 0;
-
     int state = 0;
-
     double action[2];
 
     auto lightReadings = mLightSensor->GetReadings();
     auto proxReadings = mProximitySensor->GetReadings();
 
-    // back
-    for (int i = 10; i <= 13; ++i) {
-        backMaxProx = std::max(backMaxProx, proxReadings.at(i).Value);
+    // light sensor value from the back of the robot
+    for (int i = 8; i <= 15; ++i) {
         backMaxLight = std::max(backMaxLight, lightReadings.at(i).Value);
     }
 
-    for (int i = 5; i <= 8; ++i) {
-        turningBackMaxLight = std::max(turningBackMaxLight, lightReadings.at(i).Value);
-        turningBackMaxLight = std::max(turningBackMaxLight, lightReadings.at(i + 10).Value);
-    }
-
     // Left front values
+    for (int i = 0; i <= 3; ++i) {
+        frontMaxLight = std::max(frontMaxLight, lightReadings.at(i).Value);
+    }
     for (int i = 0; i <= 4; ++i) {
-        maxFrontLight = std::max(maxFrontLight, lightReadings.at(i).Value);
-        maxProx = std::max(maxProx, proxReadings.at(i).Value);
+        frontMaxProx = std::max(frontMaxProx, proxReadings.at(i).Value);
     }
     // Right front values
-    for (int i = 19; i <= 23; ++i) {
-        maxFrontLight = std::max(maxFrontLight, lightReadings.at(i).Value);
-        maxProx = std::max(maxProx, proxReadings.at(i).Value);
+    for (int i = 20; i <= 23; ++i) {
+        frontMaxLight = std::max(frontMaxLight, lightReadings.at(i).Value);
     }
+    for (int i = 19; i <= 23; ++i) {
+        frontMaxProx = std::max(frontMaxProx, proxReadings.at(i).Value);
+    }
+
+    // max light reading around the footbot
     for (int i = 0; i < 23; ++i) {
         maxLight = std::max(maxLight, lightReadings.at(i).Value);
     }
 
     // States
-    if (closeToZero(backMaxLight) && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < parThreshold) {
-         // WANDER state
+    if (closeToZero(backMaxLight) && closeToZero(frontMaxProx) && maxLight < parThreshold) {
+         // FOLLOW state
         state = 0;
     }
-    if (backMaxLight > 0.01 && closeToZero(maxProx) && closeToZero(backMaxProx) && maxLight < parThreshold) {
-         // TURN state
+    if (!closeToZero(backMaxLight) && closeToZero(frontMaxProx) && maxLight < parThreshold) {
+         // UTURN state
         state = 1;
     }
-    if (maxProx > 0 || backMaxProx > 0) {
+    if (frontMaxProx > 0 && maxLight < parThreshold) {
          // AVOID state
         state = 2;
     }
-    if (maxLight > parThreshold && closeToZero(maxProx)) {
+    if (maxLight > parThreshold && closeToZero(frontMaxProx)) {
          // IDLE state
          state = 3;
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 100 == 0) { // Every 250 epochs it decreases the parExploreExploit parameter
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 75 == 0) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
@@ -187,19 +180,19 @@ void FootbotQLearnDiy::ControlStep() {
     globalMaxLightReading = std::max(globalMaxLightReading, maxLight);
     mPrevState = state;
     switch (actionIndex) {
-        case 0:
+        case 0: // STOP
             action[0] = 0;
             action[1] = 0;
             break;
-        case 1:
+        case 1: // TURN LEFT
             action[0] = 0;
             action[1] = parWheelVelocity;
             break;
-        case 2:
+        case 2: // TURN RIGHT
             action[0] = parWheelVelocity;
             action[1] = 0;
             break;
-        case 3:
+        case 3: // FORWARD
             action[0] = parWheelVelocity;
             action[1] = parWheelVelocity;
             break;
@@ -214,11 +207,11 @@ void FootbotQLearnDiy::ControlStep() {
     std::string actualState;
     switch (state) {
         case 0: {
-            actualState = "WANDER";
+            actualState = "FOLLOW";
             break;
         }
         case 1: {
-            actualState = "TURN";
+            actualState = "UTURN";
             break;
         }
         case 2: {
@@ -235,17 +228,15 @@ void FootbotQLearnDiy::ControlStep() {
     }
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
-    LOG << "BackwProx: " << backMaxProx << std::endl;
-    LOG << "MaxProx: " << maxProx << std::endl;
-    LOG << "BackwLight: " << backMaxLight << std::endl;
-    LOG << "TurningLight: " << turningBackMaxLight << std::endl;
-    LOG << "MaxFrontLight: " << maxFrontLight << std::endl;
+    LOG << "FrontMaxProx: " << frontMaxProx << std::endl;
+    LOG << "BackMaxLight: " << backMaxLight << std::endl;
+    LOG << "MaxFrontLight: " << frontMaxLight << std::endl;
     LOG << "MaxLight: " << maxLight << std::endl;
 
     LOG << "Action taken: " << getActionName(action[0], action[1]) << std::endl;
     LOG << "State: " << actualState << std::endl;
     LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
-    LOG << "Max max light: " << globalMaxLightReading << std::endl;
+    LOG << "Global max light: " << globalMaxLightReading << std::endl;
 }
 
 void FootbotQLearnDiy::Destroy() {
