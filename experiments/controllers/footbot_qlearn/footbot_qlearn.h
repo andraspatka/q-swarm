@@ -1,11 +1,3 @@
-/*
- * A simple controller for the foot-bot. Obstacle avoidance is implemented
- * The robot moves towards a destination while avoiding the obstacles in its path.
- *
- * This controller is meant to be used with the XML files:
- *  scenes/single_footbot.argos
- */
-
 #include <argos3/core/utility/logging/argos_log.h>
 #include <argos3/core/control_interface/ci_controller.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_differential_steering_actuator.h>

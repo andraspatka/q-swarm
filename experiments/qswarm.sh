@@ -53,7 +53,6 @@ function f_build_debug {
 	cd ${build_dir}
 	cmake -DCMAKE_BUILD_TYPE=Debug ..
 	make
-	f_run
 }
 
 # Capture subtask.
@@ -81,7 +80,7 @@ fi
 
 job=$1
 cap_output=$2
-if [[ "$job" != "build" && "$job" != "capture" && "$job" != "clean" ]]; then
+if [[ "$job" != "build" && "$job" != "capture" && "$job" != "clean"  && "$job" != "build-debug" ]]; then
     scene_name="scenes/$2.argos"
     if ! [[ -a ${scene_name} ]]; then
         echo "Could not find the scene: $scene_name"

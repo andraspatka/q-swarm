@@ -1,16 +1,9 @@
-/*
- * A simple controller for the foot-bot. Obstacle avoidance is implemented
- * The robot moves towards a destination while avoiding the obstacles in its path.
- *
- * This controller is meant to be used with the XML files:
- *  scenes/single_footbot.argos
- */
-
 #include <argos3/core/utility/logging/argos_log.h>
 #include <argos3/core/control_interface/ci_controller.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_differential_steering_actuator.h>
 #include <argos3/plugins/robots/foot-bot/control_interface/ci_footbot_proximity_sensor.h>
 #include <argos3/plugins/robots/foot-bot/control_interface/ci_footbot_light_sensor.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_colored_blob_omnidirectional_camera_sensor.h>
 #include <argos3/core/utility/configuration/argos_configuration.h>
 #include <argos3/core/utility/math/vector2.h>
 #include <argos3/core/utility/math/angles.h>
@@ -91,6 +84,9 @@ private:
 
     /* Pointer to the foot-bot light sensor. */
     CCI_FootBotLightSensor *mLightSensor;
+
+    /* Pointer to the omnidirectional camera sensor */
+    CCI_ColoredBlobOmnidirectionalCameraSensor *mCamera;
 
     /** PARAMETERS FROM THE ARGOS FILE */
 
