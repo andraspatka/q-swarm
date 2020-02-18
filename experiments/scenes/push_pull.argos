@@ -9,7 +9,7 @@
 
   <!-- Controllers -->
   <controllers>
-    <single_footbot_controller id="sfc" library="cmake-build-debug/controllers/single_footbot/libsingle_footbot.so">
+    <footbot_push_pull id="sfc" library="cmake-build-debug/controllers/push_pull/libfootbot_push_pull.so">
       <actuators>
         <differential_steering implementation="default" />
       </actuators>
@@ -19,7 +19,7 @@
       </sensors>
       <!-- Velocity parameter -->
       <params velocity="15" />
-    </single_footbot_controller>
+    </footbot_push_pull>
   </controllers>
 
   <!-- Arena configuration -->

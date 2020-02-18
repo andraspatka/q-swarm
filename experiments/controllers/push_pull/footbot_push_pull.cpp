@@ -1,6 +1,6 @@
-#include "single_footbot.h"
+#include "footbot_push_pull.h"
 
-SingleFootBot::SingleFootBot() :
+FootbotPushPull::FootbotPushPull() :
         mDiffSteering(NULL),
         mProximity(NULL),
         mWheelVelocity(2.5f),
@@ -10,7 +10,7 @@ SingleFootBot::SingleFootBot() :
  * Get the pointer to the actuator and the sensor.
  * Also get the velocity parameter.
  */
-void SingleFootBot::Init(TConfigurationNode &t_node) {
+void FootbotPushPull::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mProximity = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
@@ -25,7 +25,7 @@ void SingleFootBot::Init(TConfigurationNode &t_node) {
  *
  * TODO: find best condition for acceptable obstacle distance
  */
-void SingleFootBot::ControlStep() {
+void FootbotPushPull::ControlStep() {
     CVector2 vectorSum;
     CVector2 straightVector = CVector2(1, 0);
 
@@ -83,4 +83,4 @@ void SingleFootBot::ControlStep() {
  * Register the controller.
  * This is needed in order for argos to be able to bind the scene to this controller.
  */
-REGISTER_CONTROLLER(SingleFootBot, "single_footbot_controller")
+REGISTER_CONTROLLER(FootbotPushPull, "footbot_push_pull")

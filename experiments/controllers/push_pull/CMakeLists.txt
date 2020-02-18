@@ -1,0 +1,5 @@
+add_library(footbot_push_pull MODULE footbot_push_pull.h footbot_push_pull.cpp)
+target_link_libraries(footbot_push_pull
+  argos3core_simulator
+  argos3plugin_simulator_footbot
+  argos3plugin_simulator_genericrobot)

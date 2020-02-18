@@ -3,7 +3,7 @@
  * The robot moves towards a destination while avoiding the obstacles in its path.
  *
  * This controller is meant to be used with the XML files:
- *  scenes/single_footbot.argos
+ *  scenes/push_pull.argos
  */
 
 #include <argos3/core/utility/logging/argos_log.h>
@@ -18,17 +18,17 @@
 
 using namespace argos;
 
-class SingleFootBot : public CCI_Controller {
+class FootbotPushPull : public CCI_Controller {
 
 public:
     /** Used for initializations. */
-    SingleFootBot();
+    FootbotPushPull();
 
     /**
       * Caution: Using the destructor is not recommended.
      * Allocate and free all memory in Init() and Destroy()
      */
-    virtual ~SingleFootBot() {}
+    virtual ~FootbotPushPull() {}
 
     /**
      * Function for initialization.
