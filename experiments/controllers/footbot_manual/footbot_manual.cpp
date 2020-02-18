@@ -182,4 +182,4 @@ void CFootBotManualControl::SetWheelSpeedsFromVector(const CVector2& c_heading) 
  * When ARGoS reads that string in the XML file, it knows which controller class to instantiate.
  * See also the XML configuration files for an example of how this is used.
  */
-REGISTER_CONTROLLER(CFootBotManualControl, "footbot_manualcontrol_controller")
+REGISTER_CONTROLLER(CFootBotManualControl, "footbot_manualcontrol")

@@ -9,7 +9,7 @@
 
     <!-- Controllers -->
     <controllers>
-        <footbot_qlearn_diy_controller id="fqc" library="cmake-build-debug/controllers/footbot_qlearn_diy/libfootbot_qlearn_diy.so">
+        <footbot_follow id="fqc" library="cmake-build-debug/controllers/footbot_follow/libfootbot_follow.so">
             <actuators>
                 <differential_steering implementation="default" />
             </actuators>
@@ -21,8 +21,8 @@
             <!-- Parameters -->
             <!-- Stage can be: explore, exploit or exploreExploit -->
             <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="exploit"/>
-        </footbot_qlearn_diy_controller>
-        <footbot_manualcontrol_controller id="fqf" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
+        </footbot_follow>
+        <footbot_manualcontrol id="fqf" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
                 <differential_steering implementation="default" />
                 <leds implementation="default" medium="leds" />
@@ -34,7 +34,7 @@
                                no_turn_angle_threshold="10"
                                max_speed="10" />
             </params>
-        </footbot_manualcontrol_controller>
+        </footbot_manualcontrol>
     </controllers>
 
     <!-- Arena configuration -->

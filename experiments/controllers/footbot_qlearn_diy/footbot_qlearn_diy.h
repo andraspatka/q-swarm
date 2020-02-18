@@ -10,7 +10,7 @@
 #include <limits>
 #include <fstream>
 
-#include "qlearner.hpp"
+#include "qlearner/qlearner.hpp"
 
 using namespace argos;
 
@@ -84,9 +84,6 @@ private:
 
     /* Pointer to the foot-bot light sensor. */
     CCI_FootBotLightSensor *mLightSensor;
-
-    /* Pointer to the omnidirectional camera sensor */
-    CCI_ColoredBlobOmnidirectionalCameraSensor *mCamera;
 
     /** PARAMETERS FROM THE ARGOS FILE */
 

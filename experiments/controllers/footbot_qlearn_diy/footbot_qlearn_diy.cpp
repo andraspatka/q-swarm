@@ -11,8 +11,6 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mProximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
-    mCamera = GetSensor<CCI_ColoredBlobOmnidirectionalCameraSensor>("colored_blob_omnidirectional_camera");
-    mCamera->Enable();
     std::string parStageString;
 
     GetNodeAttributeOrDefault(t_node, "velocity", parWheelVelocity, parWheelVelocity);
@@ -109,11 +107,6 @@ void FootbotQLearnDiy::ControlStep() {
 
     auto lightReadings = mLightSensor->GetReadings();
     auto proxReadings = mProximitySensor->GetReadings();
-    auto cameraReadings = mCamera->GetReadings().BlobList;
-
-    for (auto r : cameraReadings) {
-        LOG << r->Color << " " << r->Angle << " " << r->Distance;
-    }
 
     // light sensor value from the back of the robot
     for (int i = 8; i <= 15; ++i) {
