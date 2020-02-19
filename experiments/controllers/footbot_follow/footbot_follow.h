@@ -82,9 +82,6 @@ private:
     /* Pointer to the foot-bot proximity sensor. */
     CCI_FootBotProximitySensor *mProximitySensor;
 
-    /* Pointer to the foot-bot light sensor. */
-    CCI_FootBotLightSensor *mLightSensor;
-
     /* Pointer to the omnidirectional camera sensor */
     CCI_ColoredBlobOmnidirectionalCameraSensor *mCamera;
 
@@ -104,4 +101,7 @@ private:
 
     // Discount factor. If close to zero, then the agent prefers the immediate reward, otherwise the long term reward.
     double parDiscountFactor;
+
+    // Filename under which the Q matrix should be saved.
+    std::string parQMatFileName;
 };

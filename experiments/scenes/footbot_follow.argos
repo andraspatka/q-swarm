@@ -9,7 +9,7 @@
 
     <!-- Controllers -->
     <controllers>
-        <footbot_follow id="fqc" library="cmake-build-debug/controllers/footbot_follow/libfootbot_follow.so">
+        <footbot_follow id="ffc" library="cmake-build-debug/controllers/footbot_follow/libfootbot_follow.so">
             <actuators>
                 <differential_steering implementation="default" />
             </actuators>
@@ -20,9 +20,9 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: explore, exploit or exploreExploit -->
-            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="exploit"/>
+            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="exploreExploit" qmat_filename="Qfollow.qlmat"/>
         </footbot_follow>
-        <footbot_manualcontrol id="fqf" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
+        <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
                 <differential_steering implementation="default" />
                 <leds implementation="default" medium="leds" />
@@ -54,15 +54,15 @@
             <body position="-2.5,0,0" orientation="0,0,0" />
         </box>
 
-        <!-- The guinea pig footbot. -->
+        <!-- The follow footbot. -->
         <foot-bot id="fb">
             <body position="0,0,0" orientation="0,0,0" />
-            <controller config="fqc" />
+            <controller config="ffc" />
         </foot-bot>
-        <!-- The guinea pig footbot. -->
+        <!-- The manual control footbot. -->
         <foot-bot id="fbf">
-            <body position="1,1,0" orientation="0,0,0" />
-            <controller config="fqf" />
+            <body position="0.3,0,0" orientation="0,0,0" />
+            <controller config="fmc" />
         </foot-bot>
 
         <!-- Additional footbots distributed uniformly, their orientation is distributed using the gaussian method. -->

@@ -6,11 +6,18 @@ FootbotFollow::FootbotFollow() :
         globalMaxLightReading(0),
         epoch(0) {}
 
+/**
+ *
+ *          STOP    TURN_LEFT   TURN_RIGHT  FORWARD
+ * FOLLOW   -1      0           0           1
+ * AVOID    -1      0           0           0
+ * WANDER   -1      0           0           0
+ * IDLE     1       0           0           0
+ */
 void FootbotFollow::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mProximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
-    mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
     mCamera = GetSensor<CCI_ColoredBlobOmnidirectionalCameraSensor>("colored_blob_omnidirectional_camera");
     mCamera->Enable();
     std::string parStageString;
@@ -20,21 +27,22 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     GetNodeAttributeOrDefault(t_node, "discount_factor", parDiscountFactor, parDiscountFactor);
     GetNodeAttributeOrDefault(t_node, "threshold", parThreshold, parThreshold);
     GetNodeAttributeOrDefault(t_node, "stage", parStageString, parStageString);
+    GetNodeAttributeOrDefault(t_node, "qmat_filename", parQMatFileName, parQMatFileName);
 
     parStage = parseStageFromString(parStageString);
     mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate);
     std::vector<std::tuple<int, int>> impossibleStates = {
-            std::make_tuple(0, 0), // WANDER state, STOP action
-            std::make_tuple(1, 0), // TURN state, STOP action
-            std::make_tuple(2, 0) // AVOID state, STOP action
+            std::make_tuple(0, 0), // FOLLOW state, STOP action
+            std::make_tuple(1, 0), // AVOID state, STOP action
+            std::make_tuple(2, 0) // WANDER state, STOP action
     };
     std::vector<std::tuple<int, int, double>> rewards = {
-            std::make_tuple(0, 3, 1), // WANDER state, FORWARD action
+            std::make_tuple(0, 3, 1), // FOLLOW state, FORWARD action
             std::make_tuple(3, 0, 1) // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
-        mQLearner->readQ("Qmat.qlmat");
+        mQLearner->readQ(parQMatFileName);
     }
 }
 
@@ -110,63 +118,48 @@ void FootbotFollow::ControlStep() {
     int state = 0;
     double action[2];
 
-    auto lightReadings = mLightSensor->GetReadings();
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
 
     bool leaderDetected = false;
+    double maxCameraLen = 0;
     for (auto r : cameraReadings) {
         LOG << r->Color << " " << r->Angle << " " << r->Distance;
         if (r->Angle.GetAbsoluteValue() * argos::CRadians::RADIANS_TO_DEGREES > 30.0f) {
             leaderDetected = true;
         }
-    }
-
-    // light sensor value from the back of the robot
-    for (int i = 8; i <= 15; ++i) {
-        backMaxLight = std::max(backMaxLight, lightReadings.at(i).Value);
+        std::max(maxCameraLen, r->Distance);
     }
 
     // Left front values
-    for (int i = 0; i <= 3; ++i) {
-        frontMaxLight = std::max(frontMaxLight, lightReadings.at(i).Value);
-    }
     for (int i = 0; i <= 4; ++i) {
         frontMaxProx = std::max(frontMaxProx, proxReadings.at(i).Value);
     }
     // Right front values
-    for (int i = 20; i <= 23; ++i) {
-        frontMaxLight = std::max(frontMaxLight, lightReadings.at(i).Value);
-    }
     for (int i = 19; i <= 23; ++i) {
         frontMaxProx = std::max(frontMaxProx, proxReadings.at(i).Value);
     }
 
-    // max light reading around the footbot
-    for (int i = 0; i < 23; ++i) {
-        maxLight = std::max(maxLight, lightReadings.at(i).Value);
-    }
-
     // States
-    if (closeToZero(backMaxLight) && closeToZero(frontMaxProx) && maxLight < parThreshold) {
+    if (leaderDetected && maxCameraLen < parThreshold) {
          // FOLLOW state
         state = 0;
     }
-    if (!closeToZero(backMaxLight) && closeToZero(frontMaxProx) && maxLight < parThreshold) {
-         // UTURN state
+    if (frontMaxProx > 0 && maxCameraLen < parThreshold) {
+        // AVOID state
         state = 1;
     }
-    if (frontMaxProx > 0 && maxLight < parThreshold) {
-         // AVOID state
+    if (closeToZero(maxCameraLen) && closeToZero(frontMaxProx)) {
+        // WANDER state
         state = 2;
     }
-    if (maxLight > parThreshold && closeToZero(frontMaxProx)) {
+    if (maxLight > parThreshold && leaderDetected) {
          // IDLE state
          state = 3;
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 75 == 0) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 150 == 0) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
@@ -224,11 +217,11 @@ void FootbotFollow::ControlStep() {
             break;
         }
         case 1: {
-            actualState = "UTURN";
+            actualState = "AVOID";
             break;
         }
         case 2: {
-            actualState = "AVOID";
+            actualState = "WANDER";
             break;
         }
         case 3: {
@@ -253,7 +246,7 @@ void FootbotFollow::ControlStep() {
 }
 
 void FootbotFollow::Destroy() {
-    mQLearner->printQ("Qmat.qlmat");
+    mQLearner->printQ(parQMatFileName);
     delete mQLearner;
 }
 
