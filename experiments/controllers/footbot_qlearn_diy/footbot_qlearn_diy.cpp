@@ -24,11 +24,14 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
     std::vector<std::tuple<int, int>> impossibleStates = {
             std::make_tuple(0, 0), // WANDER state, STOP action
             std::make_tuple(1, 0), // TURN state, STOP action
-            std::make_tuple(2, 0) // AVOID state, STOP action
+            std::make_tuple(2, 0), // AVOID_LEFT state, STOP action
+            std::make_tuple(3, 0), // AVOID_RIGHT state, STOP action
+            std::make_tuple(4, 0) // WANDER state, STOP action
     };
     std::vector<std::tuple<int, int, double>> rewards = {
-            std::make_tuple(0, 3, 1), // WANDER state, FORWARD action
-            std::make_tuple(3, 0, 1) // IDLE state, STOP action
+            std::make_tuple(0, 3, 1), // FOLLOW state, FORWARD action
+            std::make_tuple(4, 3, 0.1), // WANDER state, FORWARD action - small reward
+            std::make_tuple(5, 0, 1) // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
@@ -85,21 +88,20 @@ std::string FootbotQLearnDiy::getActionName(double x, double y) {
  *          sensors:
  *              prox: ?
  *              light: b > 0 && front == 0
- *      AVOID - obstacle detected
- *          sensors:
- *              prox: front != 0
- *              light: ?
+ *      AVOID_LEFT
+ *      AVOID_RIGHT
+ *      WANDER
  *      IDLE - end destination reached, GOAL state
  *          sensors:
  *              prox: ?
  *              light: max(sensor values) > THRESHOLD
  */
 void FootbotQLearnDiy::ControlStep() {
-    double frontMaxLight = 0.0f;
     double maxLight = 0.0f;
     double backMaxLight = 0.0f;
 
-    double frontMaxProx = 0.0f;
+    double leftMaxProx = 0.0f;
+    double rightMaxProx = 0.0f;
 
     double rewardValue = 0;
     int state = 0;
@@ -114,18 +116,12 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     // Left front values
-    for (int i = 0; i <= 3; ++i) {
-        frontMaxLight = std::max(frontMaxLight, lightReadings.at(i).Value);
-    }
-    for (int i = 0; i <= 4; ++i) {
-        frontMaxProx = std::max(frontMaxProx, proxReadings.at(i).Value);
+    for (int i = 0; i <= 5; ++i) {
+        leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
     }
     // Right front values
-    for (int i = 20; i <= 23; ++i) {
-        frontMaxLight = std::max(frontMaxLight, lightReadings.at(i).Value);
-    }
-    for (int i = 19; i <= 23; ++i) {
-        frontMaxProx = std::max(frontMaxProx, proxReadings.at(i).Value);
+    for (int i = 18; i <= 23; ++i) {
+        rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
 
     // max light reading around the footbot
@@ -134,25 +130,33 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     // States
-    if (closeToZero(backMaxLight) && closeToZero(frontMaxProx) && maxLight < parThreshold) {
+    if (closeToZero(backMaxLight) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx) && maxLight < parThreshold) {
          // FOLLOW state
         state = 0;
     }
-    if (!closeToZero(backMaxLight) && closeToZero(frontMaxProx) && maxLight < parThreshold) {
+    if (!closeToZero(backMaxLight) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx) && maxLight < parThreshold) {
          // UTURN state
         state = 1;
     }
-    if (frontMaxProx > 0 && maxLight < parThreshold) {
-         // AVOID state
+    if (leftMaxProx > 0 && maxLight < parThreshold) {
+         // AVOID_LEFT state
         state = 2;
     }
-    if (maxLight > parThreshold && closeToZero(frontMaxProx)) {
+    if (rightMaxProx > 0 && maxLight < parThreshold) {
+        // AVOID_RIGHT state
+        state = 3;
+    }
+    if (closeToZero(maxLight) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
+        // WANDER state
+        state = 4;
+    }
+    if (maxLight >= parThreshold) {
          // IDLE state
-         state = 3;
+         state = 5;
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 75 == 0) {
+    if (mQLearner->getLearningRate() >= 0.05f && epoch % 150 == 0) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
@@ -214,10 +218,18 @@ void FootbotQLearnDiy::ControlStep() {
             break;
         }
         case 2: {
-            actualState = "AVOID";
+            actualState = "AVOID_LEFT";
             break;
         }
         case 3: {
+            actualState = "AVOID_RIGHT";
+            break;
+        }
+        case 4: {
+            actualState = "WANDER";
+            break;
+        }
+        case 5: {
             actualState = "IDLE";
             break;
         }
@@ -227,9 +239,9 @@ void FootbotQLearnDiy::ControlStep() {
     }
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
-    LOG << "FrontMaxProx: " << frontMaxProx << std::endl;
+    LOG << "LeftMaxProx: " << leftMaxProx << std::endl;
+    LOG << "RightMaxProx: " << rightMaxProx << std::endl;
     LOG << "BackMaxLight: " << backMaxLight << std::endl;
-    LOG << "MaxFrontLight: " << frontMaxLight << std::endl;
     LOG << "MaxLight: " << maxLight << std::endl;
 
     LOG << "Action taken: " << getActionName(action[0], action[1]) << std::endl;
