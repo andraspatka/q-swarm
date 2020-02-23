@@ -4,7 +4,7 @@
     <!-- General configuration -->
     <framework>
         <system threads="4" />
-        <experiment length="3000" ticks_per_second="10" random_seed="124" />
+        <experiment length="2600" ticks_per_second="10" random_seed="124" />
     </framework>
 
     <!-- Controllers -->
@@ -18,8 +18,8 @@
                 <footbot_proximity implementation="default" show_rays="true" />
             </sensors>
             <!-- Parameters -->
-            <!-- Stage can be: explore, exploit or exploreExploit -->
-            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="exploreExploit"/>
+            <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
+            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="train"/>
         </footbot_qlearn_diy_controller>
     </controllers>
 

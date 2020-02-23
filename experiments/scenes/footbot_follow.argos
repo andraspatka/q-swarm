@@ -19,8 +19,8 @@
                 <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
             </sensors>
             <!-- Parameters -->
-            <!-- Stage can be: explore, exploit or exploreExploit -->
-            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="exploreExploit" qmat_filename="Qfollow.qlmat"/>
+            <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
+            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="train" qmat_filename="Qfollow.qlmat"/>
         </footbot_follow>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>

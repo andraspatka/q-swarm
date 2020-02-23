@@ -166,22 +166,7 @@ void FootbotFollow::ControlStep() {
     if (globalMaxLightReading < rewardValue) {
         globalMaxLightReading = rewardValue;
     }
-    int actionIndex = 0;
-
-    switch (parStage) {
-        case Stage::EXPLORE:
-            actionIndex = mQLearner->explore(mPrevState, state);
-            break;
-        case Stage::EXPLOIT:
-            actionIndex = mQLearner->exploit(state);
-            break;
-        case Stage::EXPLORE_EXPLOIT:
-            actionIndex = mQLearner->exploreOrExploit(mPrevState, state);
-            break;
-        case Stage::INVALID:
-            actionIndex = 0;
-            break;
-    }
+    int actionIndex = mQLearner->train(mPrevState, state);
 
     globalMaxLightReading = std::max(globalMaxLightReading, maxLight);
     mPrevState = state;
@@ -251,9 +236,8 @@ void FootbotFollow::Destroy() {
 }
 
 FootbotFollow::Stage FootbotFollow::parseStageFromString(const std::string &stageString) {
-    if (stageString == "explore") return FootbotFollow::Stage::EXPLORE;
+    if (stageString == "train") return FootbotFollow::Stage::TRAIN;
     if (stageString == "exploit") return FootbotFollow::Stage::EXPLOIT;
-    if (stageString == "exploreExploit") return FootbotFollow::Stage::EXPLORE_EXPLOIT;
     std::cerr << "Invalid Stage value: " << stageString;
     exit(1);
 }

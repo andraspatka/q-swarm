@@ -47,10 +47,8 @@ public:
     virtual void Destroy();
 
     enum Stage {
-        EXPLORE,
-        EXPLOIT,
-        EXPLORE_EXPLOIT,
-        INVALID
+        TRAIN,
+        EXPLOIT
     };
 
     // Small value, close to 0. Used for floating point comparisons to "0".

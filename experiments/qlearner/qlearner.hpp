@@ -77,33 +77,7 @@ namespace ql {
             }
         }
 
-        int explore(int state, int nextState) {
-            ql::ThreadSafeRandom threadSafeRandom(0, NUM_ACTIONS);
-            int possibleAction;
-            do {
-                possibleAction = threadSafeRandom.getRandomNumber();
-            } while (R[state][possibleAction] == -1);
-            double nextStateMaxValue = 0;
-            for (int i = 0; i < NUM_ACTIONS; ++i) {
-                nextStateMaxValue = std::max(nextStateMaxValue, Q[nextState][i]);
-            }
-            Q[state][possibleAction] = R[state][possibleAction] + discountFactor * nextStateMaxValue;
-            return possibleAction;
-        }
-
-        int exploit(int state) {
-            int actionWithMaxQ = 0;
-            double maxQValue = 0;
-            for (int i = 0; i < NUM_ACTIONS; ++i) {
-                if (Q[state][i] > maxQValue) {
-                    maxQValue = Q[state][i];
-                    actionWithMaxQ = i;
-                }
-            }
-            return actionWithMaxQ;
-        }
-
-        int exploreOrExploit(int state, int nextState) {
+        int train(int state, int nextState) {
             int possibleAction = 0;
             if (learningRate > 0.1f) {
 

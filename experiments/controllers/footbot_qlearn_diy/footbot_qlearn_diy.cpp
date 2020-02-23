@@ -38,7 +38,7 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
             std::make_tuple(6, 0, 1) // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
-    if (parStage == Stage::EXPLOIT || parStage == EXPLORE_EXPLOIT) {
+    if (parStage == Stage::EXPLOIT) {
         mQLearner->readQ("Qmat.qlmat");
     }
 }
@@ -172,22 +172,7 @@ void FootbotQLearnDiy::ControlStep() {
     if (globalMaxLightReading < rewardValue) {
         globalMaxLightReading = rewardValue;
     }
-    int actionIndex = 0;
-
-    switch (parStage) {
-        case Stage::EXPLORE:
-            actionIndex = mQLearner->explore(mPrevState, state);
-            break;
-        case Stage::EXPLOIT:
-            actionIndex = mQLearner->exploit(state);
-            break;
-        case Stage::EXPLORE_EXPLOIT:
-            actionIndex = mQLearner->exploreOrExploit(mPrevState, state);
-            break;
-        case Stage::INVALID:
-            actionIndex = 0;
-            break;
-    }
+    int actionIndex = mQLearner->train(mPrevState, state);
 
     globalMaxLightReading = std::max(globalMaxLightReading, maxLight);
     mPrevState = state;
@@ -269,9 +254,8 @@ void FootbotQLearnDiy::Destroy() {
 }
 
 FootbotQLearnDiy::Stage FootbotQLearnDiy::parseStageFromString(const std::string &stageString) {
-    if (stageString == "explore") return FootbotQLearnDiy::Stage::EXPLORE;
+    if (stageString == "train") return FootbotQLearnDiy::Stage::TRAIN;
     if (stageString == "exploit") return FootbotQLearnDiy::Stage::EXPLOIT;
-    if (stageString == "exploreExploit") return FootbotQLearnDiy::Stage::EXPLORE_EXPLOIT;
     std::cerr << "Invalid Stage value: " << stageString;
     exit(1);
 }
