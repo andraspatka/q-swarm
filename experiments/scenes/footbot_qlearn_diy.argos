@@ -19,7 +19,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: explore, exploit or exploreExploit -->
-            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="exploit"/>
+            <params velocity="25" learning_rate="0.05" discount_factor="0.8" threshold="0.25" stage="exploreExploit"/>
         </footbot_qlearn_diy_controller>
     </controllers>
 
@@ -44,7 +44,7 @@
         <distribute>
             <position method="uniform" min="-2,-2,0" max="2,2,0" />
             <orientation method="uniform" min="0,0,0" max="360,0,0" />
-            <entity quantity="5" max_trials="100">
+            <entity quantity="10" max_trials="100">
                 <box id="b" size="0.3,0.3,0.5" movable="false" />
             </entity>
         </distribute>
@@ -58,14 +58,14 @@
         <distribute>
             <position method="uniform" min="-2,-2,0" max="2,2,0" />
             <orientation method="constant" values="0,0,0" />
-            <entity quantity="5" max_trials="100">
+            <entity quantity="20" max_trials="100">
                 <cylinder id="c" height="0.5" radius="0.15" movable="false" />
             </entity>
         </distribute>
 
 
         <!-- Additional wall obstacle -->
-<!--         <box id="wall_obstacle_n" size="0.1,1.1,0.4" movable="false">
+         <box id="wall_obstacle_n" size="0.1,1.1,0.4" movable="false">
             <body position="0.5,0,0" orientation="0,0,0" />
         </box>
 
@@ -75,10 +75,10 @@
 
         <box id="wall_obstacle_e" size="0.1,1.0,0.4" movable="false">
             <body position="0,-0.5,0" orientation="90,0,0" />
-        </box>-->
+        </box>
 
         <!-- End goal for the footbots marked by a light -->
-        <light id="light" position="1.5,1,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
+        <light id="light" position="1,-0.5,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
         <!-- The guinea pig footbot. -->
         <foot-bot id="fb">

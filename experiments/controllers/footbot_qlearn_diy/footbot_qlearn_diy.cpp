@@ -22,19 +22,23 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
     parStage = parseStageFromString(parStageString);
     mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate);
     std::vector<std::tuple<int, int>> impossibleStates = {
-            std::make_tuple(0, 0), // WANDER state, STOP action
-            std::make_tuple(1, 0), // TURN state, STOP action
-            std::make_tuple(2, 0), // AVOID_LEFT state, STOP action
-            std::make_tuple(3, 0), // AVOID_RIGHT state, STOP action
-            std::make_tuple(4, 0) // WANDER state, STOP action
+            std::make_tuple(0, 0), // FOLLOW state, STOP action
+            std::make_tuple(1, 0), // UTURN state, STOP action
+            std::make_tuple(2, 0), // OBST_LEFT state, STOP action
+            std::make_tuple(3, 0), // OBST_RIGHT state, STOP action
+            std::make_tuple(4, 0), // OBST_FORWARD state, STOP action
+            std::make_tuple(5, 0) // WANDER state, STOP action
     };
     std::vector<std::tuple<int, int, double>> rewards = {
             std::make_tuple(0, 3, 1), // FOLLOW state, FORWARD action
-            std::make_tuple(4, 3, 0.1), // WANDER state, FORWARD action - small reward
-            std::make_tuple(5, 0, 1) // IDLE state, STOP action
+            std::make_tuple(2, 2, 0.1), // OBST_LEFT
+            std::make_tuple(3, 1, 0.1), // OBST_RIGHT
+            std::make_tuple(4, 1, 0.1), // OBST_FORWARD
+            std::make_tuple(5, 3, 0.1), // WANDER state, FORWARD action
+            std::make_tuple(6, 0, 1) // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
-    if (parStage == Stage::EXPLOIT) {
+    if (parStage == Stage::EXPLOIT || parStage == EXPLORE_EXPLOIT) {
         mQLearner->readQ("Qmat.qlmat");
     }
 }
@@ -88,8 +92,9 @@ std::string FootbotQLearnDiy::getActionName(double x, double y) {
  *          sensors:
  *              prox: ?
  *              light: b > 0 && front == 0
- *      AVOID_LEFT
- *      AVOID_RIGHT
+ *      OBST_LEFT
+ *      OBST_RIGHT
+ *      OBST_FORWARD
  *      WANDER
  *      IDLE - end destination reached, GOAL state
  *          sensors:
@@ -104,7 +109,7 @@ void FootbotQLearnDiy::ControlStep() {
     double rightMaxProx = 0.0f;
 
     double rewardValue = 0;
-    int state = 0;
+    int state = -1;
     double action[2];
 
     auto lightReadings = mLightSensor->GetReadings();
@@ -138,21 +143,25 @@ void FootbotQLearnDiy::ControlStep() {
          // UTURN state
         state = 1;
     }
-    if (leftMaxProx > 0 && maxLight < parThreshold) {
-         // AVOID_LEFT state
+    if (!closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
+         // OBST_LEFT state
         state = 2;
     }
-    if (rightMaxProx > 0 && maxLight < parThreshold) {
-        // AVOID_RIGHT state
+    if (!closeToZero(rightMaxProx) && closeToZero(leftMaxProx)) {
+        // OBST_RIGHT state
         state = 3;
+    }
+    if (!closeToZero(leftMaxProx) && !closeToZero(rightMaxProx)) {
+        // OBST_FORWARD state
+        state = 4;
     }
     if (closeToZero(maxLight) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
         // WANDER state
-        state = 4;
+        state = 5;
     }
     if (maxLight >= parThreshold) {
          // IDLE state
-         state = 5;
+         state = 6;
     }
 
     epoch++;
@@ -218,18 +227,22 @@ void FootbotQLearnDiy::ControlStep() {
             break;
         }
         case 2: {
-            actualState = "AVOID_LEFT";
+            actualState = "OBST_LEFT";
             break;
         }
         case 3: {
-            actualState = "AVOID_RIGHT";
+            actualState = "OBST_RIGHT";
             break;
         }
         case 4: {
-            actualState = "WANDER";
+            actualState = "OBST_FORWARD";
             break;
         }
         case 5: {
+            actualState = "WANDER";
+            break;
+        }
+        case 6: {
             actualState = "IDLE";
             break;
         }
