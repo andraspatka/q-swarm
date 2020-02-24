@@ -1,0 +1,35 @@
+Egy szimulációskörnyezet szükséges és előnyös rajintelligenciás osztott algoritmusok kidolgozásához. Jóval lerövidíti a fejlesztési időt,
+mivel egyrészt nem szükséges számos robot megvásárlása, másrészt a robotok felprogramozása összemérhetetlenül gyorsabban történik.
+
+\subsection{Robot szimulátorok adta lehetőségek tanulmányozása} 
+
+A robotszimulációs környezet világában két nyílt forráskódu, elterjedtebb szoftver között lehet választani: az ARGoS3 és a V-REP.
+A következőkben szemléltetve lesz a két szimulációs környezet előnyei, hátrányai.
+
+\textbf{V-REP} \url{http://www.coppeliarobotics.com/}
+\begin{itemize}
+    \item Támogatott nyelvek robot kontrollerlogikájának megírására: C/C++, Python, Java, Lua, Matlab, Octave
+    \item Rendkívül valósághű
+    \item Ingyenes, van fizetős verzió is
+    \item Robotrajokra nincs optimalizálva
+    \item Aktívan fejlesztik, jelennek meg új verziók
+    \item Nagy a felhasználók száma
+    \item Nyílt forráskódu
+\end{itemize}
+
+\textbf{ARGoS3} \url{https://www.argos-sim.info/index.php}
+\begin{itemize}
+    \item Támogatott nyelvek robot kontrollerlogikájának megírására: C/C++ és Lua
+    \item Nagyobb az absztrakciós szint, nem annyira valósághű
+    \item Robotrajokra teljesen optimalizálva van
+    \item Ingyenes
+    \item Fejlesztés alatt áll, bár az új verziók nem konszisztensen érkeznek (2019 júliusán jött ki új verzió, az ezelőtti verzió 2016-os)
+    \item Viszonylag kevesen használják, nehezebb a hibákra megoldást találni
+    \item Nyílt forráskódu
+\end{itemize}
+
+A két robotszimulátor között a választás az ARGoS-ra esett, mivel egy nagyobb absztrakciós szintet ajánl, ezért könnyebb magára az algoritmusra, a logikára fektetni a hangsúlyt. 
+Ez a nagyobb absztrakciós szint ahhoz is vezet, hogy egy sok robotot tartalmazó robotraj esetén a számítási kapacitás közel se olyan sok, mint a V-REP-nél. 
+
+
+
