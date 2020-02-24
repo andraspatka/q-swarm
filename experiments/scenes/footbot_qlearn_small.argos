@@ -19,7 +19,8 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="train"/>
+            <params velocity="25" learning_rate="0.95" discount_factor="0.6" threshold="0.25" stage="train"/>
+            <!--<params velocity="25" learning_rate="0.05" discount_factor="0.6" threshold="0.25" stage="exploit"/>-->
         </footbot_qlearn_diy_controller>
     </controllers>
 
@@ -54,7 +55,7 @@
         </box>
 
         <!-- End goal for the footbots marked by a light -->
-        <light id="light" position="0.85,0.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
+        <light id="light" position="0.85,-0.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
         <!-- The guinea pig footbot. -->
         <foot-bot id="fb">

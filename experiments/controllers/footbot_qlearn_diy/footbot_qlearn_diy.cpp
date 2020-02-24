@@ -165,7 +165,7 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() >= 0.05f && epoch % 150 == 0) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 125 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
@@ -237,6 +237,7 @@ void FootbotQLearnDiy::ControlStep() {
     }
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
+    LOG << "Stage: " << parseStringFromStage(parStage) << std::endl;
     LOG << "LeftMaxProx: " << leftMaxProx << std::endl;
     LOG << "RightMaxProx: " << rightMaxProx << std::endl;
     LOG << "BackMaxLight: " << backMaxLight << std::endl;
@@ -257,6 +258,13 @@ FootbotQLearnDiy::Stage FootbotQLearnDiy::parseStageFromString(const std::string
     if (stageString == "train") return FootbotQLearnDiy::Stage::TRAIN;
     if (stageString == "exploit") return FootbotQLearnDiy::Stage::EXPLOIT;
     std::cerr << "Invalid Stage value: " << stageString;
+    exit(1);
+}
+
+std::string FootbotQLearnDiy::parseStringFromStage(const FootbotQLearnDiy::Stage &stage) {
+    if (stage == Stage::TRAIN) return "TRAIN";
+    if (stage == Stage::EXPLOIT) return "EXPLOIT";
+    std::cerr << "Invalid Stage value: " << stage;
     exit(1);
 }
 

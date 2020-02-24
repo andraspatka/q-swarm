@@ -63,6 +63,8 @@ private:
 
     static Stage parseStageFromString(const std::string& stageString);
 
+    static std::string parseStringFromStage(const Stage& stage);
+
     std::string getActionName(double x, double y);
 
     ql::QLearner * mQLearner;
