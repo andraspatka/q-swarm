@@ -26,16 +26,14 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
             std::make_tuple(1, 0), // UTURN state, STOP action
             std::make_tuple(2, 0), // OBST_LEFT state, STOP action
             std::make_tuple(3, 0), // OBST_RIGHT state, STOP action
-            std::make_tuple(4, 0), // OBST_FORWARD state, STOP action
-            std::make_tuple(5, 0) // WANDER state, STOP action
+            std::make_tuple(4, 0) // WANDER state, STOP action
     };
     std::vector<std::tuple<int, int, double>> rewards = {
             std::make_tuple(0, 3, 1), // FOLLOW state, FORWARD action
             std::make_tuple(2, 2, 0.1), // OBST_LEFT
             std::make_tuple(3, 1, 0.1), // OBST_RIGHT
-            std::make_tuple(4, 1, 0.1), // OBST_FORWARD
-            std::make_tuple(5, 3, 0.1), // WANDER state, FORWARD action
-            std::make_tuple(6, 0, 1) // IDLE state, STOP action
+            std::make_tuple(4, 3, 0.1), // WANDER state, FORWARD action
+            std::make_tuple(5, 0, 1) // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
@@ -121,11 +119,11 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     // Left front values
-    for (int i = 0; i <= 5; ++i) {
+    for (int i = 0; i <= 4; ++i) {
         leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
     }
     // Right front values
-    for (int i = 18; i <= 23; ++i) {
+    for (int i = 19; i <= 23; ++i) {
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
 
@@ -133,7 +131,6 @@ void FootbotQLearnDiy::ControlStep() {
     for (int i = 0; i < 23; ++i) {
         maxLight = std::max(maxLight, lightReadings.at(i).Value);
     }
-
     // States
     if (closeToZero(backMaxLight) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx) && maxLight < parThreshold) {
          // FOLLOW state
@@ -143,29 +140,25 @@ void FootbotQLearnDiy::ControlStep() {
          // UTURN state
         state = 1;
     }
-    if (!closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
+    if (leftMaxProx >= rightMaxProx && !closeToZero(leftMaxProx)) {
          // OBST_LEFT state
         state = 2;
     }
-    if (!closeToZero(rightMaxProx) && closeToZero(leftMaxProx)) {
+    if (leftMaxProx < rightMaxProx) {
         // OBST_RIGHT state
         state = 3;
     }
-    if (!closeToZero(leftMaxProx) && !closeToZero(rightMaxProx)) {
-        // OBST_FORWARD state
-        state = 4;
-    }
     if (closeToZero(maxLight) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
         // WANDER state
-        state = 5;
+        state = 4;
     }
     if (maxLight >= parThreshold) {
          // IDLE state
-         state = 6;
+         state = 5;
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 125 == 0 && parStage == Stage::TRAIN) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 300 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
@@ -220,14 +213,10 @@ void FootbotQLearnDiy::ControlStep() {
             break;
         }
         case 4: {
-            actualState = "OBST_FORWARD";
-            break;
-        }
-        case 5: {
             actualState = "WANDER";
             break;
         }
-        case 6: {
+        case 5: {
             actualState = "IDLE";
             break;
         }
