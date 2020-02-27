@@ -58,7 +58,7 @@
         <light id="light" position="0.85,-0.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
         <!-- The guinea pig footbot. -->
-        <foot-bot id="fb">
+        <foot-bot id="train">
             <body position="0,0,0" orientation="0,0,0" />
             <controller config="fqc" />
         </foot-bot>
@@ -93,6 +93,8 @@
             <camera>
                 <placement idx="0" position="0,1,4.34" look_at="0,0,0" lens_focal_length="20" />
             </camera>
+            <user_functions library="cmake-build-debug/loop_functions/id/libid_loop_functions"
+                            label="id_qtuser_functions" />
         </qt-opengl>
     </visualization>
 
