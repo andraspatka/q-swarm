@@ -37,7 +37,7 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
     };
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
-        mQLearner->readQ("Qmat.qlmat");
+        mQLearner->readQ("qmats/Qmat-train.qlmat");
     }
 }
 
@@ -158,7 +158,7 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 300 == 0 && parStage == Stage::TRAIN) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 100 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
@@ -224,6 +224,7 @@ void FootbotQLearnDiy::ControlStep() {
             actualState = "ERROR";
         }
     }
+
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
     LOG << "Stage: " << parseStringFromStage(parStage) << std::endl;
@@ -236,10 +237,11 @@ void FootbotQLearnDiy::ControlStep() {
     LOG << "State: " << actualState << std::endl;
     LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     LOG << "Global max light: " << globalMaxLightReading << std::endl;
+    LOG << "Id: " << this->m_strId << std::endl;
 }
 
 void FootbotQLearnDiy::Destroy() {
-    mQLearner->printQ("Qmat.qlmat");
+    mQLearner->printQ("qmats/Qmat-" + this->m_strId + ".qlmat");
     delete mQLearner;
 }
 
