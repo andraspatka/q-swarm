@@ -12,6 +12,7 @@
         <footbot_follow id="ffc" library="cmake-build-debug/controllers/footbot_follow/libfootbot_follow.so">
             <actuators>
                 <differential_steering implementation="default" />
+                <leds implementation="default" medium="leds" />
             </actuators>
             <sensors>
                 <footbot_light implementation="rot_z_only" show_rays="true" />
@@ -20,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="0.25" stage="train" qmat_filename="Qfollow.qlmat"/>
+            <params velocity="25" learning_rate="0.9" discount_factor="0.8" threshold="30" stage="train" qmat_filename="Qfollow.qlmat"/>
         </footbot_follow>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -28,12 +29,7 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors />
-            <params>
-                <wheel_turning hard_turn_angle_threshold="90"
-                               soft_turn_angle_threshold="70"
-                               no_turn_angle_threshold="10"
-                               max_speed="10" />
-            </params>
+            <params max_speed="25"/>
         </footbot_manualcontrol>
     </controllers>
 
@@ -42,16 +38,16 @@
 
         <!-- Arena walls -->
         <box id="wall_north" size="5,0.1,0.5" movable="false">
-            <body position="0,2.5,0" orientation="0,0,0" />
+            <body position="0,1.5,0" orientation="0,0,0" />
         </box>
         <box id="wall_south" size="5,0.1,0.5" movable="false">
-            <body position="0,-2.5,0" orientation="0,0,0" />
+            <body position="0,-1.5,0" orientation="0,0,0" />
         </box>
         <box id="wall_east" size="0.1,5,0.5" movable="false">
-            <body position="2.5,0,0" orientation="0,0,0" />
+            <body position="1.5,0,0" orientation="0,0,0" />
         </box>
         <box id="wall_west" size="0.1,5,0.5" movable="false">
-            <body position="-2.5,0,0" orientation="0,0,0" />
+            <body position="-1.5,0,0" orientation="0,0,0" />
         </box>
 
         <!-- The follow footbot. -->
@@ -59,11 +55,15 @@
             <body position="0,0,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
+
         <!-- The manual control footbot. -->
         <foot-bot id="fbf">
             <body position="0.3,0,0" orientation="0,0,0" />
             <controller config="fmc" />
         </foot-bot>
+
+        <!-- End goal for the footbots marked by a light -->
+        <light id="light" position="0.85,-0.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
         <!-- Additional footbots distributed uniformly, their orientation is distributed using the gaussian method. -->
         <distribute>

@@ -38,39 +38,6 @@ class CFootBotManualControl : public CCI_Controller {
 
 public:
 
-   /*
-    * The following variables are used as parameters for
-    * turning during navigation. You can set their value
-    * in the <parameters> section of the XML configuration
-    * file, under the
-    * <controllers><footbot_manualcontrol_controller><parameters><wheel_turning>
-    * section.
-    */
-   struct SWheelTurningParams {
-      /*
-       * The turning mechanism.
-       * The robot can be in three different turning states.
-       */
-      enum ETurningMechanism
-      {
-         NO_TURN = 0, // go straight
-         SOFT_TURN,   // both wheels are turning forwards, but at different speeds
-         HARD_TURN    // wheels are turning with opposite speeds
-      } TurningMechanism;
-      /*
-       * Angular thresholds to change turning state.
-       */
-      CRadians HardTurnOnAngleThreshold;
-      CRadians SoftTurnOnAngleThreshold;
-      CRadians NoTurnAngleThreshold;
-      /* Maximum wheel speed */
-      Real MaxSpeed;
-
-      void Init(TConfigurationNode& t_tree);
-   };
-
-public:
-
    /* Class constructor. */
    CFootBotManualControl();
 
@@ -120,14 +87,10 @@ public:
    /*
     * Sets the control vector.
     */
-   void SetControlVector(const CVector2& c_control);
+   void SetDiffSteering(double [2]);
 
 protected:
 
-   /*
-    * Gets a direction vector as input and transforms it into wheel actuation.
-    */
-   void SetWheelSpeedsFromVector(const CVector2& c_heading);
 
 private:
 
@@ -136,14 +99,14 @@ private:
    /* Pointer to the LEDs actuator */
    CCI_LEDsActuator* m_pcLEDs;
 
-   /* The turning parameters */
-   SWheelTurningParams m_sWheelTurningParams;
+    /* Maximum wheel speed */
+    Real parMaxSpeed;
 
    /* Flag to know whether this robot is selected */
    bool m_bSelected;
 
    /* The control vector */
-   CVector2 m_cControl;
+   double diffSteeringVals[2];
 };
 
 #endif
