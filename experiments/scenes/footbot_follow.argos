@@ -15,7 +15,6 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors>
-                <footbot_light implementation="rot_z_only" show_rays="true" />
                 <footbot_proximity implementation="default" show_rays="true" />
                 <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
             </sensors>
@@ -33,14 +32,28 @@
                     stage="exploit"
                     qmat_filename="Qfollow.qlmat"/>
         </footbot_follow>
-        <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
+        <!--<footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
                 <differential_steering implementation="default" />
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors />
             <params max_speed="25"/>
-        </footbot_manualcontrol>
+        </footbot_manualcontrol>-->
+        <footbot_qlearn_diy_controller id="fqc" library="cmake-build-debug/controllers/footbot_qlearn_diy/libfootbot_qlearn_diy.so">
+            <actuators>
+                <differential_steering implementation="default" />
+                <leds implementation="default" medium="leds" />
+            </actuators>
+            <sensors>
+                <footbot_light implementation="rot_z_only" show_rays="true" />
+                <footbot_proximity implementation="default" show_rays="true" />
+            </sensors>
+            <!-- Parameters -->
+            <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
+            <!--<params velocity="25" learning_rate="0.95" discount_factor="0.8" threshold="0.25" stage="train"/>-->
+            <params velocity="25" learning_rate="0.07" discount_factor="0.8" threshold="0.25" stage="exploit"/>
+        </footbot_qlearn_diy_controller>
     </controllers>
 
     <!-- Arena configuration -->
@@ -48,22 +61,22 @@
 
         <!-- Arena walls -->
         <box id="wall_north" size="5,0.1,0.5" movable="false">
-            <body position="0,1.5,0" orientation="0,0,0" />
+            <body position="0,2.5,0" orientation="0,0,0" />
         </box>
         <box id="wall_south" size="5,0.1,0.5" movable="false">
-            <body position="0,-1.5,0" orientation="0,0,0" />
+            <body position="0,-2.5,0" orientation="0,0,0" />
         </box>
         <box id="wall_east" size="0.1,5,0.5" movable="false">
-            <body position="1.5,0,0" orientation="0,0,0" />
+            <body position="2.5,0,0" orientation="0,0,0" />
         </box>
         <box id="wall_west" size="0.1,5,0.5" movable="false">
-            <body position="-1.5,0,0" orientation="0,0,0" />
+            <body position="-2.5,0,0" orientation="0,0,0" />
         </box>
 
         <distribute>
-            <position method="uniform" min="-1.5,-1.5,0" max="1.5,1.5,0" />
+            <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
             <orientation method="uniform" min="0,0,0" max="360,0,0" />
-            <entity quantity="3" max_trials="100">
+            <entity quantity="5" max_trials="100">
                 <box id="b" size="0.25,0.25,0.5" movable="false"/>
             </entity>
         </distribute>
@@ -76,12 +89,12 @@
 
         <!-- The manual control footbot. -->
         <foot-bot id="fbf">
-            <body position="0.3,0,0" orientation="0,0,0" />
-            <controller config="fmc" />
+            <body position="2,2,0" orientation="0,0,0" />
+            <controller config="fqc" />
         </foot-bot>
 
         <!-- End goal for the footbots marked by a light -->
-        <light id="light" position="0.85,-0.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
+        <light id="light" position="-0.85,-0.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
         <!-- Additional footbots distributed uniformly, their orientation is distributed using the gaussian method. -->
         <distribute>

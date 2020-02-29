@@ -12,6 +12,7 @@
         <footbot_qlearn_diy_controller id="fqc" library="cmake-build-debug/controllers/footbot_qlearn_diy/libfootbot_qlearn_diy.so">
             <actuators>
                 <differential_steering implementation="default" />
+                <leds implementation="default" medium="leds" />
             </actuators>
             <sensors>
                 <footbot_light implementation="rot_z_only" show_rays="true" />

@@ -11,6 +11,7 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mProximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
+    mLed = GetActuator<CCI_LEDsActuator>("leds");
     std::string parStageString;
 
     GetNodeAttribute(t_node, "velocity", parWheelVelocity);
@@ -126,7 +127,7 @@ void FootbotQLearnDiy::ControlStep() {
     for (int i = 19; i <= 23; ++i) {
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
-
+    mLed->SetAllColors(CColor::RED);
     // max light reading around the footbot
     for (int i = 0; i < 23; ++i) {
         maxLight = std::max(maxLight, lightReadings.at(i).Value);
