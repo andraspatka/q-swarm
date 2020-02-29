@@ -9,6 +9,7 @@
 #include <argos3/core/utility/math/angles.h>
 #include <limits>
 #include <fstream>
+#include <argos3/plugins/robots/generic/control_interface/ci_leds_actuator.h>
 
 #include "qlearner/qlearner.hpp"
 
@@ -56,7 +57,7 @@ public:
 
     constexpr int static GOAL_STATE = 3;
 
-    constexpr int static NUM_STATES = 4;
+    constexpr int static NUM_STATES = 6;
 
     constexpr int static NUM_ACTIONS = 4;
 private:
@@ -71,11 +72,14 @@ private:
 
     int epoch = 0;
 
-    double globalMaxLightReading;
+    double globalMaxCameraReading;
 
     /** ACTUATORS AND SENSORS */
     /* Pointer to the differential steering actuator. */
     CCI_DifferentialSteeringActuator *mDiffSteering;
+
+    /* Pointer to the LED actuator */
+    CCI_LEDsActuator *mLed;
 
     /* Pointer to the foot-bot proximity sensor. */
     CCI_FootBotProximitySensor *mProximitySensor;

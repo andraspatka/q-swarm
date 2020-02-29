@@ -13,11 +13,11 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
     mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
     std::string parStageString;
 
-    GetNodeAttributeOrDefault(t_node, "velocity", parWheelVelocity, parWheelVelocity);
-    GetNodeAttributeOrDefault(t_node, "learning_rate", parLearnRate, parLearnRate);
-    GetNodeAttributeOrDefault(t_node, "discount_factor", parDiscountFactor, parDiscountFactor);
-    GetNodeAttributeOrDefault(t_node, "threshold", parThreshold, parThreshold);
-    GetNodeAttributeOrDefault(t_node, "stage", parStageString, parStageString);
+    GetNodeAttribute(t_node, "velocity", parWheelVelocity);
+    GetNodeAttribute(t_node, "learning_rate", parLearnRate);
+    GetNodeAttribute(t_node, "discount_factor", parDiscountFactor);
+    GetNodeAttribute(t_node, "threshold", parThreshold);
+    GetNodeAttribute(t_node, "stage", parStageString);
 
     parStage = parseStageFromString(parStageString);
     mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate);
