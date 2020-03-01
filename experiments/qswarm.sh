@@ -2,20 +2,19 @@
 # ================================================================================
 # Created by: Patka Zsolt-András
 # On: 13.07.2019
-# Last revision: 23.12.2019
-# This script makes it easier to clean, build, debug and run the ARGoS experiment
+# Last revision: 01.03.2020
+# This script makes it easier to clean, build, debug and run the ARGoS experiments
 # 
 # Arguments:$1	The job to execute, can be:
 #                   capture     takes the frames created from an argos capture,
 #                               creates a video from them and then deletes them.
 #                               filename is equal to $2
 #                   clean       removes the ${build_dir} directory
-#					build 		builds the project
-#					run			runs the experiment
-#					build-run   builds the project and runs the experiment	
-#					build-debug builds the project and stars the experiment in
-#								debug mode
-#			$2	The name of the scene
+#					          build 		  builds the project
+#					          run			    runs the experiment
+#					          build-run   builds the project and runs the experiment
+#					          build-debug builds the project and stars the experiment in debug mode
+#			      $2	The scene's name (without the .argos extension)
 #
 # build - requires no $2
 # ================================================================================
@@ -58,6 +57,7 @@ function f_build_debug {
 # Capture subtask.
 function f_capture {
     frames=$(ls | egrep "^frame_[0-9]{5}.png")
+    starting_index=$(echo ${frames} | tr " " "\n" | head -1 | tr -d "frame_" | tr -d ".png")
     dir_name=$(echo "capture_$cap_output")
     cd captures
     mkdir ${dir_name}
@@ -67,7 +67,7 @@ function f_capture {
     do
         mv ${frame} captures/${dir_name}/frames/${frame}
     done
-    ffmpeg -framerate 24 -i captures/${dir_name}/frames/frame_%05d.png \
+    ffmpeg -start_number ${starting_index} -framerate 24 -i captures/${dir_name}/frames/frame_%05d.png \
         -vf scale=1280:-2 -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p \
         captures/${dir_name}/${cap_output}.mp4
 }
@@ -94,12 +94,12 @@ fi
 
 
 case $job in
-    clean)
-        f_clean
-        ;;
-    capture)
-        f_capture
-        ;;
+  clean)
+    f_clean
+    ;;
+  capture)
+    f_capture
+    ;;
 	build)
 		f_build
 		;;
