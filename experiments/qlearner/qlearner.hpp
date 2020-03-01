@@ -89,8 +89,8 @@ namespace ql {
             for (auto impState : impossibleStateActions) {
                 int stateIndex = std::get<0>(impState);
                 int actionIndex = std::get<1>(impState);
-                assertm(stateIndex < NUM_STATES, "Invalid state index!");
-                assertm(actionIndex < NUM_ACTIONS, "Invalid action index!");
+                assertm(stateIndex < NUM_STATES && stateIndex >= 0, "Invalid state index!");
+                assertm(actionIndex < NUM_ACTIONS && actionIndex >= 0, "Invalid action index!");
                 R[stateIndex][actionIndex] = -1;
             }
 
@@ -98,8 +98,8 @@ namespace ql {
                 int stateIndex = std::get<0>(r);
                 int actionIndex = std::get<1>(r);
                 double reward = std::get<2>(r);
-                assertm(stateIndex < NUM_STATES, "Invalid state index!");
-                assertm(actionIndex < NUM_ACTIONS, "Invalid action index!");
+                assertm(stateIndex < NUM_STATES && stateIndex >= 0, "Invalid state index!");
+                assertm(actionIndex < NUM_ACTIONS && actionIndex >= 0, "Invalid action index!");
                 assertm(reward > 0, "Reward value can not be negative!");
                 R[stateIndex][actionIndex] = reward;
             }
@@ -128,7 +128,10 @@ namespace ql {
          * @return
          */
         int train(int state, int nextState) {
+            assertm(state < NUM_STATES && state >= 0, "Train: Invalid state index!");
+            assertm(nextState < NUM_STATES && nextState >= 0, "Train: Invalid next state: index!");
             int possibleAction = 0;
+            int bestAction = 0;
             if (learningRate > 0.1f) {
 
 //                ql::ThreadSafeRandom threadSafeRandom(0, NUM_ACTIONS);
@@ -138,10 +141,16 @@ namespace ql {
                 } while (R[state][possibleAction] == -1);
             } else {
                 double maxQValue = 0;
+                double nextStateMaxQValue = 0;
                 for (int i = 0; i < NUM_ACTIONS; ++i) {
                     if (Q[state][i] > maxQValue) {
                         maxQValue = Q[state][i];
                         possibleAction = i;
+                    }
+                    // Next state corresponds to the current state, as the next state can't be predicted
+                    if (Q[nextState][i] > nextStateMaxQValue) {
+                        nextStateMaxQValue = Q[state][i];
+                        bestAction = i;
                     }
                 }
             }
@@ -153,7 +162,8 @@ namespace ql {
             Q[state][possibleAction] = Q[state][possibleAction]
                                        + learningRate * (R[state][possibleAction] + discountFactor * nextStateMaxValue -
                                                          Q[state][possibleAction]);
-            return possibleAction;
+            // If the learningRate is less than 0.1f, then the absolute best action should be returned.
+            return (learningRate > 0.1f) ? possibleAction : bestAction;
         }
 
 
