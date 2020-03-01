@@ -93,7 +93,6 @@ std::string FootbotQLearnDiy::getActionName(double x, double y) {
  *              light: b > 0 && front == 0
  *      OBST_LEFT
  *      OBST_RIGHT
- *      OBST_FORWARD
  *      WANDER
  *      IDLE - end destination reached, GOAL state
  *          sensors:
@@ -120,11 +119,11 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     // Left front values
-    for (int i = 0; i <= 4; ++i) {
+    for (int i = 0; i <= 5; ++i) {
         leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
     }
     // Right front values
-    for (int i = 19; i <= 23; ++i) {
+    for (int i = 18; i <= 23; ++i) {
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
     mLed->SetAllColors(CColor::RED);
@@ -141,11 +140,11 @@ void FootbotQLearnDiy::ControlStep() {
          // UTURN state
         state = 1;
     }
-    if (leftMaxProx >= rightMaxProx && !closeToZero(leftMaxProx)) {
+    if (leftMaxProx >= rightMaxProx && !closeToZero(leftMaxProx) && maxLight < parThreshold) {
          // OBST_LEFT state
         state = 2;
     }
-    if (leftMaxProx < rightMaxProx) {
+    if (leftMaxProx < rightMaxProx && maxLight < parThreshold) {
         // OBST_RIGHT state
         state = 3;
     }
@@ -159,7 +158,7 @@ void FootbotQLearnDiy::ControlStep() {
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 100 == 0 && parStage == Stage::TRAIN) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 150 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
