@@ -55,8 +55,6 @@ public:
     // Small value, close to 0. Used for floating point comparisons to "0".
     constexpr double static EXP_EPSILON = 0.01;
 
-    constexpr int static GOAL_STATE = 3;
-
     constexpr int static NUM_STATES = 6;
 
     constexpr int static NUM_ACTIONS = 4;

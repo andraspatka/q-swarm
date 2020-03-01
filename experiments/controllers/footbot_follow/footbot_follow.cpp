@@ -86,34 +86,6 @@ std::string FootbotFollow::getActionName(double x, double y) {
  *
  *              back
  * Function for aggregating multiple sensor values: max
- * Aggregate of sensor values:
- *      f:  0 23
- *      lm: 5 6
- *      rm: 17 18
- *      lf: 1 2 3 4
- *      rf: 19 20 21 22
- *      b:  8 9 10 11 12 13 14 15
- *
- * States:
- *      FOLLOW - the goal is visible from the front
- *          sensors:
- *              prox: 0
- *              light: b=0
- *      UTURN - facing in the wrong direction, should turn around
- *          sensors:
- *              prox: ?
- *              light: b > 0 && front == 0
- *      AVOID - obstacle detected
- *          sensors:
- *              prox: front != 0
- *              light: ?
- *      IDLE - end destination reached, GOAL state
- *          sensors:
- *              prox: ?
- *              light: max(sensor values) > THRESHOLD
- *      WANDER - nothing is visible
- *          camera = 0
- *          prox != 0
  */
 void FootbotFollow::ControlStep() {
 
@@ -124,9 +96,6 @@ void FootbotFollow::ControlStep() {
     int state = -1;
     double action[2];
 
-    double frontCameraLen = 0.0f;
-    double backCameraLen = 0.0f;
-
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
 
@@ -136,20 +105,21 @@ void FootbotFollow::ControlStep() {
     for (auto r : cameraReadings) {
         LOG << r->Color << " " << r->Angle << " " << r->Distance << std::endl;
         double angleInDegrees = r->Angle.GetAbsoluteValue() * argos::CRadians::RADIANS_TO_DEGREES;
-        if (angleInDegrees <= 30.0f && r->Color == CColor::RED) {
+        if (angleInDegrees <= 30.0f && (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::GREEN)) {
             leaderDetected = true;
-        } else if (r->Color == CColor::RED) {
+            maxCameraLen = std::max(maxCameraLen, r->Distance);
+        } else if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::GREEN) {
             backLeaderDetected = true;
+            maxCameraLen = std::max(maxCameraLen, r->Distance);
         }
-        maxCameraLen = std::max(maxCameraLen, r->Distance);
     }
 
     // Left front values
-    for (int i = 0; i <= 4; ++i) {
+    for (int i = 0; i <= 5; ++i) {
         leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
     }
     // Right front values
-    for (int i = 19; i <= 23; ++i) {
+    for (int i = 18; i <= 23; ++i) {
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
 
@@ -183,7 +153,7 @@ void FootbotFollow::ControlStep() {
         state = 4;
         mLed->SetAllColors(CColor::WHITE);
     }
-    if (maxCameraLen < parThreshold && leaderDetected) {
+    if (maxCameraLen < parThreshold && (leaderDetected || backLeaderDetected)) {
          // IDLE state
          state = 5;
          mLed->SetAllColors(CColor::GREEN);
