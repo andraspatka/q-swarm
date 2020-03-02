@@ -3,7 +3,7 @@
 
     <!-- General configuration -->
     <framework>
-        <system threads="4" />
+        <system threads="1" />
         <experiment length="0" ticks_per_second="10" random_seed="124" />
     </framework>
 
@@ -78,16 +78,16 @@
         </foot-bot>
 
         <!-- The footbot which can go to the goal. -->
-        <foot-bot id="fgc">
+        <!--<foot-bot id="fgc">
             <body position="2,2,0" orientation="0,0,0" />
             <controller config="fgc" />
-        </foot-bot>
+        </foot-bot>-->
 
         <!-- Manual control footbot. -->
-<!--        <foot-bot id="fmc">
+        <foot-bot id="fmc">
             <body position="2,2,0" orientation="0,0,0" />
             <controller config="fmc" />
-        </foot-bot>-->
+        </foot-bot>
 
         <!-- End goal for the footbots marked by a light -->
         <light id="light" position="-0.85,-0.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />

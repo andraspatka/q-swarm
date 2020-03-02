@@ -85,6 +85,10 @@ void CManualControlQTUserFunctions::EntitySelected(CEntity &c_entity) {
     if (!pcFB) return;
     /* It's a foot-bot; extract its controller */
     m_pcController = dynamic_cast<CFootBotManualControl *>(&pcFB->GetControllableEntity().GetController());
+    if (!m_pcController) {
+        return;
+    }
+
     /* Tell that foot-bot that it is selected */
     m_pcController->Select();
     /* Reset key press information */
