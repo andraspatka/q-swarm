@@ -21,7 +21,7 @@
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
             <!--<params velocity="30" learning_rate="0.95" discount_factor="0.8" threshold="40" stage="train" qmat_filename="Qfollow.qlmat"/>-->
-            <params velocity="30" learning_rate="0.05" discount_factor="0.8" threshold="40" stage="exploit" qmat_filename="Qfollow.qlmat"/>
+            <params velocity="30" learning_rate="0.05" discount_factor="0.8" threshold="50" stage="exploit" qmat_filename="Qfollow.qlmat"/>
         </footbot_follow>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -43,7 +43,7 @@
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
 <!--            <params velocity="25" learning_rate="0.95" discount_factor="0.8" threshold="0.25" stage="train"/>-->
-            <params velocity="25" learning_rate="0.07" discount_factor="0.8" threshold="0.25" stage="exploit"/>
+            <params velocity="25" learning_rate="0.05" discount_factor="0.8" threshold="0.25" stage="exploit"/>
         </footbot_qlearn_diy_controller>
     </controllers>
 

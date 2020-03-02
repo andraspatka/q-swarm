@@ -178,10 +178,10 @@ void FootbotFollow::ControlStep() {
             break;
         case 1: // TURN LEFT
             action[0] = 0;
-            action[1] = parWheelVelocity;
+            action[1] = 2 * parWheelVelocity;
             break;
         case 2: // TURN RIGHT
-            action[0] = parWheelVelocity;
+            action[0] = 2 * parWheelVelocity;
             action[1] = 0;
             break;
         case 3: // FORWARD
