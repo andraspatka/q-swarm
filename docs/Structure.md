@@ -119,3 +119,42 @@ Deklarációk
  - saját munka kell legyen
  - a dolgozat az egyetemé 
 
+Turnitin report
+
+Extras:
+ - románul
+ - 1 oldalas kell legyen
+
+Kivonat:
+ - 150-200 szó
+
+Ábrák, táblázatok jegyzéke
+
+Bevezető:
+ - kontextus
+ - téma pontos tartományának behatárolása
+ - tulajdonképpeni téma
+
+Elméleti megalapozás és bibliográfiai tanulmány
+ - survey
+
+Rendszer specifikációi és architektúrája (szoftverek és hardverek esetén)
+
+Részletes tervezés
+
+Üzembe helyezés és kísérleti eredmények
+ - felmerült problémák és megoldásaik
+ - kísérleti eredmények
+
+A rendszer felhasználása
+ - bebizonyítani, hogy hasznos dolog
+
+Következtetések
+ - megvalósítások
+    - lehet valami tervben volt, de nem megvalósítható
+ - hasonló rendszerekkel való összehasonlítás
+ - további fejlesztési irányok
+
+Irodalomjegyzék
+
+Függelékek
