@@ -3,7 +3,7 @@
 FootbotFollow::FootbotFollow() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
-        globalMaxCameraReading(0),
+        globalMinCameraBlobDist(0),
         epoch(0) {}
 
 /**
@@ -88,11 +88,9 @@ std::string FootbotFollow::getActionName(double x, double y) {
  * Function for aggregating multiple sensor values: max
  */
 void FootbotFollow::ControlStep() {
-
     double leftMaxProx = 0.0f;
     double rightMaxProx = 0.0f;
 
-    double rewardValue = 0;
     int state = -1;
     double action[2];
 
@@ -101,18 +99,28 @@ void FootbotFollow::ControlStep() {
 
     bool leaderDetected = false;
     bool backLeaderDetected = false;
-    double maxCameraLen = 0;
+    double minCameraLen = 0;
+    CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
     for (auto r : cameraReadings) {
-        LOG << r->Color << " " << r->Angle << " " << r->Distance << std::endl;
-        double angleInDegrees = r->Angle.GetAbsoluteValue() * argos::CRadians::RADIANS_TO_DEGREES;
-        if (angleInDegrees <= 30.0f && (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::GREEN)) {
-            leaderDetected = true;
-            maxCameraLen = std::max(maxCameraLen, r->Distance);
-        } else if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::GREEN) {
-            backLeaderDetected = true;
-            maxCameraLen = std::max(maxCameraLen, r->Distance);
+        if (r->Distance < minDistanceBlob.Distance && (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::GREEN)) {
+            minDistanceBlob.Distance = r->Distance;
+            minDistanceBlob.Angle = r->Angle;
+            minDistanceBlob.Color = r->Color;
         }
     }
+    double absAngleInDegrees = minDistanceBlob.Angle.GetAbsoluteValue() * argos::CRadians::RADIANS_TO_DEGREES;
+
+    if (minDistanceBlob.Color != CColor::WHITE) {
+        minCameraLen = minDistanceBlob.Distance;
+        if (absAngleInDegrees <= 30.0f) {
+            leaderDetected = true;
+        } else {
+            backLeaderDetected = true;
+        }
+    } else {
+        minCameraLen = 0;
+    }
+
 
     // Left front values
     for (int i = 0; i <= 5; ++i) {
@@ -123,17 +131,17 @@ void FootbotFollow::ControlStep() {
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
 
-    // As we use the camera sensor, the maxCameraLen refers to distance, not sensor reading intensity.
+    // As we use the camera sensor, the minCameraLen refers to distance, not sensor reading intensity.
     // Therefore the threshold that we define (the threshold refers to how close the agent should be to its goal) should be
     // less then the maximal camera distance in the given step
 
     // States
-    if (leaderDetected && maxCameraLen > parThreshold) {
+    if (leaderDetected && minCameraLen > parThreshold) {
          // FOLLOW state
         state = 0;
         mLed->SetAllColors(CColor::YELLOW);
     }
-    if (closeToZero(maxCameraLen) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
+    if (closeToZero(minCameraLen) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
         // WANDER state
         state = 1;
         mLed->SetAllColors(CColor::WHITE);
@@ -153,7 +161,7 @@ void FootbotFollow::ControlStep() {
         state = 4;
         mLed->SetAllColors(CColor::WHITE);
     }
-    if (maxCameraLen < parThreshold && (leaderDetected || backLeaderDetected)) {
+    if (minCameraLen < parThreshold && (leaderDetected || backLeaderDetected)) {
          // IDLE state
          state = 5;
          mLed->SetAllColors(CColor::GREEN);
@@ -163,13 +171,9 @@ void FootbotFollow::ControlStep() {
     if (mQLearner->getLearningRate() > 0.05f && epoch % 150 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
-
-    if (globalMaxCameraReading < rewardValue) {
-        globalMaxCameraReading = rewardValue;
-    }
     int actionIndex = mQLearner->train(mPrevState, state);
 
-    globalMaxCameraReading = std::max(globalMaxCameraReading, maxCameraLen);
+    globalMinCameraBlobDist = std::min(globalMinCameraBlobDist, minCameraLen);
     mPrevState = state;
     switch (actionIndex) {
         case 0: // STOP
@@ -231,12 +235,12 @@ void FootbotFollow::ControlStep() {
     LOG << "Stage: " << parStage << std::endl;
     LOG << "LeftMaxProx: " << leftMaxProx << std::endl;
     LOG << "RightMaxProx: " << rightMaxProx << std::endl;
-    LOG << "Max camera len: " << maxCameraLen << std::endl;
+    LOG << "Min camera len: " << minCameraLen << std::endl;
 
     LOG << "Action taken: " << getActionName(action[0], action[1]) << std::endl;
     LOG << "State: " << actualState << std::endl;
     LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
-    LOG << "Global max camera: " << globalMaxCameraReading << std::endl;
+    LOG << "Global min camera: " << globalMinCameraBlobDist << std::endl;
 }
 
 void FootbotFollow::Destroy() {

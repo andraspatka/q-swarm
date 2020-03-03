@@ -70,7 +70,7 @@ private:
 
     int epoch = 0;
 
-    double globalMaxCameraReading;
+    double globalMinCameraBlobDist;
 
     /** ACTUATORS AND SENSORS */
     /* Pointer to the differential steering actuator. */
