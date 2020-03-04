@@ -102,7 +102,7 @@ void FootbotFollow::ControlStep() {
     double minCameraLen = 0;
     CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
     for (auto r : cameraReadings) {
-        if (r->Distance < minDistanceBlob.Distance && (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::GREEN)) {
+        if (r->Distance < minDistanceBlob.Distance && r->Color == CColor::RED) {
             minDistanceBlob.Distance = r->Distance;
             minDistanceBlob.Angle = r->Angle;
             minDistanceBlob.Color = r->Color;
@@ -123,11 +123,11 @@ void FootbotFollow::ControlStep() {
 
 
     // Left front values
-    for (int i = 0; i <= 5; ++i) {
+    for (int i = 0; i <= 3; ++i) {
         leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
     }
     // Right front values
-    for (int i = 18; i <= 23; ++i) {
+    for (int i = 20; i <= 23; ++i) {
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
 
