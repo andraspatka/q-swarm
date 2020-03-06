@@ -25,7 +25,7 @@ https://www.argos-sim.info/examples.php
 Before installing Argos3
 
 ```bash
-sudo apt install cmake libfreeimage-dev libfreeimageplus-dev qt5-default freeglut3-dev libxi-dev libxmu-dev liblua5.3-dev lua5.3    
+sudo apt-get install cmake libfreeimage-dev libfreeimageplus-dev qt5-default freeglut3-dev libxi-dev libxmu-dev liblua5.3-dev lua5.3
 
 #In case of error: sudo apt --fix-broken install
 ```
