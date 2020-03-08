@@ -130,8 +130,8 @@ namespace ql {
         int train(int state, int nextState) {
             assertm(state < NUM_STATES && state >= 0, "Train: Invalid state index!");
             assertm(nextState < NUM_STATES && nextState >= 0, "Train: Invalid next state: index!");
-            int possibleAction = 0;
-            int bestAction = 0;
+            int possibleAction = -1;
+            int bestAction = -1;
             if (learningRate > 0.1f) {
 
 //                ql::ThreadSafeRandom threadSafeRandom(0, NUM_ACTIONS);
@@ -149,7 +149,7 @@ namespace ql {
                     }
                     // Next state corresponds to the current state, as the next state can't be predicted
                     if (Q[nextState][i] > nextStateMaxQValue) {
-                        nextStateMaxQValue = Q[state][i];
+                        nextStateMaxQValue = Q[nextState][i];
                         bestAction = i;
                     }
                 }
