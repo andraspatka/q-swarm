@@ -20,7 +20,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="30" learning_rate="0.05" discount_factor="0.8" threshold="50" stage="exploit" qmat_filename="Qfollow-train.qlmat"/>
+            <params velocity="30" learning_rate="0.95" discount_factor="0.8" threshold="40" stage="train" qmat_filename="Qfollow-train.qlmat"/>
         </footbot_follow>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -41,6 +41,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
+            <!--            <params velocity="25" learning_rate="0.95" discount_factor="0.8" threshold="0.25" stage="train"/>-->
             <params velocity="25" learning_rate="0.05" discount_factor="0.8" threshold="0.25" stage="exploit"/>
         </footbot_qlearn_diy_controller>
     </controllers>
@@ -87,28 +88,6 @@
             <controller config="fmc" />
         </foot-bot>
 
-        <!-- End goal for the footbots marked by a light -->
-        <light id="light" position="-0.85,-0.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
-
-        <!-- The follow footbots. -->
-        <distribute>
-            <position method="uniform" min="-2,-2,0" max="2,2,0" />
-            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="0" max_trials="100">
-                <foot-bot id="fb">
-                    <controller config="fgc" />
-                </foot-bot>
-            </entity>
-        </distribute>
-        <distribute>
-            <position method="uniform" min="-2,-2,0" max="2,2,0" />
-            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="10" max_trials="100">
-                <foot-bot id="fbfollow">
-                    <controller config="ffc" />
-                </foot-bot>
-            </entity>
-        </distribute>
 
     </arena>
 

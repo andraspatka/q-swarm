@@ -1,6 +1,7 @@
 experiments/build
 experiments/.project
-experiments/.idea
+experiments/.idea/dictionaries
+experiments/.idea/shelf
 experiments/cmake-build-debug
 experiments/captures
 *.aux
@@ -13,3 +14,8 @@ experiments/captures
 *.blg
 *.qlmat
 main.log
+experiments.iml
+misc.xml
+workspace.xml
+modules.xml
+vcs.xml
