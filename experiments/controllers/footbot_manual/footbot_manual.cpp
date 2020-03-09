@@ -11,7 +11,7 @@ CFootBotManualControl::CFootBotManualControl() :
 void CFootBotManualControl::Init(TConfigurationNode& t_node) {
    m_pcWheels = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
    m_pcLEDs   = GetActuator<CCI_LEDsActuator>("leds");
-
+   m_pcLEDs->SetAllColors(CColor::WHITE);
    GetNodeAttribute(t_node, "max_speed", this->parMaxSpeed);
 }
 
@@ -29,7 +29,7 @@ void CFootBotManualControl::Select() {
 
 void CFootBotManualControl::Deselect() {
    m_bSelected = false;
-   m_pcLEDs->SetAllColors(CColor::BLACK);
+   m_pcLEDs->SetAllColors(CColor::WHITE);
 }
 
 void CFootBotManualControl::SetDiffSteering(double diffSteer[2]) {

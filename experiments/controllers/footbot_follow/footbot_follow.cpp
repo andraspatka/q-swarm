@@ -62,9 +62,9 @@ bool closeToZero(double value) {
 
 std::string FootbotFollow::getActionName(double x, double y) {
     if (x == 0.0 && y == 0.0) return "STOP";
-    if (x == parWheelVelocity && y == parWheelVelocity) return "FORWARD";
-    if (x == 0.0 && y == parWheelVelocity) return "TURN LEFT";
-    if (x == parWheelVelocity && y == 0.0f) return "TURN RIGHT";
+    if (x == y) return "FORWARD";
+    if (y > x) return "TURN LEFT";
+    if (x > y) return "TURN RIGHT";
     return "INVALID";
 }
 
@@ -121,7 +121,6 @@ void FootbotFollow::ControlStep() {
         minCameraLen = 0;
     }
 
-
     // Left front values
     for (int i = 0; i <= 3; ++i) {
         leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
@@ -131,40 +130,52 @@ void FootbotFollow::ControlStep() {
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
 
+    bool isObstacleLeft = (leftMaxProx >= rightMaxProx && !closeToZero(leftMaxProx));
+    bool isObstacleRight = (leftMaxProx < rightMaxProx);
+    bool isObstacleDetected = isObstacleLeft || isObstacleRight;
+
+    bool isFollow = leaderDetected && minCameraLen > parThreshold && !isObstacleDetected;
+    bool isWander = closeToZero(minCameraLen) && !isObstacleDetected;
+    bool isUturn = backLeaderDetected && minCameraLen > parThreshold && !leaderDetected && !isObstacleDetected;
+    bool isIdle = minCameraLen < parThreshold && (leaderDetected || backLeaderDetected) && !isObstacleDetected;
+
     // As we use the camera sensor, the minCameraLen refers to distance, not sensor reading intensity.
     // Therefore the threshold that we define (the threshold refers to how close the agent should be to its goal) should be
     // less then the maximal camera distance in the given step
 
     // States
-    if (leaderDetected && minCameraLen > parThreshold) {
+    if (isFollow) {
          // FOLLOW state
         state = 0;
         mLed->SetAllColors(CColor::YELLOW);
-    }
-    if (closeToZero(minCameraLen) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
+    } else if (isWander) {
         // WANDER state
         state = 1;
         mLed->SetAllColors(CColor::WHITE);
-    }
-    if (backLeaderDetected && !leaderDetected && closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
+    } else if (isUturn) {
         // UTURN state
         state = 2;
         mLed->SetAllColors(CColor::WHITE);
-    }
-    if (leftMaxProx >= rightMaxProx && !closeToZero(leftMaxProx)) {
+    } else if (isObstacleLeft) {
         // OBST_LEFT state
         state = 3;
         mLed->SetAllColors(CColor::WHITE);
-    }
-    if (leftMaxProx < rightMaxProx) {
+    } else if (isObstacleRight) {
         // OBST_RIGHT state
         state = 4;
         mLed->SetAllColors(CColor::WHITE);
-    }
-    if (minCameraLen < parThreshold && (leaderDetected || backLeaderDetected)) {
+    } else if (isIdle) {
          // IDLE state
          state = 5;
          mLed->SetAllColors(CColor::GREEN);
+    }
+
+    if (state == -1) {
+        int bp = 0;
+    }
+
+    if (isFollow + isWander + isUturn + isObstacleLeft + isObstacleRight + isIdle > 1) {
+        int bp = 0;
     }
 
     epoch++;
