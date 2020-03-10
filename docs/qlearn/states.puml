@@ -1,9 +1,0 @@
-@startuml name
-scale 2
-top to bottom direction
-skinparam packageStyle rect
-(wander)->(obstacle_detected): neg reward
-(wander)->(goal): pos reward
-(wander)->(back): neg reward
-
-@enduml
