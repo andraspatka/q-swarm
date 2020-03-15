@@ -28,3 +28,5 @@ add_subdirectory(controllers)
 
 # Descend into the loop_functions directory
 add_subdirectory(loop_functions)
+
+add_subdirectory(qlearner)
