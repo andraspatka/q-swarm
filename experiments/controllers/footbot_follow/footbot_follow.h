@@ -11,7 +11,9 @@
 #include <fstream>
 #include <argos3/plugins/robots/generic/control_interface/ci_leds_actuator.h>
 
-#include "qlearner/qlearner.hpp"
+#include <qlearner/qlearner.hpp>
+#include <qlearner/ql_utils.hpp>
+#include <qlearner/ql_math_utils.hpp>
 
 using namespace argos;
 
@@ -52,17 +54,12 @@ public:
         EXPLOIT
     };
 
-    // Small value, close to 0. Used for floating point comparisons to "0".
-    constexpr double static EXP_EPSILON = 0.001;
-
-    constexpr int static NUM_STATES = 6;
+    constexpr int static NUM_STATES = 8;
 
     constexpr int static NUM_ACTIONS = 4;
 private:
 
     static Stage parseStageFromString(const std::string& stageString);
-
-    std::string getActionName(double x, double y);
 
     ql::QLearner * mQLearner;
 

@@ -15,6 +15,8 @@ FootbotFollow::FootbotFollow() :
  * OBST_LEFT  -1      0           0.1         0
  * OBST_RIGHT -1      0.1         0           0
  * IDLE        1      0           0           0
+ * PUSHED     -1      0           0           0
+ * PULLED     -1      0           0           0
  */
 void FootbotFollow::Init(TConfigurationNode &t_node) {
 
@@ -39,7 +41,9 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
             std::make_tuple(1, 0), // WANDER state, STOP action
             std::make_tuple(2, 0), // UTURN, STOP action
             std::make_tuple(3, 0), // OBST_LEFT, STOP action
-            std::make_tuple(4, 0)  // OBST_RIGHT, STOP action
+            std::make_tuple(4, 0),  // OBST_RIGHT, STOP action
+            std::make_tuple(6, 0),  // PUSHED, STOP action
+            std::make_tuple(7, 0),  // PULLED, STOP action
     };
     std::vector<std::tuple<int, int, double>> rewards = {
             std::make_tuple(0, 3, 1), // FOLLOW state, FORWARD action
@@ -52,20 +56,6 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     if (parStage == Stage::EXPLOIT) {
         mQLearner->readQ("qmats/" + parQMatFileName);
     }
-}
-
-
-
-bool closeToZero(double value) {
-    return value < FootbotFollow::EXP_EPSILON;
-}
-
-std::string FootbotFollow::getActionName(double x, double y) {
-    if (x == 0.0 && y == 0.0) return "STOP";
-    if (x == y) return "FORWARD";
-    if (y > x) return "TURN LEFT";
-    if (x > y) return "TURN RIGHT";
-    return "INVALID";
 }
 
 /**
@@ -92,7 +82,6 @@ void FootbotFollow::ControlStep() {
     double rightMaxProx = 0.0f;
 
     int state = -1;
-    double action[2];
 
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
@@ -130,44 +119,61 @@ void FootbotFollow::ControlStep() {
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
 
-    bool isObstacleLeft = (leftMaxProx >= rightMaxProx && !closeToZero(leftMaxProx));
+    double pushMaxProx = std::max(leftMaxProx, rightMaxProx);
+    double fpush = ql::QLMathUtils::calculateGauss(2.0, 1 - pushMaxProx, 0, 1.0f);
+    double fpull = ql::QLMathUtils::calculateGauss(2.0, minDistanceBlob.Distance / 120.0f, 1, 1.0f);
+
+    double fpushPullSum = fpull - fpush;
+
+    bool isObstacleLeft = (leftMaxProx >= rightMaxProx && !ql::QLMathUtils::closeToZero(leftMaxProx));
     bool isObstacleRight = (leftMaxProx < rightMaxProx);
     bool isObstacleDetected = isObstacleLeft || isObstacleRight;
 
     bool isFollow = leaderDetected && minCameraLen > parThreshold && !isObstacleDetected;
-    bool isWander = closeToZero(minCameraLen) && !isObstacleDetected;
+    bool isWander = ql::QLMathUtils::closeToZero(minCameraLen) && !isObstacleDetected;
     bool isUturn = backLeaderDetected && minCameraLen > parThreshold && !leaderDetected && !isObstacleDetected;
     bool isIdle = minCameraLen < parThreshold && (leaderDetected || backLeaderDetected) && !isObstacleDetected;
+    bool isPushed = fpushPullSum < 0;
+    bool isPulled = fpushPullSum > 0;
 
     // As we use the camera sensor, the minCameraLen refers to distance, not sensor reading intensity.
     // Therefore the threshold that we define (the threshold refers to how close the agent should be to its goal) should be
     // less then the maximal camera distance in the given step
-
+    std::string actualState;
     // States
     if (isFollow) {
-         // FOLLOW state
+        actualState = "FOLLOW";
         state = 0;
         mLed->SetAllColors(CColor::YELLOW);
     } else if (isWander) {
-        // WANDER state
+        actualState = "WANDER";
         state = 1;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isUturn) {
-        // UTURN state
+        actualState = "UTURN";
         state = 2;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isObstacleLeft) {
-        // OBST_LEFT state
+        actualState = "OBST_LEFT";
         state = 3;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isObstacleRight) {
-        // OBST_RIGHT state
+        actualState = "OBST_RIGHT";
         state = 4;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isIdle) {
-         // IDLE state
+        actualState = "IDLE";
          state = 5;
          mLed->SetAllColors(CColor::GREEN);
+    } else if (isPushed) {
+        actualState = "PUSHED";
+        state = 6;
+        mLed->SetAllColors(CColor::CYAN);
+    }
+    else if (isPulled) {
+        actualState = "PULLED";
+        state = 7;
+        mLed->SetAllColors(CColor::BROWN);
     }
 
     if (state == -1) {
@@ -186,61 +192,9 @@ void FootbotFollow::ControlStep() {
 
     globalMinCameraBlobDist = std::min(globalMinCameraBlobDist, minCameraLen);
     mPrevState = state;
-    switch (actionIndex) {
-        case 0: // STOP
-            action[0] = 0;
-            action[1] = 0;
-            break;
-        case 1: // TURN LEFT
-            action[0] = 0;
-            action[1] = 2 * parWheelVelocity;
-            break;
-        case 2: // TURN RIGHT
-            action[0] = 2 * parWheelVelocity;
-            action[1] = 0;
-            break;
-        case 3: // FORWARD
-            action[0] = parWheelVelocity;
-            action[1] = parWheelVelocity;
-            break;
-        default:
-            action[0] = 0;
-            action[1] = 0;
-            break;
-    }
 
+    std::array<double, 2> action = ql::QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
-
-    std::string actualState;
-    switch (state) {
-        case 0: {
-            actualState = "FOLLOW";
-            break;
-        }
-        case 1: {
-            actualState = "WANDER";
-            break;
-        }
-        case 2: {
-            actualState = "UTURN";
-            break;
-        }
-        case 3: {
-            actualState = "OBST_LEFT";
-            break;
-        }
-        case 4: {
-            actualState = "OBST_RIGHT";
-            break;
-        }
-        case 5: {
-            actualState = "IDLE";
-            break;
-        }
-        default: {
-            actualState = "ERROR";
-        }
-    }
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
     LOG << "Stage: " << parStage << std::endl;
@@ -248,10 +202,13 @@ void FootbotFollow::ControlStep() {
     LOG << "RightMaxProx: " << rightMaxProx << std::endl;
     LOG << "Min camera len: " << minCameraLen << std::endl;
 
-    LOG << "Action taken: " << getActionName(action[0], action[1]) << std::endl;
+    LOG << "Action taken: " << ql::QLUtils::getActionName(action[0], action[1]) << std::endl;
     LOG << "State: " << actualState << std::endl;
     LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     LOG << "Global min camera: " << globalMinCameraBlobDist << std::endl;
+    LOG << "fpush: " << fpush << std::endl;
+    LOG << "fpull: " << fpull << std::endl;
+    LOG << "fpull - fpush:  " << fpushPullSum << std::endl;
 }
 
 void FootbotFollow::Destroy() {
