@@ -4,6 +4,7 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <argos3/core/utility/math/vector2.h>
 
 #define assertm(exp, msg) assert(((void)msg, exp))
 
@@ -25,9 +26,32 @@ namespace ql {
          * @return
          */
         static double calculateGauss(double a, double x, double b, double c) {
-            double num = - pow((x - b), 2.0);
+            double num = -pow((x - b), 2.0);
             double denum = 2 * pow(c, 2.0);
             return a * exp(num / denum);
+        }
+
+        static double cameraToDistance(double reading) {
+            return reading / CAMERA_READING_MAX_VALUE;
+        }
+
+        static double proxToDistance(double reading) {
+            return 1 - reading;
+        }
+
+        static argos::CVector2
+        readingToVector(double readingLength, argos::CRadians readingAngle, double a, double b, double c,
+                        double (*transf)(double)) {
+            double length = calculateGauss(a, transf(readingLength), b, c);
+            return {length, readingAngle};
+        }
+
+        static double absAngleInDegrees(argos::CRadians angle) {
+            return angle.GetAbsoluteValue() * argos::CRadians::RADIANS_TO_DEGREES;
+        }
+
+        static double angleInDegrees(argos::CRadians angle) {
+            return angle.GetValue() * argos::CRadians::RADIANS_TO_DEGREES;
         }
     };
 }

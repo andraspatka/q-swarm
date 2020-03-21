@@ -16,6 +16,7 @@
 #include <qlearner/ql_math_utils.hpp>
 
 using namespace argos;
+using namespace ql;
 
 class FootbotFollow : public CCI_Controller {
 
@@ -57,6 +58,18 @@ public:
     constexpr int static NUM_STATES = 8;
 
     constexpr int static NUM_ACTIONS = 4;
+
+    // The push gauss curve's centre point is the robot
+    constexpr double static B_PUSH = 0.0f;
+    // The pull gauss curve's centre point is the prox sensor's coverage limit
+    constexpr double static B_PULL = 1.0f;
+    // Width of the gauss curve for pushing forces
+    constexpr double static C_PUSH = 0.2f;
+    // Width of the gauss curve for pulling forces
+    constexpr double static C_PULL = 0.2f;
+    // Height of the gauss curve
+    constexpr double static A = 1.0f;
+
 private:
 
     static Stage parseStageFromString(const std::string& stageString);
