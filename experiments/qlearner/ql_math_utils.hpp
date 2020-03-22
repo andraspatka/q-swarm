@@ -13,6 +13,9 @@ namespace ql {
     class QLMathUtils {
     public:
         static constexpr double EPSILON = 0.01;
+        static constexpr double CUTOFF_VALUE = 0.15;
+        static constexpr double CAMERA_READING_MAX_VALUE = 120.0f;
+
         static bool closeToZero(double value) {
             return value < EPSILON && value > -EPSILON;
         }
@@ -28,7 +31,8 @@ namespace ql {
         static double calculateGauss(double a, double x, double b, double c) {
             double num = -pow((x - b), 2.0);
             double denum = 2 * pow(c, 2.0);
-            return a * exp(num / denum);
+            double ret = a * exp(num / denum);
+            return ret <= CUTOFF_VALUE ? 0.0f : ret;
         }
 
         static double cameraToDistance(double reading) {

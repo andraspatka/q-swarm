@@ -55,7 +55,7 @@ public:
         EXPLOIT
     };
 
-    constexpr int static NUM_STATES = 8;
+    constexpr int static NUM_STATES = 6;
 
     constexpr int static NUM_ACTIONS = 4;
 
@@ -64,9 +64,9 @@ public:
     // The pull gauss curve's centre point is the prox sensor's coverage limit
     constexpr double static B_PULL = 1.0f;
     // Width of the gauss curve for pushing forces
-    constexpr double static C_PUSH = 0.2f;
+    constexpr double static C_PUSH = 0.3f;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 0.2f;
+    constexpr double static C_PULL = 0.1f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 

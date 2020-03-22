@@ -12,8 +12,8 @@ FootbotFollow::FootbotFollow() :
  * 0 WANDER     -1      0           0           0.1
  * 1 FOLLOW     -1      0           0           1
  * 2 UTURN      -1      0           0           0
- * 3 DIR_LEFT   -1      0.1         0           0
- * 4 DIR_RIGHT  -1      0           0.1         0
+ * 3 DIR_LEFT   -1      0         0           0
+ * 4 DIR_RIGHT  -1      0           0         0
  * 5 IDLE        1      0           0           0
  */
 void FootbotFollow::Init(TConfigurationNode &t_node) {
@@ -44,8 +44,6 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     std::vector<std::tuple<int, int, double>> rewards = {
             std::make_tuple(0, 3, 0.1), // WANDER state, FORWARD action
             std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
-            std::make_tuple(3, 1, 0.1), // DIR_LEFT state, TURN_LEFT action
-            std::make_tuple(4, 2, 0.1), // DIR_RIGHT state, TURN_RIGHT action
             std::make_tuple(5, 0, 1), // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
@@ -109,8 +107,9 @@ void FootbotFollow::ControlStep() {
         maxProx = std::max(maxProx, proxReadings.at(i).Value);
     }
 
-    CVector2 directionVector = fpushVector + fpullVector;
+    CVector2 directionVector = fpullVector - fpushVector;
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
+
     // TODO: revise wander and idle state
     bool isWander = QLMathUtils::closeToZero(maxProx) && minDistanceBlob.Distance == 1000.0f;
     bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) < 30.0f && !isDirZero;
@@ -119,16 +118,16 @@ void FootbotFollow::ControlStep() {
                      QLMathUtils::angleInDegrees(directionVector.Angle()) < 125.0f && !isDirZero;
     bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -30.0f &&
                       QLMathUtils::angleInDegrees(directionVector.Angle()) > -125.0f && !isDirZero;
-    bool isIdle = isDirZero;
+    bool isIdle = isDirZero && minDistanceBlob.Distance != 1000.0f;
 
     std::string actualState;
     // States
     if (isWander) {
-        actualState = "FOLLOW";
+        actualState = "WANDER";
         state = 0;
         mLed->SetAllColors(CColor::YELLOW);
     } else if (isFollow) {
-        actualState = "WANDER";
+        actualState = "FOLLOW";
         state = 1;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isUturn) {
@@ -158,7 +157,7 @@ void FootbotFollow::ControlStep() {
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 150 == 0 && parStage == Stage::TRAIN) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 175 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
     int actionIndex = mQLearner->train(mPrevState, state);
