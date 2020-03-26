@@ -12,8 +12,8 @@ FootbotFollow::FootbotFollow() :
  * 0 WANDER     -1      0           0           0.1
  * 1 FOLLOW     -1      0           0           1
  * 2 UTURN      -1      0           0           0
- * 3 DIR_LEFT   -1      0         0           0
- * 4 DIR_RIGHT  -1      0           0         0
+ * 3 DIR_LEFT   -1      0.1         0           0
+ * 4 DIR_RIGHT  -1      0           0.1         0
  * 5 IDLE        1      0           0           0
  */
 void FootbotFollow::Init(TConfigurationNode &t_node) {
@@ -44,6 +44,8 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     std::vector<std::tuple<int, int, double>> rewards = {
             std::make_tuple(0, 3, 0.1), // WANDER state, FORWARD action
             std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
+            std::make_tuple(3, 1, 0.1), // DIR_LEFT state, TURN_LEFT action
+            std::make_tuple(4, 2, 0.1), // DIR_RIGHT state, TURN_LEFT action
             std::make_tuple(5, 0, 1), // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
@@ -84,7 +86,7 @@ void FootbotFollow::ControlStep() {
 
     CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
     for (auto r : cameraReadings) {
-        if (r->Distance < minDistanceBlob.Distance && r->Color == CColor::RED) {
+        if (r->Distance < minDistanceBlob.Distance && (r->Color == CColor::RED || r->Color == CColor::YELLOW)) {
             minDistanceBlob.Distance = r->Distance;
             minDistanceBlob.Angle = r->Angle;
             minDistanceBlob.Color = r->Color;
@@ -125,15 +127,15 @@ void FootbotFollow::ControlStep() {
     if (isWander) {
         actualState = "WANDER";
         state = 0;
-        mLed->SetAllColors(CColor::YELLOW);
+        mLed->SetAllColors(CColor::WHITE);
     } else if (isFollow) {
         actualState = "FOLLOW";
         state = 1;
-        mLed->SetAllColors(CColor::WHITE);
+        mLed->SetAllColors(CColor::YELLOW);
     } else if (isUturn) {
         actualState = "UTURN";
         state = 2;
-        mLed->SetAllColors(CColor::WHITE);
+        mLed->SetAllColors(CColor::PURPLE);
     } else if (isDirLeft) {
         actualState = "DIR_LEFT";
         state = 3;

@@ -15,12 +15,12 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors>
-                <footbot_proximity implementation="default" show_rays="false" />
-                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="false" />
+                <footbot_proximity implementation="default" show_rays="true" />
+                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="30" learning_rate="0.0" discount_factor="0.8" threshold="30" stage="exploit" qmat_filename="Qfollow-train.qlmat"/>
+            <params velocity="35" learning_rate="0.0" discount_factor="0.8" threshold="30" stage="exploit" qmat_filename="Qfollow-train.qlmat"/>
         </footbot_follow>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -71,44 +71,41 @@
         </distribute>
 
         <foot-bot id="fb">
-            <body position="2.2,2.2,0" orientation="0,0,0" />
+            <body position="2.1,2.1,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
 
-        <!-- The footbot which can go to the goal. -->
-        <!--<foot-bot id="fgc">
-            <body position="2,2,0" orientation="0,0,0" />
-            <controller config="fgc" />
-        </foot-bot>-->
+        <foot-bot id="fb2">
+            <body position="1.8,2.1,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+
+        <foot-bot id="fb3">
+            <body position="1.5,2.1,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+
+        <foot-bot id="fb4">
+            <body position="1.2,2.1,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+
 
         <!-- Manual control footbot. -->
         <foot-bot id="fmc">
-            <body position="2,2,0" orientation="0,0,0" />
+            <body position="1.8,1.8,0" orientation="0,0,0" />
             <controller config="fmc" />
         </foot-bot>
 
+<!--
+        <foot-bot id="fgc">
+            <body position="1.8,1.8,0" orientation="0,0,0" />
+            <controller config="fgc" />
+        </foot-bot>
+-->
+
         <!-- End goal for the footbots marked by a light -->
         <light id="light" position="-0.85,-0.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
-
-        <!-- The follow footbots. -->
-        <distribute>
-            <position method="uniform" min="-2,-2,0" max="2,2,0" />
-            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="3" max_trials="100">
-                <foot-bot id="fb">
-                    <controller config="fgc" />
-                </foot-bot>
-            </entity>
-        </distribute>
-        <distribute>
-            <position method="uniform" min="-2,-2,0" max="2,2,0" />
-            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="20" max_trials="100">
-                <foot-bot id="fbfollow">
-                    <controller config="ffc" />
-                </foot-bot>
-            </entity>
-        </distribute>
 
     </arena>
 
