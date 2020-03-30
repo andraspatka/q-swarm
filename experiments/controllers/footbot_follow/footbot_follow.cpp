@@ -112,17 +112,23 @@ void FootbotFollow::ControlStep() {
     CVector2 directionVector = fpullVector - fpushVector;
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
 
-    // TODO: revise wander and idle state
-    bool isWander = QLMathUtils::closeToZero(maxProx) && minDistanceBlob.Distance == 1000.0f;
-    bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) < 30.0f && !isDirZero;
-    bool isUturn = QLMathUtils::absAngleInDegrees(directionVector.Angle()) > 125.0f && !isDirZero;
-    bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > 30.0f &&
-                     QLMathUtils::angleInDegrees(directionVector.Angle()) < 125.0f && !isDirZero;
-    bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -30.0f &&
-                      QLMathUtils::angleInDegrees(directionVector.Angle()) > -125.0f && !isDirZero;
-    bool isIdle = isDirZero && minDistanceBlob.Distance != 1000.0f;
+    double const FORWARD_ANGLE = 30.0f;
+    double const SIDE_ANGLE = 125.0f;
+
+    bool isTargetSeen = minDistanceBlob.Distance != 1000.0f;
+
+    bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
+    bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) < FORWARD_ANGLE && !isDirZero;
+    bool isUturn = QLMathUtils::absAngleInDegrees(directionVector.Angle()) > SIDE_ANGLE && !isDirZero;
+    bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
+                     QLMathUtils::angleInDegrees(directionVector.Angle()) < SIDE_ANGLE && !isDirZero;
+    bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
+                      QLMathUtils::angleInDegrees(directionVector.Angle()) > -SIDE_ANGLE && !isDirZero;
+    bool isIdle = isDirZero && isTargetSeen;
 
     std::string actualState;
+    // TODO: Should this be included?
+    CColor followColor = isTargetSeen ? CColor::YELLOW : CColor::WHITE;
     // States
     if (isWander) {
         actualState = "WANDER";
@@ -139,11 +145,11 @@ void FootbotFollow::ControlStep() {
     } else if (isDirLeft) {
         actualState = "DIR_LEFT";
         state = 3;
-        mLed->SetAllColors(CColor::WHITE);
+        mLed->SetAllColors(followColor);
     } else if (isDirRight) {
         actualState = "DIR_RIGHT";
         state = 4;
-        mLed->SetAllColors(CColor::WHITE);
+        mLed->SetAllColors(followColor);
     } else if (isIdle) {
         actualState = "IDLE";
         state = 5;

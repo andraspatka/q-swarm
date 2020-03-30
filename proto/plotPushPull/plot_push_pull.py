@@ -4,8 +4,8 @@ import numpy as np
 x_plt = np.linspace(0, 3, num=100)
 B_PUSH = 0  # The robot's centre
 B_PULL = 3  # The prox sensor's coverage limit
-C_PUSH = 0.6  # width of the gauss curve
-C_PULL = 0.6
+C_PUSH = 0.5  # width of the gauss curve
+C_PULL = 0.8
 A = 1  # height of the gauss curve
 
 num_push = - (x_plt - B_PUSH) ** 2
