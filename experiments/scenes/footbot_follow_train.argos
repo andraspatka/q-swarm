@@ -30,7 +30,7 @@
             <sensors />
             <params max_speed="25"/>
         </footbot_manualcontrol>
-        <footbot_qlearn_diy_controller id="fgc" library="cmake-build-debug/controllers/footbot_qlearn_diy/libfootbot_qlearn_diy.so">
+        <footbot_leader_controller id="fgc" library="cmake-build-debug/controllers/footbot_leader/libfootbot_leader.so">
             <actuators>
                 <differential_steering implementation="default" />
                 <leds implementation="default" medium="leds" />
@@ -42,7 +42,7 @@
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
             <params velocity="25" learning_rate="0.05" discount_factor="0.8" threshold="0.25" stage="exploit"/>
-        </footbot_qlearn_diy_controller>
+        </footbot_leader_controller>
     </controllers>
 
     <!-- Arena configuration -->

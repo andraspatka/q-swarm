@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="footbot_qlearn_diy" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-c scenes/footbot_qlearn_diy.argos" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="experiments" TARGET_NAME="footbot_qlearn_diy" CONFIG_NAME="Debug" RUN_PATH="/usr/local/bin/argos3">
-    <method v="2">
-      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-    </method>
-  </configuration>
-</component>

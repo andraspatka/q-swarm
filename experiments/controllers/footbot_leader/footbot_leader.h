@@ -15,17 +15,17 @@
 
 using namespace argos;
 
-class FootbotQLearnDiy : public CCI_Controller {
+class FootbotLeader : public CCI_Controller {
 
 public:
     /** Used for initializations. */
-    FootbotQLearnDiy();
+    FootbotLeader();
 
     /**
      * Caution: Using the destructor is not recommended.
      * Allocate and free all memory in Init() and Destroy()
      */
-    virtual ~FootbotQLearnDiy() {}
+    virtual ~FootbotLeader() {}
 
     /**
      * Function for initialization.

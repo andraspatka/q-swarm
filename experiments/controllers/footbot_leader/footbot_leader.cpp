@@ -1,12 +1,12 @@
-#include "footbot_qlearn_diy.h"
+#include "footbot_leader.h"
 
-FootbotQLearnDiy::FootbotQLearnDiy() :
+FootbotLeader::FootbotLeader() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
         globalMaxLightReading(0),
         epoch(0) {}
 
-void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
+void FootbotLeader::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mProximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
@@ -45,10 +45,10 @@ void FootbotQLearnDiy::Init(TConfigurationNode &t_node) {
 
 
 bool closeToZero(double value) {
-    return value < FootbotQLearnDiy::EXP_EPSILON;
+    return value < FootbotLeader::EXP_EPSILON;
 }
 
-std::string FootbotQLearnDiy::getActionName(double x, double y) {
+std::string FootbotLeader::getActionName(double x, double y) {
     if (x == 0.0 && y == 0.0) return "STOP";
     if (x == parWheelVelocity && y == parWheelVelocity) return "FORWARD";
     if (x == 0.0 && y == parWheelVelocity) return "TURN LEFT";
@@ -99,7 +99,7 @@ std::string FootbotQLearnDiy::getActionName(double x, double y) {
  *              prox: ?
  *              light: max(sensor values) > THRESHOLD
  */
-void FootbotQLearnDiy::ControlStep() {
+void FootbotLeader::ControlStep() {
     double maxLight = 0.0f;
     double backMaxLight = 0.0f;
 
@@ -240,19 +240,19 @@ void FootbotQLearnDiy::ControlStep() {
     LOG << "Id: " << this->m_strId << std::endl;
 }
 
-void FootbotQLearnDiy::Destroy() {
+void FootbotLeader::Destroy() {
     mQLearner->printQ("qmats/Qmat-" + this->m_strId + ".qlmat");
     delete mQLearner;
 }
 
-FootbotQLearnDiy::Stage FootbotQLearnDiy::parseStageFromString(const std::string &stageString) {
-    if (stageString == "train") return FootbotQLearnDiy::Stage::TRAIN;
-    if (stageString == "exploit") return FootbotQLearnDiy::Stage::EXPLOIT;
+FootbotLeader::Stage FootbotLeader::parseStageFromString(const std::string &stageString) {
+    if (stageString == "train") return FootbotLeader::Stage::TRAIN;
+    if (stageString == "exploit") return FootbotLeader::Stage::EXPLOIT;
     std::cerr << "Invalid Stage value: " << stageString;
     exit(1);
 }
 
-std::string FootbotQLearnDiy::parseStringFromStage(const FootbotQLearnDiy::Stage &stage) {
+std::string FootbotLeader::parseStringFromStage(const FootbotLeader::Stage &stage) {
     if (stage == Stage::TRAIN) return "TRAIN";
     if (stage == Stage::EXPLOIT) return "EXPLOIT";
     std::cerr << "Invalid Stage value: " << stage;
@@ -263,4 +263,4 @@ std::string FootbotQLearnDiy::parseStringFromStage(const FootbotQLearnDiy::Stage
  * Register the controller.
  * This is needed in order for argos to be able to bind the scene to this controller.
  */
-REGISTER_CONTROLLER(FootbotQLearnDiy, "footbot_qlearn_diy_controller")
+REGISTER_CONTROLLER(FootbotLeader, "footbot_leader_controller")
