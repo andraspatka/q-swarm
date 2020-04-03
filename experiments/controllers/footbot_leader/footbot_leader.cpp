@@ -6,6 +6,15 @@ FootbotLeader::FootbotLeader() :
         globalMaxLightReading(0),
         epoch(0) {}
 
+/**
+*            STOP    TURN_LEFT   TURN_RIGHT  FORWARD
+* 0 WANDER      -1      0           0           0.1
+* 1 FOLLOW      -1      0           0           1
+* 2 UTURN       -1      0           0           0
+* 3 OBST_LEFT   -1      0           0.1         0
+* 4 OBST_RIGHT  -1      0.1         0           0
+* 5 IDLE         1      0           0           0
+*/
 void FootbotLeader::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
@@ -40,12 +49,6 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     if (parStage == Stage::EXPLOIT) {
         mQLearner->readQ("qmats/Qmat-train.qlmat");
     }
-}
-
-
-
-bool closeToZero(double value) {
-    return value < FootbotLeader::EXP_EPSILON;
 }
 
 std::string FootbotLeader::getActionName(double x, double y) {
@@ -108,7 +111,6 @@ void FootbotLeader::ControlStep() {
 
     double rewardValue = 0;
     int state = -1;
-    double action[2];
 
     auto lightReadings = mLightSensor->GetReadings();
     auto proxReadings = mProximitySensor->GetReadings();
@@ -119,11 +121,11 @@ void FootbotLeader::ControlStep() {
     }
 
     // Left front values
-    for (int i = 0; i <= 5; ++i) {
+    for (int i = 0; i <= 4; ++i) {
         leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
     }
     // Right front values
-    for (int i = 18; i <= 23; ++i) {
+    for (int i = 19; i <= 23; ++i) {
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
     mLed->SetAllColors(CColor::RED);
@@ -131,30 +133,36 @@ void FootbotLeader::ControlStep() {
     for (int i = 0; i < 23; ++i) {
         maxLight = std::max(maxLight, lightReadings.at(i).Value);
     }
+
     // States
-    if (closeToZero(backMaxLight) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx) && maxLight < parThreshold) {
-         // FOLLOW state
+    bool isFollow = QLMathUtils::closeToZero(backMaxLight) && QLMathUtils::closeToZero(leftMaxProx) && QLMathUtils::closeToZero(rightMaxProx) &&
+                    !QLMathUtils::closeToZero(maxLight) && maxLight < parThreshold;
+    bool isUturn = !QLMathUtils::closeToZero(backMaxLight) && QLMathUtils::closeToZero(leftMaxProx) && QLMathUtils::closeToZero(rightMaxProx) &&
+                   maxLight < parThreshold;
+    bool isObstLeft = leftMaxProx >= rightMaxProx && !QLMathUtils::closeToZero(leftMaxProx) && maxLight < parThreshold;
+    bool isObstRight = leftMaxProx < rightMaxProx && maxLight < parThreshold;
+    bool isWander = QLMathUtils::closeToZero(maxLight) && QLMathUtils::closeToZero(leftMaxProx) && QLMathUtils::closeToZero(rightMaxProx);
+    bool isIdle = maxLight >= parThreshold;
+
+    std::string actualStateString;
+    if (isFollow) {
         state = 0;
-    }
-    if (!closeToZero(backMaxLight) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx) && maxLight < parThreshold) {
-         // UTURN state
+        actualStateString = "WANDER";
+    } else if (isUturn) {
         state = 1;
-    }
-    if (leftMaxProx >= rightMaxProx && !closeToZero(leftMaxProx) && maxLight < parThreshold) {
-         // OBST_LEFT state
+        actualStateString = "UTURN";
+    } else if (isObstLeft) {
         state = 2;
-    }
-    if (leftMaxProx < rightMaxProx && maxLight < parThreshold) {
-        // OBST_RIGHT state
+        actualStateString = "OBST_LEFT";
+    } else if (isObstRight) {
         state = 3;
-    }
-    if (closeToZero(maxLight) && closeToZero(leftMaxProx) && closeToZero(rightMaxProx)) {
-        // WANDER state
+        actualStateString = "OBST_RIGHT";
+    } else if (isWander) {
         state = 4;
-    }
-    if (maxLight >= parThreshold) {
-         // IDLE state
-         state = 5;
+        actualStateString = "WANDER";
+    } else if (isIdle) {
+        state = 5;
+        actualStateString = "IDLE";
     }
 
     epoch++;
@@ -166,64 +174,10 @@ void FootbotLeader::ControlStep() {
         globalMaxLightReading = rewardValue;
     }
     int actionIndex = mQLearner->train(mPrevState, state);
-
+    std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
     globalMaxLightReading = std::max(globalMaxLightReading, maxLight);
     mPrevState = state;
-    switch (actionIndex) {
-        case 0: // STOP
-            action[0] = 0;
-            action[1] = 0;
-            break;
-        case 1: // TURN LEFT
-            action[0] = 0;
-            action[1] = parWheelVelocity;
-            break;
-        case 2: // TURN RIGHT
-            action[0] = parWheelVelocity;
-            action[1] = 0;
-            break;
-        case 3: // FORWARD
-            action[0] = parWheelVelocity;
-            action[1] = parWheelVelocity;
-            break;
-        default:
-            action[0] = 0;
-            action[1] = 0;
-            break;
-    }
-
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
-
-    std::string actualState;
-    switch (state) {
-        case 0: {
-            actualState = "FOLLOW";
-            break;
-        }
-        case 1: {
-            actualState = "UTURN";
-            break;
-        }
-        case 2: {
-            actualState = "OBST_LEFT";
-            break;
-        }
-        case 3: {
-            actualState = "OBST_RIGHT";
-            break;
-        }
-        case 4: {
-            actualState = "WANDER";
-            break;
-        }
-        case 5: {
-            actualState = "IDLE";
-            break;
-        }
-        default: {
-            actualState = "ERROR";
-        }
-    }
 
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
@@ -233,8 +187,8 @@ void FootbotLeader::ControlStep() {
     LOG << "BackMaxLight: " << backMaxLight << std::endl;
     LOG << "MaxLight: " << maxLight << std::endl;
 
-    LOG << "Action taken: " << getActionName(action[0], action[1]) << std::endl;
-    LOG << "State: " << actualState << std::endl;
+    LOG << "Action taken: " << QLUtils::getActionName(action[0], action[1]) << std::endl;
+    LOG << "State: " << actualStateString << std::endl;
     LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     LOG << "Global max light: " << globalMaxLightReading << std::endl;
     LOG << "Id: " << this->m_strId << std::endl;

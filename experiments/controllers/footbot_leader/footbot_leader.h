@@ -11,9 +11,12 @@
 #include <fstream>
 #include <argos3/plugins/robots/generic/control_interface/ci_leds_actuator.h>
 
-#include "qlearner/qlearner.hpp"
+#include <qlearner/ql_utils.hpp>
+#include <qlearner/ql_math_utils.hpp>
+#include <qlearner/qlearner.hpp>
 
 using namespace argos;
+using namespace ql;
 
 class FootbotLeader : public CCI_Controller {
 
