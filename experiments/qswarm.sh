@@ -87,7 +87,7 @@ if [[ "$job" != "build" && "$job" != "capture" && "$job" != "clean"  && "$job" !
         exit 1;
     fi
 fi
-if [[ "$1" == "capture" && -z ${cap_output} ]]; then
+if [[ "$job" == "capture" && -z ${cap_output} ]]; then
     echo "Invalid usage. Correct usage: qswarm capture [output_file_name]"
     exit 1;
 fi
