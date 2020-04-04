@@ -16,7 +16,7 @@
             </actuators>
             <sensors>
                 <footbot_proximity implementation="default" show_rays="true" />
-                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="false" />
+                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
@@ -128,13 +128,19 @@
             <controller config="ffc" />
         </foot-bot>
 
+        <foot-bot id="fgc3">
+            <body position="0.3,0,0" orientation="0,0,0" />
+            <controller config="fgc" />
+        </foot-bot>
 
-        <!--
-                <foot-bot id="fgc">
-                    <body position="1.8,1.8,0" orientation="0,0,0" />
-                    <controller config="fgc" />
-                </foot-bot>
-        -->
+
+        <foot-bot id="fb11">
+            <body position="-0.5,0,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+
+
+
 
         <!-- End goal for the footbots marked by a light -->
         <light id="light" position="4,0,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
@@ -157,6 +163,8 @@
             <!-- Camera position, bird-eye view. -->
             <camera>
                 <placement idx="0" position="0,1,4.34" look_at="0,0,0" lens_focal_length="20" />
+                <placement idx="2" position="0,1.5,0.2" look_at="0,0,0" lens_focal_length="40" />
+
             </camera>
             <user_functions library="cmake-build-debug/loop_functions/manual_control/libmanual_loop_functions.so" label="manual_qtuser_functions" />
         </qt-opengl>
