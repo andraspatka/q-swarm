@@ -77,30 +77,6 @@ std::string FootbotLeader::getActionName(double x, double y) {
  *
  *              back
  * Function for aggregating multiple sensor values: max
- * Aggregate of sensor values:
- *      f:  0 23
- *      lm: 5 6
- *      rm: 17 18
- *      lf: 1 2 3 4
- *      rf: 19 20 21 22
- *      b:  8 9 10 11 12 13 14 15
- *
- * States:
- *      FOLLOW - the goal is visible from the front
- *          sensors:
- *              prox: 0
- *              light: b=0
- *      UTURN - facing in the wrong direction, should turn around
- *          sensors:
- *              prox: ?
- *              light: b > 0 && front == 0
- *      OBST_LEFT
- *      OBST_RIGHT
- *      WANDER
- *      IDLE - end destination reached, GOAL state
- *          sensors:
- *              prox: ?
- *              light: max(sensor values) > THRESHOLD
  */
 void FootbotLeader::ControlStep() {
     double maxLight = 0.0f;

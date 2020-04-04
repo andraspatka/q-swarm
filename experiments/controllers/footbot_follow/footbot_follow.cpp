@@ -71,7 +71,6 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
  *              11 12
  *
  *              back
- * Function for aggregating multiple sensor values: max
  */
 void FootbotFollow::ControlStep() {
     CVector2 fpushVector;
@@ -154,14 +153,6 @@ void FootbotFollow::ControlStep() {
         actualState = "IDLE";
         state = 5;
         mLed->SetAllColors(CColor::GREEN);
-    }
-
-    if (state == -1) {
-        int bp = 0;
-    }
-
-    if (isFollow + isWander + isUturn + isDirLeft + isDirRight + isIdle > 1) {
-        int bp = 0;
     }
 
     epoch++;
