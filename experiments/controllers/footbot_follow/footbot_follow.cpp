@@ -22,6 +22,8 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     mLed = GetActuator<CCI_LEDsActuator>("leds");
     mProximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     mCamera = GetSensor<CCI_ColoredBlobOmnidirectionalCameraSensor>("colored_blob_omnidirectional_camera");
+    mPosition = GetSensor<CCI_PositioningSensor>("positioning");
+
     mCamera->Enable();
     std::string parStageString;
 
@@ -52,6 +54,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     if (parStage == Stage::EXPLOIT) {
         mQLearner->readQ("qmats/" + parQMatFileName);
     }
+    ql::Logger::clearMyLogs(this->m_strId);
 }
 
 /**
@@ -165,8 +168,11 @@ void FootbotFollow::ControlStep() {
 
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
+    const CVector3 actualPosition = this->mPosition->GetReading().Position;
+    ql::Logger::logPosition(this->m_strId, {actualPosition.GetX(), actualPosition.GetY()});
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
+    LOG << "Id: " << this->m_strId << std::endl;
     LOG << "Stage: " << parStage << std::endl;
     LOG << "fpush: " << fpushVector << std::endl;
     LOG << "fpull: " << fpullVector << std::endl;

@@ -30,3 +30,5 @@ add_subdirectory(controllers)
 add_subdirectory(loop_functions)
 
 add_subdirectory(qlearner)
+
+add_subdirectory(monitoring)

@@ -10,10 +10,13 @@
 #include <limits>
 #include <fstream>
 #include <argos3/plugins/robots/generic/control_interface/ci_leds_actuator.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 
 #include <qlearner/qlearner.hpp>
 #include <qlearner/ql_utils.hpp>
 #include <qlearner/ql_math_utils.hpp>
+
+#include <monitoring/logger.hpp>
 
 using namespace argos;
 using namespace ql;
@@ -94,6 +97,9 @@ private:
 
     /* Pointer to the omnidirectional camera sensor */
     CCI_ColoredBlobOmnidirectionalCameraSensor *mCamera;
+
+    /* Pointer to the footbot positioning sensor. */
+    CCI_PositioningSensor* mPosition;
 
     /** PARAMETERS FROM THE ARGOS FILE */
 
