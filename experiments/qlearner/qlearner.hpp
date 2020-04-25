@@ -22,11 +22,14 @@ namespace ql {
         // hyperparameters
         double discountFactor;
         double learningRate;
+        double eGreedy;
 
         const int NUM_STATES;
         const int NUM_ACTIONS;
 
         std::vector<std::vector<double>> Q;
+        std::vector<std::vector<double>> Q1;
+        std::vector<std::vector<double>> Q2;
         std::vector<std::vector<double>> R;
     public:
 
@@ -44,20 +47,25 @@ namespace ql {
          *  if it's close to 0 then the agent relies more on its already acquired knowledge.
          */
         QLearner(const int NUM_STATES, const int NUM_ACTIONS, const double discountFactor = 0.8f,
-                 const double learningRate = 0.6f) : NUM_STATES(NUM_STATES),
+                 const double learningRate = 0.6f, const double eGreedy = 0.1f) : NUM_STATES(NUM_STATES),
                                                      NUM_ACTIONS(NUM_ACTIONS),
                                                      discountFactor(discountFactor),
-                                                     learningRate(learningRate) {
+                                                     learningRate(learningRate),
+                                                     eGreedy(eGreedy) {
 
             assertm(discountFactor <= 1 && discountFactor >= 0, "The discount factor should be between 0 and 1!");
             assertm(learningRate <= 1 && learningRate >= 0, "The learning rate should be between 0 and 1!");
             Q = std::vector<std::vector<double>>(NUM_STATES);
+            Q1 = std::vector<std::vector<double>>(NUM_STATES);
+            Q2 = std::vector<std::vector<double>>(NUM_STATES);
             R = std::vector<std::vector<double>>(NUM_STATES);
+            srand(10);
             for (int i = 0; i < NUM_STATES; ++i) {
                 Q[i] = std::vector<double>(NUM_ACTIONS, 0.0f);
+                Q1[i] = std::vector<double>(NUM_ACTIONS, 0.0f);
+                Q2[i] = std::vector<double>(NUM_ACTIONS, 0.0f);
                 R[i] = std::vector<double>(NUM_ACTIONS, 0.0f);
             }
-            srand(10);
         }
 
         double getLearningRate() const {
@@ -102,6 +110,19 @@ namespace ql {
                 assertm(actionIndex < NUM_ACTIONS && actionIndex >= 0, "Invalid action index!");
                 assertm(reward > 0, "Reward value can not be negative!");
                 R[stateIndex][actionIndex] = reward;
+            }
+
+            for (int i = 0; i < NUM_STATES; ++i) {
+                for (int j = 0; j < NUM_ACTIONS; ++j) {
+                    if (R[i][j] != -1) {
+                        Q1[i][j] = drand48() / 2;
+                        Q2[i][j] = drand48() / 2;
+                    } else {
+                        Q1[i][j] = -1;
+                        Q2[i][j] = -1;
+                    }
+
+                }
             }
         }
 
@@ -166,6 +187,67 @@ namespace ql {
             return (learningRate > 0.1f) ? possibleAction : bestAction;
         }
 
+        int doubleQ(int state, int nextState) {
+            assertm(state < NUM_STATES && state >= 0, "Train: Invalid state index!");
+            assertm(nextState < NUM_STATES && nextState >= 0, "Train: Invalid next state: index!");
+
+            const double eGreedyRand = drand48();
+            int action = 0;
+            if (eGreedyRand < eGreedy) { // exploration
+                do {
+                    action = rand() % NUM_ACTIONS;
+                } while (R[state][action] < 0);
+            } else { // exploitation
+                double maxActionValue = 0;
+                for (int a = 0; a < NUM_ACTIONS; ++a) {
+                    const double qsum = Q1[state][a] + Q1[state][a];
+                    if (qsum > maxActionValue) {
+                        maxActionValue = qsum;
+                        action = a;
+                    }
+                }
+            }
+            const double qrand = drand48();
+
+            std::vector<std::vector<double>> H;
+            std::vector<std::vector<double>> Hi;
+
+            bool isQ1 = qrand < 0.5f;
+            H = isQ1 ? Q1 : Q2;
+            Hi = isQ1 ? Q2 : Q1;
+
+            int actionMaxH = 0;
+            double valMaxH = 0;
+            for (int a = 0; a < NUM_ACTIONS; ++a) {
+                if (H[state][a] > valMaxH) {
+                    valMaxH = H[state][a];
+                    actionMaxH = a;
+                }
+            }
+
+            H[state][action] = H[state][action] + learningRate * (R[state][action] + discountFactor * Hi[nextState][actionMaxH] - H[state][action]);
+
+            if (H[state][action] < 0) {
+                int bp = 0;
+            }
+            Q1 = isQ1 ? H : Hi;
+            Q2 = isQ1 ? Hi : H;
+
+            return action;
+        }
+
+        int exploit(int state) {
+            int action;
+            double maxActionValue = 0;
+            for (int a = 0; a < NUM_ACTIONS; ++a) {
+                if (Q[state][a] > maxActionValue) {
+                    maxActionValue = Q[state][a];
+                    action = a;
+                }
+            }
+            return action;
+        }
+
 
         /**
          * Writes the Q matrix to a file.
@@ -181,6 +263,22 @@ namespace ql {
             for (int i = 0; i < NUM_STATES; ++i) {
                 for (int j = 0; j < NUM_ACTIONS; ++j) {
                     file << Q[i][j] << " ";
+                }
+                file << "\n";
+            }
+            file.close();
+        }
+
+        void printDoubleQ(const std::string &fileName) {
+            std::ofstream file(fileName);
+            if (!file.is_open()) {
+                std::cout << "There was a problem opening the output file!\n";
+                exit(1);
+            }
+
+            for (int i = 0; i < NUM_STATES; ++i) {
+                for (int j = 0; j < NUM_ACTIONS; ++j) {
+                    file << Q1[i][j] + Q2[i][j] << " ";
                 }
                 file << "\n";
             }

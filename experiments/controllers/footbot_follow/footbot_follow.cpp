@@ -44,10 +44,10 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
             std::make_tuple(4, 0)  // DIR_RIGHT, STOP action
     };
     std::vector<std::tuple<int, int, double>> rewards = {
-            std::make_tuple(0, 3, 0.1), // WANDER state, FORWARD action
-            std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
-            std::make_tuple(3, 1, 0.1), // DIR_LEFT state, TURN_LEFT action
-            std::make_tuple(4, 2, 0.1), // DIR_RIGHT state, TURN_LEFT action
+            std::make_tuple(0, 3, 0.2), // WANDER state, FORWARD action
+//            std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
+//            std::make_tuple(3, 1, 0.1), // DIR_LEFT state, TURN_LEFT action
+//            std::make_tuple(4, 2, 0.1), // DIR_RIGHT state, TURN_LEFT action
             std::make_tuple(5, 0, 1), // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
@@ -129,8 +129,6 @@ void FootbotFollow::ControlStep() {
     bool isIdle = isDirZero && isTargetSeen;
 
     std::string actualState;
-    // TODO: Should this be included?
-    CColor followColor = isTargetSeen ? CColor::YELLOW : CColor::WHITE;
     // States
     if (isWander) {
         actualState = "WANDER";
@@ -147,11 +145,11 @@ void FootbotFollow::ControlStep() {
     } else if (isDirLeft) {
         actualState = "DIR_LEFT";
         state = 3;
-        mLed->SetAllColors(followColor);
+        mLed->SetAllColors(CColor::WHITE);
     } else if (isDirRight) {
         actualState = "DIR_RIGHT";
         state = 4;
-        mLed->SetAllColors(followColor);
+        mLed->SetAllColors(CColor::WHITE);
     } else if (isIdle) {
         actualState = "IDLE";
         state = 5;
@@ -159,10 +157,10 @@ void FootbotFollow::ControlStep() {
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 175 == 0 && parStage == Stage::TRAIN) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 75 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
-    int actionIndex = mQLearner->train(mPrevState, state);
+    int actionIndex = (parStage == Stage::EXPLOIT) ? mQLearner->exploit(state) : mQLearner->doubleQ(mPrevState, state);
 
     mPrevState = state;
 
@@ -185,7 +183,11 @@ void FootbotFollow::ControlStep() {
 }
 
 void FootbotFollow::Destroy() {
-    mQLearner->printQ("qmats/" + parQMatFileName);
+    if (parStage == Stage::EXPLOIT) {
+        mQLearner->printDoubleQ("qmats/" + parQMatFileName + this->m_strId + ".qlmat");
+    } else {
+        mQLearner->printDoubleQ("qmats/" + parQMatFileName);
+    }
     delete mQLearner;
 }
 

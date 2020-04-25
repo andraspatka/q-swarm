@@ -16,12 +16,12 @@
             </actuators>
             <sensors>
                 <footbot_proximity implementation="default" show_rays="true" />
-                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="false" />
+                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="35" learning_rate="0.0" discount_factor="0.8" threshold="30" stage="exploit" qmat_filename="Qfollow"/>
+            <params velocity="35" learning_rate="0.9" discount_factor="0.8" threshold="30" stage="train" qmat_filename="Qfollow-train"/>
         </footbot_follow>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -50,95 +50,40 @@
     <arena size="20, 20, 4" center="0,0,0.5">
 
         <!-- Arena walls -->
-        <box id="wall_north" size="10,0.1,0.5" movable="false">
-            <body position="0,5,0" orientation="0,0,0" />
+        <box id="wall_north" size="5,0.1,0.5" movable="false">
+            <body position="0,2.5,0" orientation="0,0,0" />
         </box>
-        <box id="wall_south" size="10,0.1,0.5" movable="false">
-            <body position="0,-5,0" orientation="0,0,0" />
+        <box id="wall_south" size="5,0.1,0.5" movable="false">
+            <body position="0,-2.5,0" orientation="0,0,0" />
         </box>
-        <box id="wall_east" size="0.1,10,0.5" movable="false">
-            <body position="5,0,0" orientation="0,0,0" />
+        <box id="wall_east" size="0.1,5,0.5" movable="false">
+            <body position="2.5,0,0" orientation="0,0,0" />
         </box>
-        <box id="wall_west" size="0.1,10,0.5" movable="false">
-            <body position="-5,0,0" orientation="0,0,0" />
+        <box id="wall_west" size="0.1,5,0.5" movable="false">
+            <body position="-2.5,0,0" orientation="0,0,0" />
         </box>
 
-<!--        <distribute>
-            <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
-            <orientation method="uniform" min="0,0,0" max="360,0,0" />
-            <entity quantity="5" max_trials="100">
-                <box id="b" size="0.25,0.25,0.5" movable="false"/>
-            </entity>
-        </distribute>-->
+                <distribute>
+                    <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
+                    <orientation method="uniform" min="0,0,0" max="360,0,0" />
+                    <entity quantity="5" max_trials="100">
+                        <box id="b" size="0.25,0.25,0.5" movable="false"/>
+                    </entity>
+                </distribute>
 
         <foot-bot id="fba1">
             <body position="1.5,2.2,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-        <foot-bot id="fba2">
-            <body position="1.5,1.4,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba3">
-            <body position="1.2,2.2,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba4">
-            <body position="1.2,1.8,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba5">
-            <body position="1.2,1.4,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba6">
-            <body position="0.9,2.1,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba7">
-            <body position="0.9,1.8,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba8">
-            <body position="0.9,1.5,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-
 
         <!-- Leader - flock A. -->
-        <foot-bot id="fgac">
+        <foot-bot id="fgca">
             <body position="1.8,1.8,0" orientation="0,0,0" />
             <controller config="fgc" />
         </foot-bot>
 
-        <!-- Leader. -->
-        <foot-bot id="fgc2">
-            <body position="3.8,3.8,0" orientation="0,0,0" />
-            <controller config="fgc" />
-        </foot-bot>
-
-        <foot-bot id="fb7">
-            <body position="3.5,3.6,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-
-        <foot-bot id="fb8">
-            <body position="3.3,3.6,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-
-        <foot-bot id="fb9">
-            <body position="3.0,3.6,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-
-        <foot-bot id="fb10">
-            <body position="3.8,3.6,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-
         <!-- End goal for the footbots marked by a light -->
-        <light id="light" position="4,0,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
+        <light id="light" position="0,0,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
     </arena>
 
