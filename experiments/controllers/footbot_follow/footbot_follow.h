@@ -58,9 +58,11 @@ public:
         EXPLOIT
     };
 
-    constexpr int static NUM_STATES = 6;
+    constexpr int static NUM_STATES = 5;
 
     constexpr int static NUM_ACTIONS = 4;
+
+    constexpr int static STATE_THRESHOLD = 40;
 
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
@@ -69,7 +71,7 @@ public:
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.5f;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 0.8f;
+    constexpr double static C_PULL = 0.7f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 
@@ -84,6 +86,10 @@ private:
     int epoch = 0;
 
     double globalMinCameraBlobDist;
+
+    int mLearnedEpoch = 4000;
+
+    std::array<int, NUM_STATES> mStateStats;
 
     /** ACTUATORS AND SENSORS */
     /* Pointer to the differential steering actuator. */

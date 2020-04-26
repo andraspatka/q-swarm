@@ -171,7 +171,7 @@ void FootbotLeader::ControlStep() {
 }
 
 void FootbotLeader::Destroy() {
-    mQLearner->printQ("qmats/Qmat-" + this->m_strId + ".qlmat");
+    mQLearner->printQ("qmats/Qmat-" + this->m_strId + ".qlmat", false);
     delete mQLearner;
 }
 

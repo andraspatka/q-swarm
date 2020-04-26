@@ -32,7 +32,7 @@ namespace ql {
             double num = -pow((x - b), 2.0);
             double denum = 2 * pow(c, 2.0);
             double ret = a * exp(num / denum);
-            return ret <= CUTOFF_VALUE ? 0.0f : ret;
+            return (ret <= CUTOFF_VALUE) ? 0.0f : ret;
         }
 
         static double cameraToDistance(double reading) {

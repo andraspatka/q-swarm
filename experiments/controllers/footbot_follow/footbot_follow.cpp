@@ -9,12 +9,11 @@ FootbotFollow::FootbotFollow() :
 /**
  *
  *            STOP    TURN_LEFT   TURN_RIGHT  FORWARD
- * 0 WANDER     -1      0           0           0.1
+ * 0 WANDER     -1      0           0           0.2
  * 1 FOLLOW     -1      0           0           1
- * 2 UTURN      -1      0           0           0
- * 3 DIR_LEFT   -1      0.1         0           0
- * 4 DIR_RIGHT  -1      0           0.1         0
- * 5 IDLE        1      0           0           0
+ * 2 DIR_LEFT   -1      0           0           0
+ * 3 DIR_RIGHT  -1      0           0           0
+ * 4 IDLE        2      0           0           0
  */
 void FootbotFollow::Init(TConfigurationNode &t_node) {
 
@@ -35,24 +34,22 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "qmat_filename", parQMatFileName);
 
     parStage = parseStageFromString(parStageString);
-    mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate);
+    mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.1);
     std::vector<std::tuple<int, int>> impossibleStates = {
             std::make_tuple(0, 0), // WANDER state, STOP action
             std::make_tuple(1, 0), // FOLLOW state, STOP action
-            std::make_tuple(2, 0), // UTURN, STOP action
-            std::make_tuple(3, 0), // DIR_LEFT, STOP action
-            std::make_tuple(4, 0)  // DIR_RIGHT, STOP action
+            std::make_tuple(2, 0), // DIR_LEFT, STOP action
+            std::make_tuple(3, 0)  // DIR_RIGHT, STOP action
     };
     std::vector<std::tuple<int, int, double>> rewards = {
             std::make_tuple(0, 3, 0.2), // WANDER state, FORWARD action
-//            std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
-//            std::make_tuple(3, 1, 0.1), // DIR_LEFT state, TURN_LEFT action
-//            std::make_tuple(4, 2, 0.1), // DIR_RIGHT state, TURN_LEFT action
-            std::make_tuple(5, 0, 1), // IDLE state, STOP action
+            std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
+            std::make_tuple(4, 0, 2), // IDLE state, STOP action
     };
+    mStateStats.fill(0);
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
-        mQLearner->readQ("qmats/" + parQMatFileName);
+        mQLearner->readQ("qmats/Qfollow-train.qlmat");
     }
     ql::Logger::clearMyLogs(this->m_strId);
 }
@@ -115,15 +112,14 @@ void FootbotFollow::ControlStep() {
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
 
     double const FORWARD_ANGLE = 30.0f;
-    double const SIDE_ANGLE = 125.0f;
+    double const SIDE_ANGLE = 180.0f;
 
     bool isTargetSeen = minDistanceBlob.Distance != 1000.0f;
 
     bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
     bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) < FORWARD_ANGLE && !isDirZero;
-    bool isUturn = QLMathUtils::absAngleInDegrees(directionVector.Angle()) > SIDE_ANGLE && !isDirZero;
     bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
-                     QLMathUtils::angleInDegrees(directionVector.Angle()) < SIDE_ANGLE && !isDirZero;
+                     QLMathUtils::angleInDegrees(directionVector.Angle()) <= SIDE_ANGLE && !isDirZero;
     bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
                       QLMathUtils::angleInDegrees(directionVector.Angle()) > -SIDE_ANGLE && !isDirZero;
     bool isIdle = isDirZero && isTargetSeen;
@@ -138,34 +134,46 @@ void FootbotFollow::ControlStep() {
         actualState = "FOLLOW";
         state = 1;
         mLed->SetAllColors(CColor::YELLOW);
-    } else if (isUturn) {
-        actualState = "UTURN";
-        state = 2;
-        mLed->SetAllColors(CColor::PURPLE);
     } else if (isDirLeft) {
         actualState = "DIR_LEFT";
-        state = 3;
+        state = 2;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isDirRight) {
         actualState = "DIR_RIGHT";
-        state = 4;
+        state = 3;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isIdle) {
         actualState = "IDLE";
-        state = 5;
+        state = 4;
         mLed->SetAllColors(CColor::GREEN);
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 75 == 0 && parStage == Stage::TRAIN) {
+    if (parStage == Stage::TRAIN) {
+        mStateStats[state] += 1;
+    }
+    bool isLearned = true;
+    for (auto a : mStateStats) {
+        if (a < STATE_THRESHOLD) {
+            isLearned = false;
+        }
+    }
+    if (isLearned && epoch < mLearnedEpoch && parStage == Stage::TRAIN) {
+        mQLearner->setLearningRate(0);
+        mLearnedEpoch = epoch;
+        mQLearner->printQ("qmats/debug" + parQMatFileName  + "-" + this->m_strId + ".qlmat", true);
+    }
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 115 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
+
     int actionIndex = (parStage == Stage::EXPLOIT) ? mQLearner->exploit(state) : mQLearner->doubleQ(mPrevState, state);
 
     mPrevState = state;
 
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
+
     const CVector3 actualPosition = this->mPosition->GetReading().Position;
     ql::Logger::logPosition(this->m_strId, {actualPosition.GetX(), actualPosition.GetY()});
     // LOGGING
@@ -175,6 +183,7 @@ void FootbotFollow::ControlStep() {
     LOG << "fpush: " << fpushVector << std::endl;
     LOG << "fpull: " << fpullVector << std::endl;
     LOG << "Direction: " << directionVector << std::endl;
+    LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
 
     LOG << "Action taken: " << QLUtils::getActionName(action[0], action[1]) << std::endl;
     LOG << "State: " << actualState << std::endl;
@@ -183,11 +192,10 @@ void FootbotFollow::ControlStep() {
 }
 
 void FootbotFollow::Destroy() {
-    if (parStage == Stage::EXPLOIT) {
-        mQLearner->printDoubleQ("qmats/" + parQMatFileName + this->m_strId + ".qlmat");
-    } else {
-        mQLearner->printDoubleQ("qmats/" + parQMatFileName);
+    if (parStage != Stage::EXPLOIT) {
+        mQLearner->printQ("qmats/" + parQMatFileName  + "-" + this->m_strId + ".qlmat", true);
     }
+
     delete mQLearner;
 }
 

@@ -23,16 +23,17 @@ namespace ql {
         double discountFactor;
         double learningRate;
         double eGreedy;
+    private:
 
         const int NUM_STATES;
-        const int NUM_ACTIONS;
 
+        const int NUM_ACTIONS;
         std::vector<std::vector<double>> Q;
+
         std::vector<std::vector<double>> Q1;
         std::vector<std::vector<double>> Q2;
         std::vector<std::vector<double>> R;
     public:
-
         /**
          * Creates the blank Q and R matrices and sets the hyper parameters.
          *
@@ -45,6 +46,9 @@ namespace ql {
          * @param learningRate Defines how much the agent should learn from the reinforcement.
          *  If it's close to 1 then the agent learns the most,
          *  if it's close to 0 then the agent relies more on its already acquired knowledge.
+         * @param eGreedy Defines how much the agent should explore/exploit
+         *  If it's close to 1 then the agent explores,
+         *  if it's close to 0 then the agent exploits.
          */
         QLearner(const int NUM_STATES, const int NUM_ACTIONS, const double discountFactor = 0.8f,
                  const double learningRate = 0.6f, const double eGreedy = 0.1f) : NUM_STATES(NUM_STATES),
@@ -55,11 +59,12 @@ namespace ql {
 
             assertm(discountFactor <= 1 && discountFactor >= 0, "The discount factor should be between 0 and 1!");
             assertm(learningRate <= 1 && learningRate >= 0, "The learning rate should be between 0 and 1!");
+            assertm(eGreedy <= 1 && eGreedy >= 0, "The explore-exploit ratio should be between 0 and 1!");
             Q = std::vector<std::vector<double>>(NUM_STATES);
             Q1 = std::vector<std::vector<double>>(NUM_STATES);
             Q2 = std::vector<std::vector<double>>(NUM_STATES);
             R = std::vector<std::vector<double>>(NUM_STATES);
-            srand(10);
+            srand(12);
             for (int i = 0; i < NUM_STATES; ++i) {
                 Q[i] = std::vector<double>(NUM_ACTIONS, 0.0f);
                 Q1[i] = std::vector<double>(NUM_ACTIONS, 0.0f);
@@ -73,7 +78,8 @@ namespace ql {
         }
 
         void setLearningRate(double learningRate) {
-            this->learningRate = learningRate;
+            assertm(learningRate <= 1 && learningRate >= 0, "The learning rate should be between 0 and 1!");
+            QLearner::learningRate = learningRate;
         }
 
         double getDiscountFactor() const {
@@ -81,7 +87,17 @@ namespace ql {
         }
 
         void setDiscountFactor(double discountFactor) {
+            assertm(discountFactor <= 1 && discountFactor >= 0, "The discount factor should be between 0 and 1!");
             QLearner::discountFactor = discountFactor;
+        }
+
+        double getEGreedy() const {
+            return eGreedy;
+        }
+
+        void setEGreedy(double eGreedy) {
+            assertm(eGreedy <= 1 && eGreedy >= 0, "The explore-exploit ratio should be between 0 and 1!");
+            QLearner::eGreedy = eGreedy;
         }
 
 
@@ -115,13 +131,14 @@ namespace ql {
             for (int i = 0; i < NUM_STATES; ++i) {
                 for (int j = 0; j < NUM_ACTIONS; ++j) {
                     if (R[i][j] != -1) {
-                        Q1[i][j] = drand48() / 2;
-                        Q2[i][j] = drand48() / 2;
+                        Q[i][j] = drand48();
+                        Q1[i][j] = drand48();
+                        Q2[i][j] = drand48();
                     } else {
+                        Q[i][j] = -1;
                         Q1[i][j] = -1;
                         Q2[i][j] = -1;
                     }
-
                 }
             }
         }
@@ -227,18 +244,44 @@ namespace ql {
 
             H[state][action] = H[state][action] + learningRate * (R[state][action] + discountFactor * Hi[nextState][actionMaxH] - H[state][action]);
 
-            if (H[state][action] < 0) {
-                int bp = 0;
-            }
             Q1 = isQ1 ? H : Hi;
             Q2 = isQ1 ? Hi : H;
 
             return action;
         }
 
+        int simpleQ(int state, int nextState) {
+            assertm(state < NUM_STATES && state >= 0, "Train: Invalid state index!");
+            assertm(nextState < NUM_STATES && nextState >= 0, "Train: Invalid next state: index!");
+
+            const double eGreedyRand = drand48();
+            int action = 0;
+            if (eGreedyRand < eGreedy) { // exploration
+                do {
+                    action = rand() % NUM_ACTIONS;
+                } while (R[state][action] < 0);
+            } else { // exploitation
+                double maxActionValue = -1;
+                for (int a = 0; a < NUM_ACTIONS; ++a) {
+                    if (Q[state][action] > maxActionValue) {
+                        maxActionValue = Q[state][action];
+                        action = a;
+                    }
+                }
+            }
+            double nextStateMaxQ = 0.0f;
+            for (int a = 0; a < NUM_ACTIONS; ++a) {
+                nextStateMaxQ = std::max(nextStateMaxQ, Q[nextState][action]);
+            }
+
+            Q[state][action] = Q[state][action] + learningRate * (R[state][action] + discountFactor * nextStateMaxQ - Q[state][action]);
+
+            return action;
+        }
+
         int exploit(int state) {
             int action;
-            double maxActionValue = 0;
+            double maxActionValue = -1;
             for (int a = 0; a < NUM_ACTIONS; ++a) {
                 if (Q[state][a] > maxActionValue) {
                     maxActionValue = Q[state][a];
@@ -253,7 +296,7 @@ namespace ql {
          * Writes the Q matrix to a file.
          * @param fileName the file's name to where the Q matrix will be written to.
          */
-        void printQ(const std::string &fileName) {
+        void printQ(const std::string &fileName, bool isDouble) {
             std::ofstream file(fileName);
             if (!file.is_open()) {
                 std::cout << "There was a problem opening the output file!\n";
@@ -262,23 +305,11 @@ namespace ql {
 
             for (int i = 0; i < NUM_STATES; ++i) {
                 for (int j = 0; j < NUM_ACTIONS; ++j) {
-                    file << Q[i][j] << " ";
-                }
-                file << "\n";
-            }
-            file.close();
-        }
-
-        void printDoubleQ(const std::string &fileName) {
-            std::ofstream file(fileName);
-            if (!file.is_open()) {
-                std::cout << "There was a problem opening the output file!\n";
-                exit(1);
-            }
-
-            for (int i = 0; i < NUM_STATES; ++i) {
-                for (int j = 0; j < NUM_ACTIONS; ++j) {
-                    file << Q1[i][j] + Q2[i][j] << " ";
+                    if (isDouble) {
+                        file << Q1[i][j] + Q2[i][j] << " ";
+                    } else {
+                        file << Q[i][j] << " ";
+                    }
                 }
                 file << "\n";
             }

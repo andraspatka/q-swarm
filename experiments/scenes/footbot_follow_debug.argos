@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="35" learning_rate="0.9" discount_factor="0.8" threshold="30" stage="train" qmat_filename="Qfollow-train"/>
+            <params velocity="35" learning_rate="0.9" discount_factor="0.8" threshold="30" stage="train" qmat_filename="Qfollow"/>
         </footbot_follow>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -63,22 +63,22 @@
             <body position="-2.5,0,0" orientation="0,0,0" />
         </box>
 
-                <distribute>
-                    <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
-                    <orientation method="uniform" min="0,0,0" max="360,0,0" />
-                    <entity quantity="5" max_trials="100">
-                        <box id="b" size="0.25,0.25,0.5" movable="false"/>
-                    </entity>
-                </distribute>
+        <distribute>
+            <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
+            <orientation method="uniform" min="0,0,0" max="360,0,0" />
+            <entity quantity="5" max_trials="100">
+                <box id="b" size="0.25,0.25,0.5" movable="false"/>
+            </entity>
+        </distribute>
 
-        <foot-bot id="fba1">
-            <body position="1.5,2.2,0" orientation="0,0,0" />
+        <foot-bot id="train">
+            <body position="1,2.2,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
 
         <!-- Leader - flock A. -->
-        <foot-bot id="fgca">
-            <body position="1.8,1.8,0" orientation="0,0,0" />
+        <foot-bot id="leader">
+            <body position="1.5,1.8,0" orientation="0,0,0" />
             <controller config="fgc" />
         </foot-bot>
 
