@@ -90,8 +90,12 @@ void FootbotFollow::ControlStep() {
             minDistanceBlob.Angle = r->Angle;
             minDistanceBlob.Color = r->Color;
 
-            fpullVector += QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
-                                                            QLMathUtils::cameraToDistance);
+            CVector2 pullVector = QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
+                                                               QLMathUtils::cameraToDistance);
+            if (r->Color == CColor::RED) { // following the actual leader has a higher priority
+                pullVector = pullVector * 1.4;
+            }
+            fpullVector = fpullVector + pullVector;
         }
     }
 
@@ -123,28 +127,33 @@ void FootbotFollow::ControlStep() {
     bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
                       QLMathUtils::angleInDegrees(directionVector.Angle()) > -SIDE_ANGLE && !isDirZero;
     bool isIdle = isDirZero && isTargetSeen;
-
+    bool negateVelocity = false;
     std::string actualState;
     // States
     if (isWander) {
         actualState = "WANDER";
         state = 0;
+        negateVelocity = true;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isFollow) {
         actualState = "FOLLOW";
         state = 1;
+        negateVelocity = false;
         mLed->SetAllColors(CColor::YELLOW);
     } else if (isDirLeft) {
         actualState = "DIR_LEFT";
         state = 2;
+        negateVelocity = true;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isDirRight) {
         actualState = "DIR_RIGHT";
         state = 3;
+        negateVelocity = true;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isIdle) {
         actualState = "IDLE";
         state = 4;
+        negateVelocity = true;
         mLed->SetAllColors(CColor::GREEN);
     }
 
@@ -171,8 +180,9 @@ void FootbotFollow::ControlStep() {
 
     mPrevState = state;
 
+    double velocityFactor = (negateVelocity) ? 1 : directionVector.Length();
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
-    mDiffSteering->SetLinearVelocity(action[0], action[1]);
+    mDiffSteering->SetLinearVelocity(action[0] * velocityFactor, action[1] * velocityFactor);
 
     const CVector3 actualPosition = this->mPosition->GetReading().Position;
     ql::Logger::logPosition(this->m_strId, {actualPosition.GetX(), actualPosition.GetY()});
@@ -183,6 +193,7 @@ void FootbotFollow::ControlStep() {
     LOG << "fpush: " << fpushVector << std::endl;
     LOG << "fpull: " << fpullVector << std::endl;
     LOG << "Direction: " << directionVector << std::endl;
+    LOG << "VelocityFactor: " << velocityFactor << std::endl;
     LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
 
     LOG << "Action taken: " << QLUtils::getActionName(action[0], action[1]) << std::endl;

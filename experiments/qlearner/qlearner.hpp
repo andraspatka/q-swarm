@@ -139,6 +139,11 @@ namespace ql {
                         Q1[i][j] = -1;
                         Q2[i][j] = -1;
                     }
+                    if (i == NUM_STATES - 1) { //terminal state
+                        Q[i][j] = 0;
+                        Q1[i][j] = 0;
+                        Q2[i][j] = 0;
+                    }
                 }
             }
         }
