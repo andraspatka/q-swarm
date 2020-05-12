@@ -43,6 +43,10 @@ namespace ql {
             return 1 - reading;
         }
 
+        static double ligthToDistance(double reading) {
+            return (1 - reading) * 2.3;
+        }
+
         static argos::CVector2
         readingToVector(double readingLength, argos::CRadians readingAngle, double a, double b, double c,
                         double (*transf)(double)) {

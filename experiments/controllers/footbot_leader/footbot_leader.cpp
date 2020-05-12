@@ -8,12 +8,12 @@ FootbotLeader::FootbotLeader() :
 
 /**
 *            STOP    TURN_LEFT   TURN_RIGHT  FORWARD
-* 0 WANDER      -1      0           0           0.1
-* 1 FOLLOW      -1      0           0           1
-* 2 UTURN       -1      0           0           0
-* 3 OBST_LEFT   -1      0           0.1         0
-* 4 OBST_RIGHT  -1      0.1         0           0
-* 5 IDLE         1      0           0           0
+
+* 0 FOLLOW      -1      0           0           1
+* 1 DIR_LEFT   -1      0           0           0
+* 2 DIR_RIGHT  -1      0           0           0
+* 3 WANDER      -1      0           0           0.2
+* 4 IDLE         2      0           0           0
 */
 void FootbotLeader::Init(TConfigurationNode &t_node) {
 
@@ -30,33 +30,23 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "stage", parStageString);
 
     parStage = parseStageFromString(parStageString);
-    mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate);
+    mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.1);
     std::vector<std::tuple<int, int>> impossibleStates = {
             std::make_tuple(0, 0), // FOLLOW state, STOP action
-            std::make_tuple(1, 0), // UTURN state, STOP action
-            std::make_tuple(2, 0), // OBST_LEFT state, STOP action
-            std::make_tuple(3, 0), // OBST_RIGHT state, STOP action
-            std::make_tuple(4, 0) // WANDER state, STOP action
+            std::make_tuple(1, 0), // DIR_LEFT state, STOP action
+            std::make_tuple(2, 0), // DIR_RIGHT state, STOP action
+            std::make_tuple(3, 0) // WANDER state, STOP action
     };
     std::vector<std::tuple<int, int, double>> rewards = {
             std::make_tuple(0, 3, 1), // FOLLOW state, FORWARD action
-            std::make_tuple(2, 2, 0.1), // OBST_LEFT
-            std::make_tuple(3, 1, 0.1), // OBST_RIGHT
-            std::make_tuple(4, 3, 0.1), // WANDER state, FORWARD action
-            std::make_tuple(5, 0, 1) // IDLE state, STOP action
+            std::make_tuple(3, 3, 0.2), // WANDER state, FORWARD action
+            std::make_tuple(4, 0, 2) // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
         mQLearner->readQ("qmats/Qmat-train.qlmat");
     }
-}
-
-std::string FootbotLeader::getActionName(double x, double y) {
-    if (x == 0.0 && y == 0.0) return "STOP";
-    if (x == parWheelVelocity && y == parWheelVelocity) return "FORWARD";
-    if (x == 0.0 && y == parWheelVelocity) return "TURN LEFT";
-    if (x == parWheelVelocity && y == 0.0f) return "TURN RIGHT";
-    return "INVALID";
+    mLed->SetAllColors(CColor::RED);
 }
 
 /**
@@ -84,6 +74,10 @@ void FootbotLeader::ControlStep() {
 
     double leftMaxProx = 0.0f;
     double rightMaxProx = 0.0f;
+    double maxProx = 0.0f;
+
+    CVector2 fpushVector;
+    CVector2 fpullVector;
 
     double rewardValue = 0;
     int state = -1;
@@ -91,65 +85,71 @@ void FootbotLeader::ControlStep() {
     auto lightReadings = mLightSensor->GetReadings();
     auto proxReadings = mProximitySensor->GetReadings();
 
-    // light sensor value from the back of the robot
-    for (int i = 8; i <= 15; ++i) {
-        backMaxLight = std::max(backMaxLight, lightReadings.at(i).Value);
-    }
-
     // Left front values
     for (int i = 0; i <= 4; ++i) {
+        fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
+                                                    C_PUSH, QLMathUtils::proxToDistance);
         leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
     }
     // Right front values
     for (int i = 19; i <= 23; ++i) {
+        fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
+                                                    C_PUSH, QLMathUtils::proxToDistance);
         rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
     }
-    mLed->SetAllColors(CColor::RED);
+
     // max light reading around the footbot
     for (int i = 0; i < 23; ++i) {
-        maxLight = std::max(maxLight, lightReadings.at(i).Value);
+        if (!QLMathUtils::closeToZero(lightReadings.at(i).Value)) {
+            fpullVector += QLMathUtils::readingToVector(lightReadings.at(i).Value, lightReadings.at(i).Angle, A, B_PULL,
+                                                        C_PULL, QLMathUtils::ligthToDistance);
+            maxLight = std::max(maxLight, lightReadings.at(i).Value);
+        }
+
     }
+    maxProx = std::max(leftMaxProx, rightMaxProx);
+
+    CVector2 directionVector = fpullVector - fpushVector;
+    bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
+
+    double const FORWARD_ANGLE = 30.0f;
+    double const SIDE_ANGLE = 180.0f;
+
+    bool isTargetSeen = !QLMathUtils::closeToZero(maxLight);
 
     // States
-    bool isFollow = QLMathUtils::closeToZero(backMaxLight) && QLMathUtils::closeToZero(leftMaxProx) && QLMathUtils::closeToZero(rightMaxProx) &&
-                    !QLMathUtils::closeToZero(maxLight) && maxLight < parThreshold;
-    bool isUturn = !QLMathUtils::closeToZero(backMaxLight) && QLMathUtils::closeToZero(leftMaxProx) && QLMathUtils::closeToZero(rightMaxProx) &&
-                   maxLight < parThreshold;
-    bool isObstLeft = leftMaxProx >= rightMaxProx && !QLMathUtils::closeToZero(leftMaxProx) && maxLight < parThreshold;
-    bool isObstRight = leftMaxProx < rightMaxProx && maxLight < parThreshold;
-    bool isWander = QLMathUtils::closeToZero(maxLight) && QLMathUtils::closeToZero(leftMaxProx) && QLMathUtils::closeToZero(rightMaxProx);
-    bool isIdle = maxLight >= parThreshold;
+    bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) < FORWARD_ANGLE && !isDirZero && maxLight < parThreshold;
+    bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
+                      QLMathUtils::angleInDegrees(directionVector.Angle()) <= SIDE_ANGLE && !isDirZero && maxLight < parThreshold;
+    bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
+                      QLMathUtils::angleInDegrees(directionVector.Angle()) > -SIDE_ANGLE && !isDirZero && maxLight < parThreshold;
+    bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
+    bool isIdle = (isDirZero && isTargetSeen) || maxLight > parThreshold;
 
     std::string actualStateString;
     if (isFollow) {
         state = 0;
         actualStateString = "WANDER";
-    } else if (isUturn) {
+    } else if (isDirLeft) {
         state = 1;
-        actualStateString = "UTURN";
-    } else if (isObstLeft) {
+        actualStateString = "DIR_LEFT";
+    } else if (isDirRight) {
         state = 2;
-        actualStateString = "OBST_LEFT";
-    } else if (isObstRight) {
-        state = 3;
-        actualStateString = "OBST_RIGHT";
+        actualStateString = "DIR_RIGHT";
     } else if (isWander) {
-        state = 4;
+        state = 3;
         actualStateString = "WANDER";
     } else if (isIdle) {
-        state = 5;
+        state = 4;
         actualStateString = "IDLE";
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 150 == 0 && parStage == Stage::TRAIN) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 115 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
-    if (globalMaxLightReading < rewardValue) {
-        globalMaxLightReading = rewardValue;
-    }
-    int actionIndex = mQLearner->train(mPrevState, state);
+    int actionIndex = (parStage == Stage::EXPLOIT) ? mQLearner->exploit(state) : mQLearner->doubleQ(mPrevState, state);
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
     globalMaxLightReading = std::max(globalMaxLightReading, maxLight);
     mPrevState = state;
@@ -171,7 +171,9 @@ void FootbotLeader::ControlStep() {
 }
 
 void FootbotLeader::Destroy() {
-    mQLearner->printQ("qmats/Qmat-" + this->m_strId + ".qlmat", false);
+    if (parStage == Stage::TRAIN) {
+        mQLearner->printQ("qmats/Qmat-" + this->m_strId + ".qlmat", true);
+    }
     delete mQLearner;
 }
 
