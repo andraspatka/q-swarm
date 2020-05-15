@@ -50,6 +50,8 @@ public:
       */
     virtual void Destroy();
 
+    void ExportQ();
+
     enum Stage {
         TRAIN,
         EXPLOIT
@@ -62,10 +64,12 @@ public:
 
     constexpr int static NUM_ACTIONS = 4;
 
+    constexpr int static STATE_THRESHOLD = 40;
+
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
     // The pull gauss curve's centre point is the prox sensor's coverage limit
-    constexpr double static B_PULL = 2.3f;
+    constexpr double static B_PULL = 2.5f;
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.5f;
     // Width of the gauss curve for pulling forces
@@ -87,6 +91,10 @@ private:
     int epoch = 0;
 
     double globalMaxLightReading = 0.0f;
+
+    int mLearnedEpoch = 4000;
+
+    std::array<int, NUM_STATES> mStateStats;
 
     /** ACTUATORS AND SENSORS */
     /* Pointer to the differential steering actuator. */

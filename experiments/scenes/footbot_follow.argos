@@ -64,10 +64,10 @@
         </box>
 
         <distribute>
-            <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
+            <position method="uniform" min="-5,-5,0" max="5,5,0" />
             <orientation method="uniform" min="0,0,0" max="360,0,0" />
-            <entity quantity="5" max_trials="100">
-                <box id="b" size="0.25,0.25,0.5" movable="false"/>
+            <entity quantity="0" max_trials="100">
+                <box id="b" size="0.2,0.2,0.5" movable="false"/>
             </entity>
         </distribute>
 

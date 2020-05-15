@@ -101,15 +101,19 @@ void FootbotFollow::ControlStep() {
 
     // Left front values
     for (int i = 0; i <= 4; ++i) {
-        fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
+        if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
+            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
                                                         C_PUSH, QLMathUtils::proxToDistance);
-        maxProx = std::max(maxProx, proxReadings.at(i).Value);
+            maxProx = std::max(maxProx, proxReadings.at(i).Value);
+        }
     }
     // Right front values
     for (int i = 19; i <= 23; ++i) {
-        fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
+        if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
+            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
                                                         C_PUSH, QLMathUtils::proxToDistance);
-        maxProx = std::max(maxProx, proxReadings.at(i).Value);
+            maxProx = std::max(maxProx, proxReadings.at(i).Value);
+        }
     }
 
     CVector2 directionVector = fpullVector - fpushVector;

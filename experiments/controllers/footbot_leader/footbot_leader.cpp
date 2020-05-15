@@ -30,7 +30,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "stage", parStageString);
 
     parStage = parseStageFromString(parStageString);
-    mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.1);
+    mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.2);
     std::vector<std::tuple<int, int>> impossibleStates = {
             std::make_tuple(0, 0), // FOLLOW state, STOP action
             std::make_tuple(1, 0), // DIR_LEFT state, STOP action
@@ -87,15 +87,19 @@ void FootbotLeader::ControlStep() {
 
     // Left front values
     for (int i = 0; i <= 4; ++i) {
-        fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
-                                                    C_PUSH, QLMathUtils::proxToDistance);
-        leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
+        if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
+            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
+                                                        C_PUSH, QLMathUtils::proxToDistance);
+            leftMaxProx = std::max(leftMaxProx, proxReadings.at(i).Value);
+        }
     }
     // Right front values
     for (int i = 19; i <= 23; ++i) {
-        fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
-                                                    C_PUSH, QLMathUtils::proxToDistance);
-        rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
+        if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
+            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
+                                                        C_PUSH, QLMathUtils::proxToDistance);
+            rightMaxProx = std::max(rightMaxProx, proxReadings.at(i).Value);
+        }
     }
 
     // max light reading around the footbot
@@ -112,7 +116,7 @@ void FootbotLeader::ControlStep() {
     CVector2 directionVector = fpullVector - fpushVector;
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
 
-    double const FORWARD_ANGLE = 30.0f;
+    double const FORWARD_ANGLE = 20.0f;
     double const SIDE_ANGLE = 180.0f;
 
     bool isTargetSeen = !QLMathUtils::closeToZero(maxLight);
@@ -129,7 +133,7 @@ void FootbotLeader::ControlStep() {
     std::string actualStateString;
     if (isFollow) {
         state = 0;
-        actualStateString = "WANDER";
+        actualStateString = "FOLLOW";
     } else if (isDirLeft) {
         state = 1;
         actualStateString = "DIR_LEFT";
@@ -145,7 +149,22 @@ void FootbotLeader::ControlStep() {
     }
 
     epoch++;
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 115 == 0 && parStage == Stage::TRAIN) {
+    if (parStage == Stage::TRAIN) {
+        mStateStats[state] += 1;
+    }
+    bool isLearned = true;
+    for (auto a : mStateStats) {
+        if (a < STATE_THRESHOLD) {
+            isLearned = false;
+        }
+    }
+
+    if (isLearned && epoch < mLearnedEpoch && parStage == Stage::TRAIN) {
+        mQLearner->setLearningRate(0);
+        mLearnedEpoch = epoch;
+        ExportQ();
+    }
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
@@ -162,6 +181,7 @@ void FootbotLeader::ControlStep() {
     LOG << "RightMaxProx: " << rightMaxProx << std::endl;
     LOG << "BackMaxLight: " << backMaxLight << std::endl;
     LOG << "MaxLight: " << maxLight << std::endl;
+    LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
 
     LOG << "Action taken: " << QLUtils::getActionName(action[0], action[1]) << std::endl;
     LOG << "State: " << actualStateString << std::endl;
@@ -170,10 +190,14 @@ void FootbotLeader::ControlStep() {
     LOG << "Id: " << this->m_strId << std::endl;
 }
 
-void FootbotLeader::Destroy() {
+void FootbotLeader::ExportQ() {
     if (parStage == Stage::TRAIN) {
         mQLearner->printQ("qmats/Qmat-" + this->m_strId + ".qlmat", true);
     }
+}
+
+void FootbotLeader::Destroy() {
+    this->ExportQ();
     delete mQLearner;
 }
 
