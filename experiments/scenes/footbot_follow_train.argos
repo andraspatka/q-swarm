@@ -75,12 +75,12 @@
         <light id="light" position="-0.8,-0.7,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
         <!-- The footbot which can go to the goal. -->
-        <foot-bot id="leader">
+        <foot-bot id="follow-leader1">
             <body position="0,-2.3,0" orientation="0,0,0" />
             <controller config="fgc" />
         </foot-bot>
 
-        <foot-bot id="leader2">
+        <foot-bot id="follow-leader2">
             <body position="1.9,1.7,0" orientation="0,0,0" />
             <controller config="fgc" />
         </foot-bot>

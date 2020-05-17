@@ -17,6 +17,7 @@
             <sensors>
                 <footbot_light implementation="rot_z_only" show_rays="true" />
                 <footbot_proximity implementation="default" show_rays="true" />
+                <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
