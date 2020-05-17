@@ -1,3 +1,5 @@
+#include <argos3/core/utility/math/vector3.h>
+#include <monitoring/logger.hpp>
 #include "footbot_leader.h"
 
 FootbotLeader::FootbotLeader() :
@@ -21,6 +23,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     mProximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
     mLed = GetActuator<CCI_LEDsActuator>("leds");
+    mPosition = GetSensor<CCI_PositioningSensor>("positioning");
     std::string parStageString;
 
     GetNodeAttribute(t_node, "velocity", parWheelVelocity);
@@ -44,7 +47,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     };
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
-        mQLearner->readQ("qmats/Leader-train.qlmat");
+        mQLearner->readQ("qmats/leader-train.qlmat");
     }
     mLed->SetAllColors(CColor::RED);
 }
@@ -172,7 +175,15 @@ void FootbotLeader::ControlStep() {
     globalMaxLightReading = std::max(globalMaxLightReading, maxLight);
     mPrevState = state;
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
-
+    std::string actionName = QLUtils::getActionName(action[0], action[1]);
+    const CVector3 actualPosition = this->mPosition->GetReading().Position;
+    std::vector<std::string> toLog = {
+            std::to_string(actualPosition.GetX()),
+            std::to_string(actualPosition.GetY()),
+            actualStateString,
+            actionName
+    };
+    ql::Logger::log(this->m_strId, toLog);
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
     LOG << "Stage: " << parseStringFromStage(parStage) << std::endl;
@@ -182,7 +193,7 @@ void FootbotLeader::ControlStep() {
     LOG << "MaxLight: " << maxLight << std::endl;
     LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
 
-    LOG << "Action taken: " << QLUtils::getActionName(action[0], action[1]) << std::endl;
+    LOG << "Action taken: " <<  actionName << std::endl;
     LOG << "State: " << actualStateString << std::endl;
     LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     LOG << "Global max light: " << globalMaxLightReading << std::endl;
@@ -191,7 +202,7 @@ void FootbotLeader::ControlStep() {
 
 void FootbotLeader::ExportQ() {
     if (parStage == Stage::TRAIN) {
-        mQLearner->printQ("qmats/Leader-" + this->m_strId + ".qlmat", true);
+        mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
     }
 }
 

@@ -48,7 +48,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     mStateStats.fill(0);
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
-        mQLearner->readQ("qmats/Follow-train.qlmat");
+        mQLearner->readQ("qmats/follow-train.qlmat");
     }
     ql::Logger::clearMyLogs(this->m_strId);
 }
@@ -184,10 +184,17 @@ void FootbotFollow::ControlStep() {
 
     double velocityFactor = (negateVelocity) ? 1 : directionVector.Length();
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
+    std::string actionName = QLUtils::getActionName(action[0], action[1]);
     mDiffSteering->SetLinearVelocity(action[0] * velocityFactor, action[1] * velocityFactor);
 
     const CVector3 actualPosition = this->mPosition->GetReading().Position;
-    ql::Logger::logPosition(this->m_strId, {actualPosition.GetX(), actualPosition.GetY()});
+    std::vector<std::string> toLog = {
+            std::to_string(actualPosition.GetX()),
+            std::to_string(actualPosition.GetY()),
+            actualState,
+            actionName
+    };
+    ql::Logger::log(this->m_strId, toLog);
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
     LOG << "Id: " << this->m_strId << std::endl;
@@ -198,7 +205,7 @@ void FootbotFollow::ControlStep() {
     LOG << "VelocityFactor: " << velocityFactor << std::endl;
     LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
 
-    LOG << "Action taken: " << QLUtils::getActionName(action[0], action[1]) << std::endl;
+    LOG << "Action taken: " << actionName << std::endl;
     LOG << "State: " << actualState << std::endl;
     LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     LOG << "Global min camera: " << globalMinCameraBlobDist << std::endl;
@@ -206,7 +213,7 @@ void FootbotFollow::ControlStep() {
 
 void FootbotFollow::Export() {
     if (parStage != Stage::EXPLOIT) {
-        mQLearner->printQ("qmats/Follow-" + this->m_strId + ".qlmat", true);
+        mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
     }
 }
 

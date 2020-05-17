@@ -22,7 +22,7 @@ namespace ql {
             std::remove(fileName.c_str());
         }
 
-        static void logPosition(const std::string &footbotId, const std::vector<double>& values) {
+        static void log(const std::string &footbotId, const std::vector<std::string>& values) {
             std::string fileName = std::string(Logger::LOG_DIRECTORY) + "/" + footbotId + ".csv";
             std::ofstream file(fileName, std::ios::app);
             if (!file.is_open()) {

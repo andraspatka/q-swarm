@@ -14,6 +14,7 @@
 #include <qlearner/ql_utils.hpp>
 #include <qlearner/ql_math_utils.hpp>
 #include <qlearner/qlearner.hpp>
+#include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 
 using namespace argos;
 using namespace ql;
@@ -108,6 +109,9 @@ private:
 
     /* Pointer to the foot-bot light sensor. */
     CCI_FootBotLightSensor *mLightSensor;
+
+    /* Pointer to the footbot positioning sensor. */
+    CCI_PositioningSensor* mPosition;
 
     /** PARAMETERS FROM THE ARGOS FILE */
 

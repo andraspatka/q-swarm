@@ -17,6 +17,7 @@
             <sensors>
                 <footbot_light implementation="rot_z_only" show_rays="true" />
                 <footbot_proximity implementation="default" show_rays="true" />
+                <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
             <params velocity="25" learning_rate="0.95" discount_factor="0.75" threshold="0.24" stage="exploit"/>

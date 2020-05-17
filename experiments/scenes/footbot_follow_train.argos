@@ -39,6 +39,7 @@
             <sensors>
                 <footbot_light implementation="rot_z_only" show_rays="true" />
                 <footbot_proximity implementation="default" show_rays="true" />
+                <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
@@ -84,7 +85,7 @@
             <controller config="fgc" />
         </foot-bot>
 
-        <foot-bot id="train">
+        <foot-bot id="follow-train">
             <body position="2.2,2.2,0" orientation="-130,0,0" />
             <controller config="ffc" />
         </foot-bot>

@@ -53,7 +53,7 @@
         <!-- End goal for the footbots marked by a light -->
         <light id="light" position="2,2.3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
-        <foot-bot id="train">
+        <foot-bot id="leader-train">
             <body position="-2,-2,0" orientation="0,0,0" />
             <controller config="fqc" />
         </foot-bot>
