@@ -2,3 +2,5 @@ venv
 *.iml
 profiles_settings.xml
 /.idea
+
+__pycache__
