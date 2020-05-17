@@ -1,0 +1,8 @@
+//
+// Created by andraspatka on 17.05.2020.
+//
+
+#ifndef EXPERIMENTS_FOOTBOT_PREDATOR_H
+#define EXPERIMENTS_FOOTBOT_PREDATOR_H
+
+#endif //EXPERIMENTS_FOOTBOT_PREDATOR_H

@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="30" learning_rate="0.9" discount_factor="0.8" threshold="30" stage="train" qmat_filename="Qfollow"/>
+            <params velocity="30" learning_rate="1" discount_factor="0.65" threshold="30" stage="train"/>
         </footbot_follow>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -42,7 +42,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="25" learning_rate="0.05" discount_factor="0.8" threshold="0.25" stage="exploit"/>
+            <params velocity="20" learning_rate="0" discount_factor="0" threshold="0.25" stage="exploit"/>
         </footbot_leader_controller>
     </controllers>
 
@@ -63,30 +63,38 @@
             <body position="-2.5,0,0" orientation="0,0,0" />
         </box>
 
+        <!-- boxes distributed uniformly in position and rotation around Z. -->
         <distribute>
             <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
-            <orientation method="uniform" min="0,0,0" max="360,0,0" />
-            <entity quantity="5" max_trials="100">
-                <box id="b" size="0.25,0.25,0.5" movable="false"/>
+            <orientation method="uniform" min="0,0,0" max="0,0,0" />
+            <entity quantity="15" max_trials="100">
+                <box id="b" size="0.15,0.15,0.5" movable="false"/>
             </entity>
         </distribute>
+        <light id="light" position="-0.8,-0.7,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
-        <foot-bot id="fb">
-            <body position="2.2,2.2,0" orientation="0,0,0" />
+        <!-- The footbot which can go to the goal. -->
+        <foot-bot id="leader">
+            <body position="0,-2.3,0" orientation="0,0,0" />
+            <controller config="fgc" />
+        </foot-bot>
+
+        <foot-bot id="leader2">
+            <body position="1.9,1.7,0" orientation="0,0,0" />
+            <controller config="fgc" />
+        </foot-bot>
+
+        <foot-bot id="train">
+            <body position="2.2,2.2,0" orientation="-130,0,0" />
             <controller config="ffc" />
         </foot-bot>
 
-        <!-- The footbot which can go to the goal. -->
-        <!--<foot-bot id="fgc">
-            <body position="2,2,0" orientation="0,0,0" />
-            <controller config="fgc" />
-        </foot-bot>-->
 
         <!-- Manual control footbot. -->
-        <foot-bot id="fmc">
+<!--        <foot-bot id="fmc">
             <body position="2,2,0" orientation="0,0,0" />
             <controller config="fmc" />
-        </foot-bot>
+        </foot-bot>-->
 
 
     </arena>

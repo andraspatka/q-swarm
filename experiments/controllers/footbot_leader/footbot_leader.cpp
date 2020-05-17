@@ -44,7 +44,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     };
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
-        mQLearner->readQ("qmats/Qmat-train.qlmat");
+        mQLearner->readQ("qmats/Leader-train.qlmat");
     }
     mLed->SetAllColors(CColor::RED);
 }
@@ -126,7 +126,7 @@ void FootbotLeader::ControlStep() {
     bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
                       QLMathUtils::angleInDegrees(directionVector.Angle()) <= SIDE_ANGLE && !isDirZero && maxLight < parThreshold;
     bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
-                      QLMathUtils::angleInDegrees(directionVector.Angle()) > -SIDE_ANGLE && !isDirZero && maxLight < parThreshold;
+                      QLMathUtils::angleInDegrees(directionVector.Angle()) >= -SIDE_ANGLE && !isDirZero && maxLight < parThreshold;
     bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
     bool isIdle = (isDirZero && isTargetSeen) || maxLight > parThreshold;
 
@@ -162,7 +162,6 @@ void FootbotLeader::ControlStep() {
     if (isLearned && epoch < mLearnedEpoch && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(0);
         mLearnedEpoch = epoch;
-        ExportQ();
     }
     if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
@@ -192,7 +191,7 @@ void FootbotLeader::ControlStep() {
 
 void FootbotLeader::ExportQ() {
     if (parStage == Stage::TRAIN) {
-        mQLearner->printQ("qmats/Qmat-" + this->m_strId + ".qlmat", true);
+        mQLearner->printQ("qmats/Leader-" + this->m_strId + ".qlmat", true);
     }
 }
 

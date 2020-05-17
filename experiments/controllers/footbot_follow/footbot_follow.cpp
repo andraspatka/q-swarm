@@ -31,10 +31,9 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "discount_factor", parDiscountFactor);
     GetNodeAttribute(t_node, "threshold", parThreshold);
     GetNodeAttribute(t_node, "stage", parStageString);
-    GetNodeAttribute(t_node, "qmat_filename", parQMatFileName);
 
     parStage = parseStageFromString(parStageString);
-    mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.1);
+    mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.10);
     std::vector<std::tuple<int, int>> impossibleStates = {
             std::make_tuple(0, 0), // WANDER state, STOP action
             std::make_tuple(1, 0), // FOLLOW state, STOP action
@@ -49,7 +48,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     mStateStats.fill(0);
     mQLearner->initR(impossibleStates, rewards);
     if (parStage == Stage::EXPLOIT) {
-        mQLearner->readQ("qmats/Qfollow-train.qlmat");
+        mQLearner->readQ("qmats/Follow-train.qlmat");
     }
     ql::Logger::clearMyLogs(this->m_strId);
 }
@@ -129,15 +128,15 @@ void FootbotFollow::ControlStep() {
     bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
                      QLMathUtils::angleInDegrees(directionVector.Angle()) <= SIDE_ANGLE && !isDirZero;
     bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
-                      QLMathUtils::angleInDegrees(directionVector.Angle()) > -SIDE_ANGLE && !isDirZero;
+                      QLMathUtils::angleInDegrees(directionVector.Angle()) >= -SIDE_ANGLE && !isDirZero;
     bool isIdle = isDirZero && isTargetSeen;
-    bool negateVelocity = false;
+
+    bool negateVelocity = true;
     std::string actualState;
     // States
     if (isWander) {
         actualState = "WANDER";
         state = 0;
-        negateVelocity = true;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isFollow) {
         actualState = "FOLLOW";
@@ -147,18 +146,18 @@ void FootbotFollow::ControlStep() {
     } else if (isDirLeft) {
         actualState = "DIR_LEFT";
         state = 2;
-        negateVelocity = true;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isDirRight) {
         actualState = "DIR_RIGHT";
         state = 3;
-        negateVelocity = true;
         mLed->SetAllColors(CColor::WHITE);
     } else if (isIdle) {
         actualState = "IDLE";
         state = 4;
-        negateVelocity = true;
         mLed->SetAllColors(CColor::GREEN);
+    }
+    if (state == -1) {
+        int bp=0;
     }
 
     epoch++;
@@ -174,9 +173,8 @@ void FootbotFollow::ControlStep() {
     if (isLearned && epoch < mLearnedEpoch && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(0);
         mLearnedEpoch = epoch;
-        mQLearner->printQ("qmats/debug" + parQMatFileName  + "-" + this->m_strId + ".qlmat", true);
     }
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 115 == 0 && parStage == Stage::TRAIN) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0 && parStage == Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
@@ -206,11 +204,14 @@ void FootbotFollow::ControlStep() {
     LOG << "Global min camera: " << globalMinCameraBlobDist << std::endl;
 }
 
-void FootbotFollow::Destroy() {
+void FootbotFollow::Export() {
     if (parStage != Stage::EXPLOIT) {
-        mQLearner->printQ("qmats/" + parQMatFileName  + "-" + this->m_strId + ".qlmat", true);
+        mQLearner->printQ("qmats/Follow-" + this->m_strId + ".qlmat", true);
     }
+}
 
+void FootbotFollow::Destroy() {
+    this->Export();
     delete mQLearner;
 }
 

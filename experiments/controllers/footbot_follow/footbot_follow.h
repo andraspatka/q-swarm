@@ -53,6 +53,8 @@ public:
       */
     virtual void Destroy();
 
+    void Export();
+
     enum Stage {
         TRAIN,
         EXPLOIT
@@ -62,7 +64,7 @@ public:
 
     constexpr int static NUM_ACTIONS = 4;
 
-    constexpr int static STATE_THRESHOLD = 40;
+    constexpr int static STATE_THRESHOLD = 30;
 
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
@@ -123,7 +125,4 @@ private:
 
     // Discount factor. If close to zero, then the agent prefers the immediate reward, otherwise the long term reward.
     double parDiscountFactor;
-
-    // Filename under which the Q matrix should be saved.
-    std::string parQMatFileName;
 };
