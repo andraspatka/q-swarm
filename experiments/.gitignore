@@ -1,0 +1,14 @@
+build
+.project
+.idea/dictionaries
+.idea/shelf
+cmake-build-debug
+captures
+*.qlmat
+*.csv
+*.iml
+experiments.iml
+misc.xml
+workspace.xml
+modules.xml
+vcs.xml
