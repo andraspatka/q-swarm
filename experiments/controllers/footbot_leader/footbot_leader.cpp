@@ -50,6 +50,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
         mQLearner->readQ("qmats/leader-train.qlmat");
     }
     mLed->SetAllColors(CColor::RED);
+    ql::Logger::clearMyLogs(this->m_strId);
 }
 
 /**

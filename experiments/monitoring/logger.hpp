@@ -2,6 +2,7 @@
 #define LOGGER
 
 #include <string>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -22,7 +23,7 @@ namespace ql {
             std::remove(fileName.c_str());
         }
 
-        static void log(const std::string &footbotId, const std::vector<std::string>& values) {
+        static void log(const std::string &footbotId, std::vector<std::string> values) {
             std::string fileName = std::string(Logger::LOG_DIRECTORY) + "/" + footbotId + ".csv";
             std::ofstream file(fileName, std::ios::app);
             if (!file.is_open()) {
@@ -30,6 +31,7 @@ namespace ql {
                 exit(1);
             }
             for (int i = 0; i < values.size() - 1; ++i) {
+                std::replace(values[i].begin(), values[i].end(), ',', '.');
                 file << values[i] << ",";
             }
             file << values[values.size() - 1] << "\n";
