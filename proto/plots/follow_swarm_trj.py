@@ -24,7 +24,7 @@ leader = readAndClean(createPathToLogs('leaderA.csv'))
 xl, yl = leader.T
 plt.scatter(xl[1], yl[1], c=leaderStartColor, s=area * 10)
 plt.scatter(xl, yl, s=area,c=leaderColor, label="Leader")
-
+plt.title('1 leader, 9 followers')
 plt.ylim(ymin=-5, ymax=5)
 plt.xlim(xmin=-5, xmax=5)
 plt.scatter(0, -2, s=200,c=goalColor, label="Goal")

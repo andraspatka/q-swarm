@@ -35,10 +35,11 @@ plt.xlabel("Distance")
 plt.ylabel("Magnitude")
 plt.ylim(ymin=0, ymax=1)
 plt.xlim(xmin=0, xmax=3)
+plt.title('Push-pull forces for the follower agent')
 
 plt.grid()
 plt.legend()
 
-plt.savefig('pushpull.png', transparent=True, dpi=300)
+plt.savefig('pushpull.png', transparent=False, dpi=300)
 plt.show()
 
