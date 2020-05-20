@@ -7,3 +7,8 @@ def readAndClean(filePath):
 
 def createPathToLogs(fileName):
     return '../../measurements/' + fileName
+
+class AGENT_TYPE:
+    SUSCEPTIBLE = 'SUSCEPTIBLE'
+    INFECTIOUS = 'INFECTIOUS'
+    REMOVED = 'REMOVED'
