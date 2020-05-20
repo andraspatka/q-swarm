@@ -23,8 +23,14 @@ namespace ql {
             std::remove(fileName.c_str());
         }
 
-        static void log(const std::string &footbotId, std::vector<std::string> values) {
-            std::string fileName = std::string(Logger::LOG_DIRECTORY) + "/" + footbotId + ".csv";
+        static void log(const std::string &footbotId, std::vector<std::string> values, bool isDiseaseSim = false) {
+            std::string fileName;
+            if (isDiseaseSim) {
+                fileName = std::string(Logger::LOG_DIRECTORY) + "/disease/" + footbotId + ".csv";
+            } else {
+                fileName = std::string(Logger::LOG_DIRECTORY) + "/" + footbotId + ".csv";
+            }
+
             std::ofstream file(fileName, std::ios::app);
             if (!file.is_open()) {
                 std::cout << "Logger: There was a problem opening the output file!\n";

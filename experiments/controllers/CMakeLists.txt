@@ -7,3 +7,5 @@ add_subdirectory(footbot_leader)
 add_subdirectory(footbot_manual)
 
 add_subdirectory(footbot_follow)
+
+add_subdirectory(footbot_infect_rw)

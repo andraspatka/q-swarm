@@ -1,9 +1,8 @@
-#include "footbot_follow.h"
+#include "footbot_infect_rw.h"
 
-FootbotFollow::FootbotFollow() :
+InfectRandomWalk::InfectRandomWalk() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
-        globalMinCameraBlobDist(0),
         epoch(0) {}
 
 /**
@@ -15,7 +14,7 @@ FootbotFollow::FootbotFollow() :
  * 3 DIR_RIGHT  -1      0           0           0
  * 4 IDLE        2      0           0           0
  */
-void FootbotFollow::Init(TConfigurationNode &t_node) {
+void InfectRandomWalk::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mLed = GetActuator<CCI_LEDsActuator>("leds");
@@ -27,30 +26,19 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     std::string parStageString;
 
     GetNodeAttribute(t_node, "velocity", parWheelVelocity);
-    GetNodeAttribute(t_node, "learning_rate", parLearnRate);
-    GetNodeAttribute(t_node, "discount_factor", parDiscountFactor);
-    GetNodeAttribute(t_node, "threshold", parThreshold);
-    GetNodeAttribute(t_node, "stage", parStageString);
+    GetNodeAttribute(t_node, "infectious", parNoOfInfectious);
+    GetNodeAttribute(t_node, "infect_prob", parInfectionProb);
 
-    parStage = parseStageFromString(parStageString);
-    mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.10);
-    std::vector<std::tuple<int, int>> impossibleStates = {
-            std::make_tuple(0, 0), // WANDER state, STOP action
-            std::make_tuple(1, 0), // FOLLOW state, STOP action
-            std::make_tuple(2, 0), // DIR_LEFT, STOP action
-            std::make_tuple(3, 0)  // DIR_RIGHT, STOP action
-    };
-    std::vector<std::tuple<int, int, double>> rewards = {
-            std::make_tuple(0, 3, 0.2), // WANDER state, FORWARD action
-            std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
-            std::make_tuple(4, 0, 2), // IDLE state, STOP action
-    };
-    mStateStats.fill(0);
-    mQLearner->initR(impossibleStates, rewards);
-    if (parStage == Stage::EXPLOIT) {
-        mQLearner->readQ("qmats/follow-train.qlmat");
-    }
+    mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS);
+    mQLearner->readQ("qmats/follow-train.qlmat");
     ql::Logger::clearMyLogs(this->m_strId);
+
+    int idNumber = std::stoi(this->m_strId);
+    if (idNumber < parNoOfInfectious) {
+        agentType = AGENT_TYPE::INFECTIOUS;
+    } else {
+        agentType = AGENT_TYPE::SUSCEPTIBLE;
+    }
 }
 
 /**
@@ -71,7 +59,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
  *
  *              back
  */
-void FootbotFollow::ControlStep() {
+void InfectRandomWalk::ControlStep() {
     CVector2 fpushVector;
     CVector2 fpullVector;
 
@@ -84,17 +72,10 @@ void FootbotFollow::ControlStep() {
 
     CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
     for (auto r : cameraReadings) {
-        if (r->Distance < minDistanceBlob.Distance && (r->Color == CColor::RED || r->Color == CColor::YELLOW)) {
-            minDistanceBlob.Distance = r->Distance;
-            minDistanceBlob.Angle = r->Angle;
-            minDistanceBlob.Color = r->Color;
-
-            CVector2 pullVector = QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
-                                                               QLMathUtils::cameraToDistance);
-            if (r->Color == CColor::RED) { // following the actual leader has a higher priority
-                pullVector = pullVector * 1.4;
+        if (ql::QLMathUtils::cameraToDistance(r->Distance) <= 1 && r->Color == CColor::RED && agentType == SUSCEPTIBLE) {
+            if (drand48() < parInfectionProb) {
+                agentType = INFECTIOUS;
             }
-            fpullVector = fpullVector + pullVector;
         }
     }
 
@@ -118,7 +99,7 @@ void FootbotFollow::ControlStep() {
     CVector2 directionVector = fpullVector - fpushVector;
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
 
-    double const FORWARD_ANGLE = 30.0f;
+    double const FORWARD_ANGLE = 20.0f;
     double const SIDE_ANGLE = 180.0f;
 
     bool isTargetSeen = minDistanceBlob.Distance != 1000.0f;
@@ -157,27 +138,28 @@ void FootbotFollow::ControlStep() {
         mLed->SetAllColors(CColor::GREEN);
     }
 
+    if (infectedForEpochs > 100) {
+        agentType = REMOVED;
+    }
+
+    CColor agentColor = CColor::WHITE;
+    switch (agentType) {
+        case INFECTIOUS:
+            agentColor = CColor::RED;
+            infectedForEpochs++;
+            break;
+        case SUSCEPTIBLE:
+            agentColor = CColor::CYAN;
+            break;
+        case REMOVED:
+            agentColor = CColor::GRAY50;
+            break;
+    }
+    mLed->SetAllColors(agentColor);
+
     epoch++;
-    if (parStage == Stage::TRAIN) {
-        mStateStats[state] += 1;
-    }
-    bool isLearned = true;
-    for (auto a : mStateStats) {
-        if (a < STATE_THRESHOLD) {
-            isLearned = false;
-        }
-    }
-    if (isLearned && epoch < mLearnedEpoch && parStage == Stage::TRAIN) {
-        mQLearner->setLearningRate(0);
-        mLearnedEpoch = epoch;
-    }
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0 && parStage == Stage::TRAIN) {
-        mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
-    }
 
-    int actionIndex = (parStage == Stage::EXPLOIT) ? mQLearner->exploit(state) : mQLearner->doubleQ(mPrevState, state);
-
-    mPrevState = state;
+    int actionIndex = mQLearner->exploit(state);
 
     double velocityFactor = (negateVelocity) ? 1 : directionVector.Length();
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
@@ -189,45 +171,35 @@ void FootbotFollow::ControlStep() {
             std::to_string(actualPosition.GetX()),
             std::to_string(actualPosition.GetY()),
             actualState,
-            actionName
+            actionName,
+            getAgentTypeAsString()
     };
-    ql::Logger::log(this->m_strId, toLog);
+    ql::Logger::log(this->m_strId, toLog, true);
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
     LOG << "Id: " << this->m_strId << std::endl;
-    LOG << "Stage: " << parStage << std::endl;
-    LOG << "fpush: " << fpushVector << std::endl;
-    LOG << "fpull: " << fpullVector << std::endl;
-    LOG << "Direction: " << directionVector << std::endl;
-    LOG << "VelocityFactor: " << velocityFactor << std::endl;
-    LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
-
+    LOG << "Type: " << getAgentTypeAsString();
     LOG << "Action taken: " << actionName << std::endl;
     LOG << "State: " << actualState << std::endl;
-    LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
-    LOG << "Global min camera: " << globalMinCameraBlobDist << std::endl;
 }
 
-void FootbotFollow::Export() {
-    if (parStage != Stage::EXPLOIT) {
-        mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
-    }
-}
-
-void FootbotFollow::Destroy() {
-    this->Export();
+void InfectRandomWalk::Destroy() {
     delete mQLearner;
 }
 
-FootbotFollow::Stage FootbotFollow::parseStageFromString(const std::string &stageString) {
-    if (stageString == "train") return FootbotFollow::Stage::TRAIN;
-    if (stageString == "exploit") return FootbotFollow::Stage::EXPLOIT;
-    std::cerr << "Invalid Stage value: " << stageString;
-    exit(1);
+std::string InfectRandomWalk::getAgentTypeAsString() {
+    switch (this->agentType) {
+        case INFECTIOUS:
+            return "INFECTIOUS";
+        case SUSCEPTIBLE:
+            return "SUSCEPTIBLE";
+        case REMOVED:
+            return "REMOVED";
+    }
 }
 
 /**
  * Register the controller.
  * This is needed in order for argos to be able to bind the scene to this controller.
  */
-REGISTER_CONTROLLER(FootbotFollow, "footbot_follow")
+REGISTER_CONTROLLER(InfectRandomWalk, "infect_random_walk")
