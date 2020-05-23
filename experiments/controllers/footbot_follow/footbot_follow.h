@@ -15,6 +15,7 @@
 #include <qlearner/qlearner.hpp>
 #include <qlearner/ql_utils.hpp>
 #include <qlearner/ql_math_utils.hpp>
+#include <qlearner/stage.hpp>
 
 #include <monitoring/logger.hpp>
 
@@ -53,13 +54,7 @@ public:
       */
     virtual void Destroy();
 
-    void Export();
-
-    enum Stage {
-        TRAIN,
-        EXPLOIT
-    };
-
+private:
     constexpr int static NUM_STATES = 5;
 
     constexpr int static NUM_ACTIONS = 4;
@@ -77,17 +72,13 @@ public:
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 
-private:
-
-    static Stage parseStageFromString(const std::string& stageString);
-
     ql::QLearner * mQLearner;
 
     int mPrevState = 0;
 
     int epoch = 0;
 
-    double globalMinCameraBlobDist;
+    double mGlobalMinCameraBlobDist;
 
     int mLearnedEpoch = 4000;
 
@@ -115,7 +106,7 @@ private:
     Real parWheelVelocity;
 
     // If true then learning phase, if false, then exploit phase.
-    Stage parStage;
+    StageHelper::Stage parStage;
 
     // Threshold value for IDLE state
     double parThreshold;

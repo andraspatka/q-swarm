@@ -139,7 +139,7 @@ namespace ql {
                         Q1[i][j] = -1;
                         Q2[i][j] = -1;
                     }
-                    if (i == NUM_STATES - 1) { //terminal state
+                    if (i == NUM_STATES - 1) { // terminal state
                         Q[i][j] = 0;
                         Q1[i][j] = 0;
                         Q2[i][j] = 0;
@@ -149,66 +149,17 @@ namespace ql {
         }
 
         /**
-         * Reinitializes the Q matrix.
-         */
-        void clearQ() {
-            Q = std::vector<std::vector<double>>(NUM_STATES);
-            for (int i = 0; i < NUM_STATES; ++i) {
-                Q[i] = std::vector<double>(NUM_ACTIONS, 0.0f);
-            }
-        }
-
-        /**
-         * Updates the value of the Q matrix.
-         * If the learning rate is higher than 0.1, then the agent is in an exploration state, meaning that it acts
-         * completely randomly. Otherwise the agent uses the Q matrix and chooses the action that its policy deems most beneficial.
+         * Updates the value of the Q matrix. Uses DoubleQ learning to avoid maximization bias (this results in overestimation).
+         * Uses the epsilon-Greedy policy, the rate of exploration and exploitation determined by the epsilon hyperparameter.
          *
          * Formula for updating the Q matrix:
-         *  Q[state][action] = Q[state][action] + learningRate * (R[state][action] + discountFactor * Max(Q[state]) - Q[state][action]
+         *  Q1[state][action] = Q1[state][action] + learningRate * (R[state][action] + discountFactor * Max(Q2[state]) - Q1[state][action]
+         *  Q2[state][action] = Q2[state][action] + learningRate * (R[state][action] + discountFactor * Max(Q1[state]) - Q2[state][action]
          *
          * @param state the current state
          * @param nextState the next state, the state to which taking the action in @param state leads to.
          * @return
          */
-        int train(int state, int nextState) {
-            assertm(state < NUM_STATES && state >= 0, "Train: Invalid state index!");
-            assertm(nextState < NUM_STATES && nextState >= 0, "Train: Invalid next state: index!");
-            int possibleAction = -1;
-            int bestAction = -1;
-            if (learningRate > 0.1f) {
-
-//                ql::ThreadSafeRandom threadSafeRandom(0, NUM_ACTIONS);
-                do {
-//                    possibleAction = threadSafeRandom.getRandomNumber();
-                    possibleAction = rand() % 4;
-                } while (R[state][possibleAction] == -1);
-            } else {
-                double maxQValue = 0;
-                double nextStateMaxQValue = 0;
-                for (int i = 0; i < NUM_ACTIONS; ++i) {
-                    if (Q[state][i] > maxQValue) {
-                        maxQValue = Q[state][i];
-                        possibleAction = i;
-                    }
-                    // Next state corresponds to the current state, as the next state can't be predicted
-                    if (Q[nextState][i] > nextStateMaxQValue) {
-                        nextStateMaxQValue = Q[nextState][i];
-                        bestAction = i;
-                    }
-                }
-            }
-
-            double nextStateMaxValue = 0;
-            for (int i = 0; i < NUM_ACTIONS; ++i) {
-                nextStateMaxValue = std::max(nextStateMaxValue, Q[nextState][i]);
-            }
-            Q[state][possibleAction] = Q[state][possibleAction]
-                                       + learningRate * (R[state][possibleAction] + discountFactor * nextStateMaxValue -
-                                                         Q[state][possibleAction]);
-            // If the learningRate is less than 0.1f, then the absolute best action should be returned.
-            return (learningRate > 0.1f) ? possibleAction : bestAction;
-        }
-
         int doubleQ(int state, int nextState) {
             assertm(state < NUM_STATES && state >= 0, "Train: Invalid state index!");
             assertm(nextState < NUM_STATES && nextState >= 0, "Train: Invalid next state: index!");
@@ -251,35 +202,6 @@ namespace ql {
 
             Q1 = isQ1 ? H : Hi;
             Q2 = isQ1 ? Hi : H;
-
-            return action;
-        }
-
-        int simpleQ(int state, int nextState) {
-            assertm(state < NUM_STATES && state >= 0, "Train: Invalid state index!");
-            assertm(nextState < NUM_STATES && nextState >= 0, "Train: Invalid next state: index!");
-
-            const double eGreedyRand = drand48();
-            int action = 0;
-            if (eGreedyRand < eGreedy) { // exploration
-                do {
-                    action = rand() % NUM_ACTIONS;
-                } while (R[state][action] < 0);
-            } else { // exploitation
-                double maxActionValue = -1;
-                for (int a = 0; a < NUM_ACTIONS; ++a) {
-                    if (Q[state][action] > maxActionValue) {
-                        maxActionValue = Q[state][action];
-                        action = a;
-                    }
-                }
-            }
-            double nextStateMaxQ = 0.0f;
-            for (int a = 0; a < NUM_ACTIONS; ++a) {
-                nextStateMaxQ = std::max(nextStateMaxQ, Q[nextState][action]);
-            }
-
-            Q[state][action] = Q[state][action] + learningRate * (R[state][action] + discountFactor * nextStateMaxQ - Q[state][action]);
 
             return action;
         }

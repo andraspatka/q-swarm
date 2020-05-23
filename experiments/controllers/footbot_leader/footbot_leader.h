@@ -12,6 +12,7 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_leds_actuator.h>
 
 #include <qlearner/ql_utils.hpp>
+#include <qlearner/stage.hpp>
 #include <qlearner/ql_math_utils.hpp>
 #include <qlearner/qlearner.hpp>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
@@ -51,16 +52,8 @@ public:
       */
     virtual void Destroy();
 
-    void ExportQ();
 
-    enum Stage {
-        TRAIN,
-        EXPLOIT
-    };
-
-    // Small value, close to 0. Used for floating point comparisons to "0".
-    constexpr double static EXP_EPSILON = 0.01;
-
+private:
     constexpr int static NUM_STATES = 5;
 
     constexpr int static NUM_ACTIONS = 4;
@@ -77,13 +70,6 @@ public:
     constexpr double static C_PULL = 0.6f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
-private:
-
-    static Stage parseStageFromString(const std::string& stageString);
-
-    static std::string parseStringFromStage(const Stage& stage);
-
-    std::string getActionName(double x, double y);
 
     ql::QLearner * mQLearner;
 
@@ -91,7 +77,7 @@ private:
 
     int epoch = 0;
 
-    double globalMaxLightReading = 0.0f;
+    double mGlobalMaxLightReading = 0.0f;
 
     int mLearnedEpoch = 4000;
 
@@ -119,7 +105,7 @@ private:
     Real parWheelVelocity;
 
     // If true then learning phase, if false, then exploit phase.
-    Stage parStage;
+    StageHelper::Stage parStage;
 
     // Threshold value for IDLE state
     double parThreshold;

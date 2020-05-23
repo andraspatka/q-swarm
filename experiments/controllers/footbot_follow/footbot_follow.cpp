@@ -3,7 +3,7 @@
 FootbotFollow::FootbotFollow() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
-        globalMinCameraBlobDist(0),
+        mGlobalMinCameraBlobDist(0),
         epoch(0) {}
 
 /**
@@ -32,7 +32,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "threshold", parThreshold);
     GetNodeAttribute(t_node, "stage", parStageString);
 
-    parStage = parseStageFromString(parStageString);
+    parStage = StageHelper::ParseStageFromString(parStageString);
     mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.10);
     std::vector<std::tuple<int, int>> impossibleStates = {
             std::make_tuple(0, 0), // WANDER state, STOP action
@@ -47,7 +47,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     };
     mStateStats.fill(0);
     mQLearner->initR(impossibleStates, rewards);
-    if (parStage == Stage::EXPLOIT) {
+    if (parStage == StageHelper::Stage::EXPLOIT) {
         mQLearner->readQ("qmats/follow-train.qlmat");
     }
     ql::Logger::clearMyLogs(this->m_strId);
@@ -158,7 +158,7 @@ void FootbotFollow::ControlStep() {
     }
 
     epoch++;
-    if (parStage == Stage::TRAIN) {
+    if (parStage == StageHelper::Stage::TRAIN) {
         mStateStats[state] += 1;
     }
     bool isLearned = true;
@@ -167,15 +167,15 @@ void FootbotFollow::ControlStep() {
             isLearned = false;
         }
     }
-    if (isLearned && epoch < mLearnedEpoch && parStage == Stage::TRAIN) {
+    if (isLearned && epoch < mLearnedEpoch && parStage == StageHelper::Stage::TRAIN) {
         mQLearner->setLearningRate(0);
         mLearnedEpoch = epoch;
     }
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0 && parStage == Stage::TRAIN) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0 && parStage == StageHelper::Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
-    int actionIndex = (parStage == Stage::EXPLOIT) ? mQLearner->exploit(state) : mQLearner->doubleQ(mPrevState, state);
+    int actionIndex = (parStage == StageHelper::Stage::EXPLOIT) ? mQLearner->exploit(state) : mQLearner->doubleQ(mPrevState, state);
 
     mPrevState = state;
 
@@ -205,25 +205,14 @@ void FootbotFollow::ControlStep() {
     LOG << "Action taken: " << actionName << std::endl;
     LOG << "State: " << actualState << std::endl;
     LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
-    LOG << "Global min camera: " << globalMinCameraBlobDist << std::endl;
-}
-
-void FootbotFollow::Export() {
-    if (parStage != Stage::EXPLOIT) {
-        mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
-    }
+    LOG << "Global min camera: " << mGlobalMinCameraBlobDist << std::endl;
 }
 
 void FootbotFollow::Destroy() {
-    this->Export();
+    if (parStage == StageHelper::Stage::TRAIN) {
+        mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
+    }
     delete mQLearner;
-}
-
-FootbotFollow::Stage FootbotFollow::parseStageFromString(const std::string &stageString) {
-    if (stageString == "train") return FootbotFollow::Stage::TRAIN;
-    if (stageString == "exploit") return FootbotFollow::Stage::EXPLOIT;
-    std::cerr << "Invalid Stage value: " << stageString;
-    exit(1);
 }
 
 /**

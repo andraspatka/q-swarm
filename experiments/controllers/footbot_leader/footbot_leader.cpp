@@ -5,12 +5,11 @@
 FootbotLeader::FootbotLeader() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
-        globalMaxLightReading(0),
+        mGlobalMaxLightReading(0),
         epoch(0) {}
 
 /**
 *            STOP    TURN_LEFT   TURN_RIGHT  FORWARD
-
 * 0 FOLLOW      -1      0           0           1
 * 1 DIR_LEFT   -1      0           0           0
 * 2 DIR_RIGHT  -1      0           0           0
@@ -32,7 +31,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "threshold", parThreshold);
     GetNodeAttribute(t_node, "stage", parStageString);
 
-    parStage = parseStageFromString(parStageString);
+    parStage = StageHelper::ParseStageFromString(parStageString);
     mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.2);
     std::vector<std::tuple<int, int>> impossibleStates = {
             std::make_tuple(0, 0), // FOLLOW state, STOP action
@@ -46,7 +45,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
             std::make_tuple(4, 0, 2) // IDLE state, STOP action
     };
     mQLearner->initR(impossibleStates, rewards);
-    if (parStage == Stage::EXPLOIT) {
+    if (parStage == StageHelper::Stage::EXPLOIT) {
         mQLearner->readQ("qmats/leader-train.qlmat");
     }
     mLed->SetAllColors(CColor::RED);
@@ -153,7 +152,7 @@ void FootbotLeader::ControlStep() {
     }
 
     epoch++;
-    if (parStage == Stage::TRAIN) {
+    if (parStage == StageHelper::Stage::TRAIN) {
         mStateStats[state] += 1;
     }
     bool isLearned = true;
@@ -163,17 +162,17 @@ void FootbotLeader::ControlStep() {
         }
     }
 
-    if (isLearned && epoch < mLearnedEpoch && parStage == Stage::TRAIN) {
+    if (isLearned && epoch < mLearnedEpoch && parStage == StageHelper::Stage::TRAIN) {
         mQLearner->setLearningRate(0);
         mLearnedEpoch = epoch;
     }
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0 && parStage == Stage::TRAIN) {
+    if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0 && parStage == StageHelper::Stage::TRAIN) {
         mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
     }
 
-    int actionIndex = (parStage == Stage::EXPLOIT) ? mQLearner->exploit(state) : mQLearner->doubleQ(mPrevState, state);
+    int actionIndex = (parStage == StageHelper::Stage::EXPLOIT) ? mQLearner->exploit(state) : mQLearner->doubleQ(mPrevState, state);
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
-    globalMaxLightReading = std::max(globalMaxLightReading, maxLight);
+    mGlobalMaxLightReading = std::max(mGlobalMaxLightReading, maxLight);
     mPrevState = state;
     mDiffSteering->SetLinearVelocity(action[0], action[1]);
     std::string actionName = QLUtils::getActionName(action[0], action[1]);
@@ -187,7 +186,7 @@ void FootbotLeader::ControlStep() {
     ql::Logger::log(this->m_strId, toLog);
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
-    LOG << "Stage: " << parseStringFromStage(parStage) << std::endl;
+    LOG << "Stage: " << StageHelper::ParseStringFromStage(parStage) << std::endl;
     LOG << "LeftMaxProx: " << leftMaxProx << std::endl;
     LOG << "RightMaxProx: " << rightMaxProx << std::endl;
     LOG << "BackMaxLight: " << backMaxLight << std::endl;
@@ -197,33 +196,15 @@ void FootbotLeader::ControlStep() {
     LOG << "Action taken: " <<  actionName << std::endl;
     LOG << "State: " << actualStateString << std::endl;
     LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
-    LOG << "Global max light: " << globalMaxLightReading << std::endl;
+    LOG << "Global max light: " << mGlobalMaxLightReading << std::endl;
     LOG << "Id: " << this->m_strId << std::endl;
 }
 
-void FootbotLeader::ExportQ() {
-    if (parStage == Stage::TRAIN) {
+void FootbotLeader::Destroy() {
+    if (parStage == StageHelper::Stage::TRAIN) {
         mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
     }
-}
-
-void FootbotLeader::Destroy() {
-    this->ExportQ();
     delete mQLearner;
-}
-
-FootbotLeader::Stage FootbotLeader::parseStageFromString(const std::string &stageString) {
-    if (stageString == "train") return FootbotLeader::Stage::TRAIN;
-    if (stageString == "exploit") return FootbotLeader::Stage::EXPLOIT;
-    std::cerr << "Invalid Stage value: " << stageString;
-    exit(1);
-}
-
-std::string FootbotLeader::parseStringFromStage(const FootbotLeader::Stage &stage) {
-    if (stage == Stage::TRAIN) return "TRAIN";
-    if (stage == Stage::EXPLOIT) return "EXPLOIT";
-    std::cerr << "Invalid Stage value: " << stage;
-    exit(1);
 }
 
 /**

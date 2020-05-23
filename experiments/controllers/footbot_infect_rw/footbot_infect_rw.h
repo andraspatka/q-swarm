@@ -57,6 +57,13 @@ public:
 
     constexpr int static NUM_ACTIONS = 4;
 
+    enum AGENT_TYPE {
+        SUSCEPTIBLE,
+        INFECTIOUS,
+        REMOVED
+    };
+
+private:
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
     // The pull gauss curve's centre point is the prox sensor's coverage limit
@@ -67,14 +74,6 @@ public:
     constexpr double static C_PULL = 0.7f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
-
-    enum AGENT_TYPE {
-        SUSCEPTIBLE,
-        INFECTIOUS,
-        REMOVED
-    };
-
-private:
 
     std::string getAgentTypeAsString();
 
