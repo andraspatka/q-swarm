@@ -7,14 +7,13 @@ FootbotFollow::FootbotFollow() :
         epoch(0) {}
 
 /**
- *
- *            STOP    TURN_LEFT   TURN_RIGHT  FORWARD
- * 0 WANDER     -1      0           0           0.2
- * 1 FOLLOW     -1      0           0           1
- * 2 DIR_LEFT   -1      0           0           0
- * 3 DIR_RIGHT  -1      0           0           0
- * 4 IDLE        2      0           0           0
- */
+*            STOP    TURN_LEFT   TURN_RIGHT  FORWARD
+* 0 WANDER     -1      0           0           0.2
+* 1 FOLLOW     -1      0           0           1
+* 2 DIR_LEFT   -1      0           0           0
+* 3 DIR_RIGHT  -1      0           0           0
+* 4 IDLE        2      0           0           0
+*/
 void FootbotFollow::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
@@ -33,22 +32,25 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "stage", parStageString);
 
     parStage = StageHelper::ParseStageFromString(parStageString);
-    mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.10);
-    std::vector<std::tuple<int, int>> impossibleStates = {
-            std::make_tuple(0, 0), // WANDER state, STOP action
-            std::make_tuple(1, 0), // FOLLOW state, STOP action
-            std::make_tuple(2, 0), // DIR_LEFT, STOP action
-            std::make_tuple(3, 0)  // DIR_RIGHT, STOP action
-    };
-    std::vector<std::tuple<int, int, double>> rewards = {
-            std::make_tuple(0, 3, 0.2), // WANDER state, FORWARD action
-            std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
-            std::make_tuple(4, 0, 2), // IDLE state, STOP action
-    };
-    mStateStats.fill(0);
-    mQLearner->initR(impossibleStates, rewards);
+    if (parStage == StageHelper::TRAIN) {
+        mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
+        std::vector<std::tuple<int, int>> impossibleStates = {
+                std::make_tuple(0, 0), // WANDER state, STOP action
+                std::make_tuple(1, 0), // FOLLOW state, STOP action
+                std::make_tuple(2, 0), // DIR_LEFT, STOP action
+                std::make_tuple(3, 0)  // DIR_RIGHT, STOP action
+        };
+        std::vector<std::tuple<int, int, double>> rewards = {
+                std::make_tuple(0, 3, 0.2), // WANDER state, FORWARD action
+                std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
+                std::make_tuple(4, 0, 2), // IDLE state, STOP action
+        };
+        mQLearner->initR(impossibleStates, rewards);
+        mStateStats.fill(0);
+    }
     if (parStage == StageHelper::Stage::EXPLOIT) {
-        mQLearner->readQ("qmats/follow-train.qlmat");
+        mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
+        mQExploiter->readQ("qmats/follow-train.qlmat");
     }
     ql::Logger::clearMyLogs(this->m_strId);
 }
@@ -98,28 +100,19 @@ void FootbotFollow::ControlStep() {
         }
     }
 
-    // Left front values
-    for (int i = 0; i <= 4; ++i) {
+    for (int i = 0; i <= 23; ++i) {
         if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
-            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
-                                                        C_PUSH, QLMathUtils::proxToDistance);
+            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
+                                                        A, B_PUSH, C_PUSH, QLMathUtils::proxToDistance);
             maxProx = std::max(maxProx, proxReadings.at(i).Value);
         }
-    }
-    // Right front values
-    for (int i = 19; i <= 23; ++i) {
-        if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
-            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
-                                                        C_PUSH, QLMathUtils::proxToDistance);
-            maxProx = std::max(maxProx, proxReadings.at(i).Value);
+        if (i == 4) {
+            i = 18;
         }
     }
 
     CVector2 directionVector = fpullVector - fpushVector;
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
-
-    double const FORWARD_ANGLE = 30.0f;
-    double const SIDE_ANGLE = 180.0f;
 
     bool isTargetSeen = minDistanceBlob.Distance != 1000.0f;
 
@@ -160,22 +153,23 @@ void FootbotFollow::ControlStep() {
     epoch++;
     if (parStage == StageHelper::Stage::TRAIN) {
         mStateStats[state] += 1;
-    }
-    bool isLearned = true;
-    for (auto a : mStateStats) {
-        if (a < STATE_THRESHOLD) {
-            isLearned = false;
+        bool isLearned = true;
+        for (auto a : mStateStats) {
+            if (a < STATE_THRESHOLD) {
+                isLearned = false;
+                break;
+            }
         }
+        if (isLearned && epoch < mLearnedEpoch) {
+            mQLearner->setLearningRate(0);
+            mLearnedEpoch = epoch;
+        }
+        if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
+            mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
+        }
+        LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     }
-    if (isLearned && epoch < mLearnedEpoch && parStage == StageHelper::Stage::TRAIN) {
-        mQLearner->setLearningRate(0);
-        mLearnedEpoch = epoch;
-    }
-    if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0 && parStage == StageHelper::Stage::TRAIN) {
-        mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
-    }
-
-    int actionIndex = (parStage == StageHelper::Stage::EXPLOIT) ? mQLearner->exploit(state) : mQLearner->doubleQ(mPrevState, state);
+    int actionIndex = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
 
     mPrevState = state;
 
@@ -192,8 +186,8 @@ void FootbotFollow::ControlStep() {
             actionName
     };
     ql::Logger::log(this->m_strId, toLog);
+
     // LOGGING
-    LOG << "---------------------------------------------" << std::endl;
     LOG << "Id: " << this->m_strId << std::endl;
     LOG << "Stage: " << parStage << std::endl;
     LOG << "fpush: " << fpushVector << std::endl;
@@ -201,22 +195,23 @@ void FootbotFollow::ControlStep() {
     LOG << "Direction: " << directionVector << std::endl;
     LOG << "VelocityFactor: " << velocityFactor << std::endl;
     LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
-
     LOG << "Action taken: " << actionName << std::endl;
     LOG << "State: " << actualState << std::endl;
-    LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
-    LOG << "Global min camera: " << mGlobalMinCameraBlobDist << std::endl;
+    LOG << "---------------------------------------------" << std::endl;
 }
 
 void FootbotFollow::Destroy() {
     if (parStage == StageHelper::Stage::TRAIN) {
         mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
+        delete mQLearner;
     }
-    delete mQLearner;
+    if (parStage == StageHelper::EXPLOIT) {
+        delete mQExploiter;
+    }
 }
 
 /**
  * Register the controller.
  * This is needed in order for argos to be able to bind the scene to this controller.
  */
-REGISTER_CONTROLLER(FootbotFollow, "footbot_follow")
+REGISTER_CONTROLLER(FootbotFollow, "footbot_follow_controller")

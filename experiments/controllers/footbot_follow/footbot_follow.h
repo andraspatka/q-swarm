@@ -18,6 +18,7 @@
 #include <qlearner/stage.hpp>
 
 #include <monitoring/logger.hpp>
+#include <qlearner/qexploiter.hpp>
 
 using namespace argos;
 using namespace ql;
@@ -72,13 +73,16 @@ private:
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 
+    static constexpr double FORWARD_ANGLE = 30.0f;
+    static constexpr double SIDE_ANGLE = 180.0f;
+
     ql::QLearner * mQLearner;
+
+    ql::QExploiter * mQExploiter;
 
     int mPrevState = 0;
 
     int epoch = 0;
-
-    double mGlobalMinCameraBlobDist;
 
     int mLearnedEpoch = 4000;
 

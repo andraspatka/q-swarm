@@ -9,7 +9,7 @@
 
     <!-- Controllers -->
     <controllers>
-        <footbot_follow id="ffc" library="cmake-build-debug/controllers/footbot_follow/libfootbot_follow.so">
+        <footbot_follow_controller id="ffc" library="cmake-build-debug/controllers/footbot_follow/libfootbot_follow.so">
             <actuators>
                 <differential_steering implementation="default" />
                 <leds implementation="default" medium="leds" />
@@ -22,7 +22,7 @@
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
             <params velocity="30" learning_rate="1" discount_factor="0.8" threshold="30" stage="exploit"/>
-        </footbot_follow>
+        </footbot_follow_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
                 <differential_steering implementation="default" />
