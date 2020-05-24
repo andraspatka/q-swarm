@@ -132,6 +132,7 @@ void FootbotLeader::ControlStep() {
         actualStateString = "DIR_RIGHT";
     } else if (isIdle) {
         state = 4;
+        mLed->SetAllColors(CColor::PURPLE);
         actualStateString = "IDLE";
     }
 

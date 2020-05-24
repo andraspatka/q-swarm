@@ -82,17 +82,20 @@ void FootbotFollow::ControlStep() {
 
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
-
+    bool isAtGoal = false;
     CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
     for (auto r : cameraReadings) {
-        if (r->Distance < minDistanceBlob.Distance && (r->Color == CColor::RED || r->Color == CColor::YELLOW)) {
+        if (r->Color == CColor::PURPLE) {
+            isAtGoal = true;
+        }
+        if (r->Distance < minDistanceBlob.Distance && (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE)) {
             minDistanceBlob.Distance = r->Distance;
             minDistanceBlob.Angle = r->Angle;
             minDistanceBlob.Color = r->Color;
 
             CVector2 pullVector = QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
                                                                QLMathUtils::cameraToDistance);
-            if (r->Color == CColor::RED) { // following the actual leader has a higher priority
+            if (r->Color == CColor::RED || r->Color == CColor::PURPLE) { // following the actual leader has a higher priority
                 pullVector = pullVector * 1.4;
             }
             fpullVector = fpullVector + pullVector;
@@ -146,7 +149,11 @@ void FootbotFollow::ControlStep() {
     } else if (isIdle) {
         actualState = "IDLE";
         state = 4;
-        mLed->SetAllColors(CColor::GREEN);
+        if (isAtGoal) {
+            mLed->SetAllColors(CColor::YELLOW);
+        } else {
+            mLed->SetAllColors(CColor::GREEN);
+        }
     }
 
     epoch++;
