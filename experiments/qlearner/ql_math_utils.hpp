@@ -12,7 +12,7 @@ namespace ql {
 
     class QLMathUtils {
     public:
-        static constexpr double EPSILON = 0.01;
+        static constexpr double EPSILON = 0.001;
         static constexpr double CUTOFF_VALUE = 0.15;
         static constexpr double CAMERA_READING_MAX_VALUE = 120.0f;
 

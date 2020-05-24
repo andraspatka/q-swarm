@@ -92,7 +92,7 @@ void InfectRandomWalk::ControlStep() {
     bool isTargetSeen = minDistanceBlob.Distance != 1000.0f;
 
     bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
-    bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) < FORWARD_ANGLE && !isDirZero;
+    bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) <= FORWARD_ANGLE && !isDirZero;
     bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
                      QLMathUtils::angleInDegrees(directionVector.Angle()) <= SIDE_ANGLE && !isDirZero;
     bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
@@ -123,6 +123,10 @@ void InfectRandomWalk::ControlStep() {
         actualState = "IDLE";
         state = 4;
         mLed->SetAllColors(CColor::GREEN);
+    }
+
+    if (state == -1) {
+        int bp =0;
     }
 
     if (infectedForEpochs > 100) {
@@ -165,7 +169,7 @@ void InfectRandomWalk::ControlStep() {
     // LOGGING
     LOG << "---------------------------------------------" << std::endl;
     LOG << "Id: " << this->m_strId << std::endl;
-    LOG << "Type: " << getAgentTypeAsString();
+    LOG << "Type: " << getAgentTypeAsString() << std::endl;
     LOG << "Action taken: " << actionName << std::endl;
     LOG << "State: " << actualState << std::endl;
 }

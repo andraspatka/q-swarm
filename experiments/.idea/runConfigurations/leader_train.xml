@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="leader_train" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-c scenes/footbot_leader_train.argos" REDIRECT_INPUT="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="experiments" TARGET_NAME="footbot_leader" CONFIG_NAME="Debug" RUN_PATH="/usr/local/bin/argos3">
+  <configuration default="false" name="leader_train" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-c scenes/leader_train.argos" REDIRECT_INPUT="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="experiments" TARGET_NAME="footbot_leader" CONFIG_NAME="Debug" RUN_PATH="/usr/local/bin/argos3">
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>

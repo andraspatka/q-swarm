@@ -3,7 +3,6 @@
 FootbotFollow::FootbotFollow() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
-        mGlobalMinCameraBlobDist(0),
         epoch(0) {}
 
 /**

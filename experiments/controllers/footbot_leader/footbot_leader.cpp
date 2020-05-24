@@ -151,7 +151,7 @@ void FootbotLeader::ControlStep() {
         if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
             mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
         }
-        LOG << "Learning rate: " << mQLearner->getLearningRate();
+        LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     }
     int actionIndex = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
     mPrevState = state;
