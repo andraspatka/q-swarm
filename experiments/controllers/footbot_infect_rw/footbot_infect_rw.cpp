@@ -29,8 +29,8 @@ void InfectRandomWalk::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "infectious", parNoOfInfectious);
     GetNodeAttribute(t_node, "infect_prob", parInfectionProb);
 
-    mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS);
-    mQLearner->readQ("qmats/follow-train.qlmat");
+    mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
+    mQExploiter->readQ("qmats/follow-train.qlmat");
     ql::Logger::clearMyLogs(this->m_strId);
 
     int idNumber = std::stoi(this->m_strId);
@@ -89,10 +89,6 @@ void InfectRandomWalk::ControlStep() {
 
     CVector2 directionVector = fpullVector - fpushVector;
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
-
-    double const FORWARD_ANGLE = 20.0f;
-    double const SIDE_ANGLE = 180.0f;
-
     bool isTargetSeen = minDistanceBlob.Distance != 1000.0f;
 
     bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
@@ -150,7 +146,7 @@ void InfectRandomWalk::ControlStep() {
 
     epoch++;
 
-    int actionIndex = mQLearner->exploit(state);
+    int actionIndex = mQExploiter->exploit(state);
 
     double velocityFactor = (negateVelocity) ? 1 : directionVector.Length();
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
@@ -175,7 +171,7 @@ void InfectRandomWalk::ControlStep() {
 }
 
 void InfectRandomWalk::Destroy() {
-    delete mQLearner;
+    delete mQExploiter;
 }
 
 std::string InfectRandomWalk::getAgentTypeAsString() {

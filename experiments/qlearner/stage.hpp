@@ -1,3 +1,6 @@
+#ifndef STAGE_HELPER
+#define STAGE_HELPER
+
 #include <string>
 #include <iostream>
 
@@ -24,3 +27,4 @@ namespace ql {
         }
     };
 }
+#endif

@@ -16,6 +16,7 @@
 #include <qlearner/ql_math_utils.hpp>
 #include <qlearner/qlearner.hpp>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
+#include <qlearner/qexploiter.hpp>
 
 using namespace argos;
 using namespace ql;
@@ -52,26 +53,27 @@ public:
       */
     virtual void Destroy();
 
-
 private:
-    constexpr int static NUM_STATES = 5;
-
-    constexpr int static NUM_ACTIONS = 4;
-
-    constexpr int static STATE_THRESHOLD = 40;
+    static const int NUM_STATES = 5;
+    static const int NUM_ACTIONS = 4;
+    static const int STATE_THRESHOLD = 40;
 
     // The push gauss curve's centre point is the robot
-    constexpr double static B_PUSH = 0.0f;
+    static constexpr double B_PUSH = 0.0f;
     // The pull gauss curve's centre point is the prox sensor's coverage limit
-    constexpr double static B_PULL = 2.5f;
+    static constexpr double B_PULL = 2.5f;
     // Width of the gauss curve for pushing forces
-    constexpr double static C_PUSH = 0.5f;
+    static constexpr double C_PUSH = 0.5f;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 0.6f;
+    static constexpr double C_PULL = 0.6f;
     // Height of the gauss curve
-    constexpr double static A = 1.0f;
+    static constexpr double A = 1.0f;
+
+    static constexpr double FORWARD_ANGLE = 20.0f;
+    static constexpr double SIDE_ANGLE = 180.0f;
 
     ql::QLearner * mQLearner;
+    ql::QExploiter * mQExploiter;
 
     int mPrevState = 0;
 

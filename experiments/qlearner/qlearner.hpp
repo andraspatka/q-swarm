@@ -206,19 +206,6 @@ namespace ql {
             return action;
         }
 
-        int exploit(int state) {
-            int action;
-            double maxActionValue = -1;
-            for (int a = 0; a < NUM_ACTIONS; ++a) {
-                if (Q[state][a] > maxActionValue) {
-                    maxActionValue = Q[state][a];
-                    action = a;
-                }
-            }
-            return action;
-        }
-
-
         /**
          * Writes the Q matrix to a file.
          * @param fileName the file's name to where the Q matrix will be written to.
@@ -239,25 +226,6 @@ namespace ql {
                     }
                 }
                 file << "\n";
-            }
-            file.close();
-        }
-
-        /**
-         * Reads the Q matrix from a file.
-         * @param fileName the file's name from where the Q matrix will be read from.
-         */
-        void readQ(const std::string &fileName) {
-            std::ifstream file(fileName);
-            if (!file.is_open()) {
-                std::cerr << "There was a problem opening the input file!\n";
-                exit(1);
-            }
-
-            for (int i = 0; i < NUM_STATES; ++i) {
-                for (int j = 0; j < NUM_ACTIONS; ++j) {
-                    file >> Q[i][j];
-                }
             }
             file.close();
         }

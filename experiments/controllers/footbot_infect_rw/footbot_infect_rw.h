@@ -17,6 +17,7 @@
 #include <qlearner/ql_math_utils.hpp>
 
 #include <monitoring/logger.hpp>
+#include <qlearner/qexploiter.hpp>
 
 using namespace argos;
 using namespace ql;
@@ -75,9 +76,12 @@ private:
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 
+    double const FORWARD_ANGLE = 20.0f;
+    double const SIDE_ANGLE = 180.0f;
+
     std::string getAgentTypeAsString();
 
-    ql::QLearner * mQLearner;
+    ql::QExploiter * mQExploiter;
 
     int epoch = 0;
 
