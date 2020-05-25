@@ -31,9 +31,17 @@ void InfectRandomWalk::Init(TConfigurationNode &t_node) {
 
     mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
     mQExploiter->readQ("qmats/follow-train.qlmat");
-    ql::Logger::clearMyLogs(this->m_strId);
+    InitInfectious();
+}
 
+void InfectRandomWalk::Reset() {
+    InitInfectious();
+}
+
+void InfectRandomWalk::InitInfectious() {
+    ql::Logger::clearMyLogs(this->m_strId);
     int idNumber = std::stoi(this->m_strId);
+    mInfectedForEpochs = 0;
     if (idNumber < parNoOfInfectious) {
         agentType = AGENT_TYPE::INFECTIOUS;
     } else {
@@ -72,7 +80,7 @@ void InfectRandomWalk::ControlStep() {
 
     CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
     for (auto r : cameraReadings) {
-        if (ql::QLMathUtils::cameraToDistance(r->Distance) <= 1 && r->Color == CColor::RED && agentType == SUSCEPTIBLE) {
+        if (ql::QLMathUtils::cameraToDistance(r->Distance) <= 0.4 && r->Color == CColor::RED && agentType == SUSCEPTIBLE) {
             if (drand48() < parInfectionProb) {
                 agentType = INFECTIOUS;
             }
@@ -87,49 +95,33 @@ void InfectRandomWalk::ControlStep() {
         }
     }
 
-    CVector2 directionVector = fpullVector - fpushVector;
+    CVector2 directionVector = -fpushVector;
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
-    bool isTargetSeen = minDistanceBlob.Distance != 1000.0f;
 
-    bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
+    bool isWander = isDirZero;
     bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) <= FORWARD_ANGLE && !isDirZero;
     bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
                      QLMathUtils::angleInDegrees(directionVector.Angle()) <= SIDE_ANGLE && !isDirZero;
     bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
                       QLMathUtils::angleInDegrees(directionVector.Angle()) >= -SIDE_ANGLE && !isDirZero;
-    bool isIdle = isDirZero && isTargetSeen;
 
-    bool negateVelocity = true;
     std::string actualState;
     // States
     if (isWander) {
         actualState = "WANDER";
         state = 0;
-        mLed->SetAllColors(CColor::WHITE);
     } else if (isFollow) {
         actualState = "FOLLOW";
         state = 1;
-        negateVelocity = false;
-        mLed->SetAllColors(CColor::YELLOW);
     } else if (isDirLeft) {
         actualState = "DIR_LEFT";
         state = 2;
-        mLed->SetAllColors(CColor::WHITE);
     } else if (isDirRight) {
         actualState = "DIR_RIGHT";
         state = 3;
-        mLed->SetAllColors(CColor::WHITE);
-    } else if (isIdle) {
-        actualState = "IDLE";
-        state = 4;
-        mLed->SetAllColors(CColor::GREEN);
     }
 
-    if (state == -1) {
-        int bp =0;
-    }
-
-    if (infectedForEpochs > 100) {
+    if (mInfectedForEpochs > 100) {
         agentType = REMOVED;
     }
 
@@ -137,7 +129,7 @@ void InfectRandomWalk::ControlStep() {
     switch (agentType) {
         case INFECTIOUS:
             agentColor = CColor::RED;
-            infectedForEpochs++;
+            mInfectedForEpochs++;
             break;
         case SUSCEPTIBLE:
             agentColor = CColor::CYAN;
@@ -152,10 +144,9 @@ void InfectRandomWalk::ControlStep() {
 
     int actionIndex = mQExploiter->exploit(state);
 
-    double velocityFactor = (negateVelocity) ? 1 : directionVector.Length();
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
     std::string actionName = QLUtils::getActionName(action[0], action[1]);
-    mDiffSteering->SetLinearVelocity(action[0] * velocityFactor, action[1] * velocityFactor);
+    mDiffSteering->SetLinearVelocity(action[0] , action[1]);
 
     const CVector3 actualPosition = this->mPosition->GetReading().Position;
     std::vector<std::string> toLog = {

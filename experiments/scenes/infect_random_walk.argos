@@ -20,7 +20,7 @@
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
-            <params velocity="30" infectious="3" infect_prob="0.1" />
+            <params velocity="30" infectious="3" infect_prob="0.1" sick_for="100" />
         </infect_random_walk>
     </controllers>
 

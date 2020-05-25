@@ -47,7 +47,7 @@ public:
     /**
      * This function is called right after Init().
      */
-    virtual void Reset() {}
+    virtual void Reset();
 
     /**
       * The opposite pair of Init()
@@ -65,6 +65,9 @@ public:
     };
 
 private:
+
+    void InitInfectious();
+
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
     // The pull gauss curve's centre point is the prox sensor's coverage limit
@@ -85,7 +88,7 @@ private:
 
     int epoch = 0;
 
-    int infectedForEpochs = 0;
+    int mInfectedForEpochs = 0;
 
     /** ACTUATORS AND SENSORS */
     /* Pointer to the differential steering actuator. */
