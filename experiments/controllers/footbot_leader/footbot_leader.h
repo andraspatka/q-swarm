@@ -46,7 +46,7 @@ public:
     /**
      * This function is called right after Init().
      */
-    virtual void Reset() {}
+    virtual void Reset();
 
     /**
       * The opposite pair of Init()

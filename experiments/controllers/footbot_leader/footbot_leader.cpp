@@ -52,6 +52,10 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     Logger::clearMyLogs(this->m_strId);
 }
 
+void FootbotLeader::Reset() {
+    mLed->SetAllColors(CColor::RED);
+}
+
 /**
  *              front
  *

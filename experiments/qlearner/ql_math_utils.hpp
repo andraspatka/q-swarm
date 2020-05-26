@@ -36,7 +36,7 @@ namespace ql {
         }
 
         static double cameraToDistance(double reading) {
-            return (reading / CAMERA_READING_MAX_VALUE) * 3;
+            return (reading / CAMERA_READING_MAX_VALUE) * 6;
         }
 
         static double proxToDistance(double reading) {

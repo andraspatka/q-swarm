@@ -95,9 +95,6 @@ void FootbotFollow::ControlStep() {
 
             CVector2 pullVector = QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
                                                                QLMathUtils::cameraToDistance);
-            if (r->Color == CColor::RED || r->Color == CColor::PURPLE) { // following the actual leader has a higher priority
-                pullVector = pullVector * 1.4;
-            }
             fpullVector = fpullVector + pullVector;
         }
     }
@@ -106,7 +103,7 @@ void FootbotFollow::ControlStep() {
         if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
             fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
                                                         A, B_PUSH, C_PUSH, QLMathUtils::proxToDistance);
-            maxProx = std::max(maxProx, proxReadings.at(i).Value);
+            maxProx = std::max(maxProx, fpushVector.Length());
         }
         if (i == 4) {
             i = 18;
@@ -132,7 +129,7 @@ void FootbotFollow::ControlStep() {
     if (isWander) {
         actualState = "WANDER";
         state = 0;
-        mLed->SetAllColors(CColor::WHITE);
+        mLed->SetAllColors(CColor::BLACK);
     } else if (isFollow) {
         actualState = "FOLLOW";
         state = 1;
@@ -198,7 +195,7 @@ void FootbotFollow::ControlStep() {
     LOG << "Stage: " << parStage << std::endl;
     LOG << "fpush: " << fpushVector << std::endl;
     LOG << "fpull: " << fpullVector << std::endl;
-    LOG << "Direction: " << directionVector << std::endl;
+    LOG << "Direction: " << directionVector.Length() << std::endl;
     LOG << "VelocityFactor: " << velocityFactor << std::endl;
     LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
     LOG << "Action taken: " << actionName << std::endl;

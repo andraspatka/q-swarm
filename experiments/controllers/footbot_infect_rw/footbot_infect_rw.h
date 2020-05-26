@@ -71,11 +71,11 @@ private:
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
     // The pull gauss curve's centre point is the prox sensor's coverage limit
-    constexpr double static B_PULL = 3.0f;
+    constexpr double static B_PULL = 6.0f;
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.5f;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 0.7f;
+    constexpr double static C_PULL = 1.4f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 

@@ -80,7 +80,7 @@ void InfectRandomWalk::ControlStep() {
 
     CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
     for (auto r : cameraReadings) {
-        if (ql::QLMathUtils::cameraToDistance(r->Distance) <= 0.4 && r->Color == CColor::RED && agentType == SUSCEPTIBLE) {
+        if (ql::QLMathUtils::cameraToDistance(r->Distance) <= 1 && r->Color == CColor::RED && agentType == SUSCEPTIBLE) {
             if (drand48() < parInfectionProb) {
                 agentType = INFECTIOUS;
             }
@@ -125,6 +125,8 @@ void InfectRandomWalk::ControlStep() {
         agentType = REMOVED;
     }
 
+    int actionIndex = mQExploiter->exploit(state);
+
     CColor agentColor = CColor::WHITE;
     switch (agentType) {
         case INFECTIOUS:
@@ -136,13 +138,12 @@ void InfectRandomWalk::ControlStep() {
             break;
         case REMOVED:
             agentColor = CColor::GRAY50;
+            actionIndex = 0;
             break;
     }
     mLed->SetAllColors(agentColor);
 
     epoch++;
-
-    int actionIndex = mQExploiter->exploit(state);
 
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
     std::string actionName = QLUtils::getActionName(action[0], action[1]);

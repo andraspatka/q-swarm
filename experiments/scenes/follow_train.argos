@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="30" learning_rate="1" discount_factor="0.8" threshold="30" stage="train"/>
+            <params velocity="30" learning_rate="1" discount_factor="0.2" threshold="30" stage="train"/>
         </footbot_follow_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
