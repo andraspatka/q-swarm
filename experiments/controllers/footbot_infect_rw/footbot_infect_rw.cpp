@@ -139,6 +139,7 @@ void InfectRandomWalk::ControlStep() {
         case REMOVED:
             agentColor = CColor::GRAY50;
             actionIndex = 0;
+            mCamera->Disable();
             break;
     }
     mLed->SetAllColors(agentColor);

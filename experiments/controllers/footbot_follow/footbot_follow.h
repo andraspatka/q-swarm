@@ -62,14 +62,17 @@ private:
 
     constexpr int static STATE_THRESHOLD = 30;
 
+    constexpr double static ALPHA_PULL = 0.3f;
+    constexpr double static BETA_PUSH = 0.7f;
+
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
     // The pull gauss curve's centre point is the prox sensor's coverage limit
-    constexpr double static B_PULL = 6.0f;
+    constexpr double static B_PULL = 1.0f;
     // Width of the gauss curve for pushing forces
-    constexpr double static C_PUSH = 0.2f;
+    constexpr double static C_PUSH = 0.4;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 1.4f;
+    constexpr double static C_PULL = 0.3f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 

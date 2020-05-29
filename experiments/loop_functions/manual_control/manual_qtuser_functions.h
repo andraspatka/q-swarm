@@ -15,6 +15,7 @@
 
 #include <argos3/plugins/simulator/visualizations/qt-opengl/qtopengl_user_functions.h>
 #include <controllers/footbot_manual/footbot_manual.h>
+#include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
 
 using namespace argos;
 
@@ -59,6 +60,8 @@ public:
     * @param c_entity The deselected entity.
     */
    virtual void EntityDeselected(CEntity& c_entity);
+
+    void Draw(CFootBotEntity& c_entity);
 
 private:
 

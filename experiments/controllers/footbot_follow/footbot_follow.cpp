@@ -101,7 +101,7 @@ void FootbotFollow::ControlStep() {
 
     for (int i = 0; i <= 23; ++i) {
         if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
-            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
+            fpushVector -= QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
                                                         A, B_PUSH, C_PUSH, QLMathUtils::proxToDistance);
             maxProx = std::max(maxProx, fpushVector.Length());
         }
@@ -109,8 +109,11 @@ void FootbotFollow::ControlStep() {
             i = 18;
         }
     }
-
-    CVector2 directionVector = fpullVector - fpushVector;
+    double pullVectorLength = (fpullVector.Length() > 1) ? 1 : fpullVector.Length();
+    double pushVectorLength = (fpushVector.Length() > 1) ? 1 : fpushVector.Length();
+    fpullVector = CVector2(pullVectorLength, fpullVector.Angle());
+    fpushVector = CVector2(pushVectorLength, fpushVector.Angle());
+    CVector2 directionVector = ALPHA_PULL * fpullVector + BETA_PUSH * fpushVector;
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
 
     bool isTargetSeen = minDistanceBlob.Distance != 1000.0f;
@@ -123,8 +126,8 @@ void FootbotFollow::ControlStep() {
                       QLMathUtils::angleInDegrees(directionVector.Angle()) >= -SIDE_ANGLE && !isDirZero;
     bool isIdle = isDirZero && isTargetSeen;
 
-    bool negateVelocity = true;
     std::string actualState;
+    double velocityFactor = 1;
     // States
     if (isWander) {
         actualState = "WANDER";
@@ -133,15 +136,17 @@ void FootbotFollow::ControlStep() {
     } else if (isFollow) {
         actualState = "FOLLOW";
         state = 1;
-        negateVelocity = false;
+        velocityFactor = directionVector.Length();
         mLed->SetAllColors(CColor::YELLOW);
     } else if (isDirLeft) {
         actualState = "DIR_LEFT";
         state = 2;
+        velocityFactor = directionVector.Length();
         mLed->SetAllColors(CColor::WHITE);
     } else if (isDirRight) {
         actualState = "DIR_RIGHT";
         state = 3;
+        velocityFactor = directionVector.Length();
         mLed->SetAllColors(CColor::WHITE);
     } else if (isIdle) {
         actualState = "IDLE";
@@ -176,7 +181,6 @@ void FootbotFollow::ControlStep() {
 
     mPrevState = state;
 
-    double velocityFactor = (negateVelocity) ? 1 : directionVector.Length();
     std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
     std::string actionName = QLUtils::getActionName(action[0], action[1]);
     mDiffSteering->SetLinearVelocity(action[0] * velocityFactor, action[1] * velocityFactor);

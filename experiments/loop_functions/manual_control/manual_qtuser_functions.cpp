@@ -9,6 +9,7 @@ CManualControlQTUserFunctions::CManualControlQTUserFunctions() :
     m_punPressedKeys[DIRECTION_BACKWARD] = 0;
     m_punPressedKeys[DIRECTION_LEFT] = 0;
     m_punPressedKeys[DIRECTION_RIGHT] = 0;
+    RegisterUserFunction<CManualControlQTUserFunctions,CFootBotEntity>(&CManualControlQTUserFunctions::Draw);
 }
 
 void CManualControlQTUserFunctions::KeyPressed(QKeyEvent *pc_event) {
@@ -77,6 +78,16 @@ void CManualControlQTUserFunctions::KeyReleased(QKeyEvent *pc_event) {
             GetQTOpenGLWidget().KeyReleased(pc_event);
             break;
     }
+}
+
+void CManualControlQTUserFunctions::Draw(CFootBotEntity& c_entity) {
+    /* The position of the text is expressed wrt the reference point of the footbot
+     * For a foot-bot, the reference point is the center of its base.
+     * See also the description in
+     * $ argos3 -q foot-bot
+     */
+    DrawText(CVector3(0.0, 0.0, 0.3),   // position
+             c_entity.GetId().c_str(), CColor::RED); // text
 }
 
 void CManualControlQTUserFunctions::EntitySelected(CEntity &c_entity) {
