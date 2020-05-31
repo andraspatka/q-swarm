@@ -21,6 +21,7 @@ namespace ql {
         static State DIR_RIGHT;
 
         State(string stateName, CColor ledColor, unsigned short index) : stateName(std::move(stateName)), ledColor(ledColor), index(index) {}
+        State() : stateName("INVALID"), ledColor(CColor::BLACK), index(65535) {}
 
         const string& getStateName() const {
             return this->stateName;
@@ -40,8 +41,4 @@ namespace ql {
     State State::DIR_RIGHT("DIR_RIGHT", CColor::WHITE, 3);
     State State::IDLE("IDLE", CColor::RED, 4);
 }
-
-
-
-
 #endif

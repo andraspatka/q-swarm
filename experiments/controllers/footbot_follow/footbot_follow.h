@@ -16,6 +16,8 @@
 #include <qlearner/ql_utils.hpp>
 #include <qlearner/ql_math_utils.hpp>
 #include <qlearner/stage.hpp>
+#include <qlearner/action.hpp>
+#include <qlearner/state.hpp>
 
 #include <monitoring/logger.hpp>
 #include <qlearner/qexploiter.hpp>
@@ -62,28 +64,30 @@ private:
 
     constexpr int static STATE_THRESHOLD = 30;
 
-    constexpr double static ALPHA_PULL = 0.3f;
-    constexpr double static BETA_PUSH = 0.7f;
+    constexpr int static PROX_READING_PER_SIDE = 4;
+
+    constexpr double static ALPHA_PULL = 0.5f;
+    constexpr double static BETA_PUSH = 0.5f;
 
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
     // The pull gauss curve's centre point is the prox sensor's coverage limit
-    constexpr double static B_PULL = 1.0f;
+    constexpr double static B_PULL = 5.5f;
     // Width of the gauss curve for pushing forces
-    constexpr double static C_PUSH = 0.4;
+    constexpr double static C_PUSH = 0.5;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 0.3f;
+    constexpr double static C_PULL = 1.2f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 
     static constexpr double FORWARD_ANGLE = 30.0f;
     static constexpr double SIDE_ANGLE = 180.0f;
 
-    ql::QLearner * mQLearner;
+    QLearner * mQLearner;
 
-    ql::QExploiter * mQExploiter;
+    QExploiter * mQExploiter;
 
-    int mPrevState = 0;
+    State mPrevState = State::WANDER;
 
     int epoch = 0;
 

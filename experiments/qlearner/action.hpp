@@ -53,5 +53,4 @@ namespace ql {
     Action Action::TURN_RIGHT("TURN_RIGHT", 2, {1.0f, 0.0f});
     Action Action::FORWARD("FORWARD", 3, {1.0f, 1.0f});
 }
-
 #endif

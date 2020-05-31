@@ -33,16 +33,16 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     parStage = StageHelper::ParseStageFromString(parStageString);
     if (parStage == StageHelper::TRAIN) {
         mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
-        std::vector<std::tuple<int, int>> impossibleStates = {
-                std::make_tuple(0, 0), // WANDER state, STOP action
-                std::make_tuple(1, 0), // FOLLOW state, STOP action
-                std::make_tuple(2, 0), // DIR_LEFT, STOP action
-                std::make_tuple(3, 0)  // DIR_RIGHT, STOP action
+        std::vector<std::tuple<State, Action>> impossibleStates = {
+                std::make_tuple(State::WANDER, Action::STOP),
+                std::make_tuple(State::FOLLOW, Action::STOP),
+                std::make_tuple(State::DIR_LEFT, Action::STOP),
+                std::make_tuple(State::DIR_RIGHT, Action::STOP)
         };
-        std::vector<std::tuple<int, int, double>> rewards = {
-                std::make_tuple(0, 3, 0.2), // WANDER state, FORWARD action
-                std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
-                std::make_tuple(4, 0, 2), // IDLE state, STOP action
+        std::vector<std::tuple<State, Action, double>> rewards = {
+                std::make_tuple(State::WANDER, Action::FORWARD, 0.2),
+                std::make_tuple(State::FOLLOW, Action::FORWARD, 1),
+                std::make_tuple(State::IDLE, Action::STOP, 2)
         };
         mQLearner->initR(impossibleStates, rewards);
         mStateStats.fill(0);
@@ -73,94 +73,78 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
  *              back
  */
 void FootbotFollow::ControlStep() {
-    CVector2 fpushVector;
-    CVector2 fpullVector;
-
-    double maxProx = 0.0f;
-
-    int state = -1;
+    ql::Vector fpushVector;
+    ql::Vector fpullVector;
+    State state;
 
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
     bool isAtGoal = false;
-    CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
+    bool isTargetSeen = false;
     for (auto r : cameraReadings) {
         if (r->Color == CColor::PURPLE) {
             isAtGoal = true;
         }
-        if (r->Distance < minDistanceBlob.Distance && (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE)) {
-            minDistanceBlob.Distance = r->Distance;
-            minDistanceBlob.Angle = r->Angle;
-            minDistanceBlob.Color = r->Color;
-
+        if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE) {
             CVector2 pullVector = QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
                                                                QLMathUtils::cameraToDistance);
-            fpullVector = fpullVector + pullVector;
+            fpullVector += pullVector;
+            isTargetSeen = true;
         }
     }
 
-    for (int i = 0; i <= 23; ++i) {
+    for (int i = 0; i < proxReadings.size(); ++i) {
         if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
-            fpushVector -= QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
+            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
                                                         A, B_PUSH, C_PUSH, QLMathUtils::proxToDistance);
-            maxProx = std::max(maxProx, fpushVector.Length());
         }
-        if (i == 4) {
-            i = 18;
+        if (i == PROX_READING_PER_SIDE) {
+            i = proxReadings.size() - 1 - PROX_READING_PER_SIDE - 1;
         }
     }
-    double pullVectorLength = (fpullVector.Length() > 1) ? 1 : fpullVector.Length();
-    double pushVectorLength = (fpushVector.Length() > 1) ? 1 : fpushVector.Length();
-    fpullVector = CVector2(pullVectorLength, fpullVector.Angle());
-    fpushVector = CVector2(pushVectorLength, fpushVector.Angle());
-    CVector2 directionVector = ALPHA_PULL * fpullVector + BETA_PUSH * fpushVector;
-    bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
+    ql::Vector directionVector = ALPHA_PULL * fpullVector - BETA_PUSH * fpushVector;
+    directionVector.clampLength(0.001, 1);
+    bool isDirZero = directionVector.isZero();
 
-    bool isTargetSeen = minDistanceBlob.Distance != 1000.0f;
+    bool isWander = isDirZero && !isTargetSeen;
+    bool isFollow = directionVector.getAbsAngle() < FORWARD_ANGLE && !isDirZero;
+    bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
+                     directionVector.getAngle() <= SIDE_ANGLE && !isDirZero;
+    bool isDirRight = directionVector.getAngle() < -FORWARD_ANGLE &&
+                      directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero;
+    bool isIdle = isDirZero && isTargetSeen || isAtGoal;
 
-    bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
-    bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) < FORWARD_ANGLE && !isDirZero;
-    bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
-                     QLMathUtils::angleInDegrees(directionVector.Angle()) <= SIDE_ANGLE && !isDirZero;
-    bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
-                      QLMathUtils::angleInDegrees(directionVector.Angle()) >= -SIDE_ANGLE && !isDirZero;
-    bool isIdle = isDirZero && isTargetSeen;
-
-    std::string actualState;
-    double velocityFactor = 1;
-    // States
+    CColor ledColor = CColor::WHITE;
+    bool negateVelocity = false;
     if (isWander) {
-        actualState = "WANDER";
-        state = 0;
-        mLed->SetAllColors(CColor::BLACK);
+        state = State::WANDER;
+        ledColor = state.getLedColor();
+        negateVelocity = true;
     } else if (isFollow) {
-        actualState = "FOLLOW";
-        state = 1;
-        velocityFactor = directionVector.Length();
-        mLed->SetAllColors(CColor::YELLOW);
-    } else if (isDirLeft) {
-        actualState = "DIR_LEFT";
-        state = 2;
-        velocityFactor = directionVector.Length();
-        mLed->SetAllColors(CColor::WHITE);
-    } else if (isDirRight) {
-        actualState = "DIR_RIGHT";
-        state = 3;
-        velocityFactor = directionVector.Length();
-        mLed->SetAllColors(CColor::WHITE);
-    } else if (isIdle) {
-        actualState = "IDLE";
-        state = 4;
-        if (isAtGoal) {
-            mLed->SetAllColors(CColor::YELLOW);
+        state = State::FOLLOW;
+        if (isTargetSeen) {
+            ledColor = CColor::YELLOW;
         } else {
-            mLed->SetAllColors(CColor::GREEN);
+            ledColor = CColor::BLACK;
+        }
+    } else if (isDirLeft) {
+        state = State::DIR_LEFT;
+        ledColor = state.getLedColor();
+    } else if (isDirRight) {
+        state = State::DIR_RIGHT;
+        ledColor = state.getLedColor();
+    } else if (isIdle) {
+        state = State::IDLE;
+        if (isAtGoal) {
+            ledColor = CColor::YELLOW;
+        } else {
+            ledColor = CColor::GREEN;
         }
     }
-
+    mLed->SetAllColors(ledColor);
     epoch++;
     if (parStage == StageHelper::Stage::TRAIN) {
-        mStateStats[state] += 1;
+        mStateStats[state.getIndex()] += 1;
         bool isLearned = true;
         for (auto a : mStateStats) {
             if (a < STATE_THRESHOLD) {
@@ -177,20 +161,24 @@ void FootbotFollow::ControlStep() {
         }
         LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     }
-    int actionIndex = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
+    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
 
     mPrevState = state;
 
-    std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
-    std::string actionName = QLUtils::getActionName(action[0], action[1]);
-    mDiffSteering->SetLinearVelocity(action[0] * velocityFactor, action[1] * velocityFactor);
+    double velocityFactor = (negateVelocity) ? 1 : directionVector.Length();
+    std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
+
+    wheelSpeeds[0] = wheelSpeeds[0] * parWheelVelocity * velocityFactor;
+    wheelSpeeds[1] = wheelSpeeds[1] * parWheelVelocity * velocityFactor;
+
+    mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
 
     const CVector3 actualPosition = this->mPosition->GetReading().Position;
     std::vector<std::string> toLog = {
             std::to_string(actualPosition.GetX()),
             std::to_string(actualPosition.GetY()),
-            actualState,
-            actionName
+            state.getStateName(),
+            action.getActionName()
     };
     ql::Logger::log(this->m_strId, toLog);
 
@@ -202,8 +190,8 @@ void FootbotFollow::ControlStep() {
     LOG << "Direction: " << directionVector.Length() << std::endl;
     LOG << "VelocityFactor: " << velocityFactor << std::endl;
     LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
-    LOG << "Action taken: " << actionName << std::endl;
-    LOG << "State: " << actualState << std::endl;
+    LOG << "Action taken: " << action.getActionName() << std::endl;
+    LOG << "State: " << state.getStateName() << std::endl;
     LOG << "---------------------------------------------" << std::endl;
 }
 

@@ -30,16 +30,16 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
 
     if (parStage == StageHelper::Stage::TRAIN) {
         mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
-        std::vector<std::tuple<int, int>> impossibleStates = {
-                std::make_tuple(0, 0), // WANDER state, STOP action
-                std::make_tuple(1, 0), // FOLLOW state, STOP action
-                std::make_tuple(2, 0), // DIR_LEFT state, STOP action
-                std::make_tuple(3, 0) // DIR_RIGHT state, STOP action
+        std::vector<std::tuple<State, Action>> impossibleStates = {
+                std::make_tuple(State::WANDER, Action::STOP),
+                std::make_tuple(State::FOLLOW, Action::STOP),
+                std::make_tuple(State::DIR_LEFT, Action::STOP),
+                std::make_tuple(State::DIR_RIGHT, Action::STOP)
         };
-        std::vector<std::tuple<int, int, double>> rewards = {
-                std::make_tuple(0, 3, 0.2), // WANDER state, FORWARD action
-                std::make_tuple(1, 3, 1), // FOLLOW state, FORWARD action
-                std::make_tuple(4, 0, 2) // IDLE state, STOP action
+        std::vector<std::tuple<State, Action, double>> rewards = {
+                std::make_tuple(State::WANDER, Action::FORWARD, 0.2),
+                std::make_tuple(State::FOLLOW, Action::FORWARD, 1),
+                std::make_tuple(State::IDLE, Action::STOP, 2)
         };
         mQLearner->initR(impossibleStates, rewards);
     }
@@ -79,10 +79,10 @@ void FootbotLeader::ControlStep() {
     double maxLight = 0.0f;
     double maxProx = 0.0f;
 
-    CVector2 fpushVector;
-    CVector2 fpullVector;
+    ql::Vector fpushVector;
+    ql::Vector fpullVector;
 
-    int state = -1;
+    State state;
 
     auto lightReadings = mLightSensor->GetReadings();
     auto proxReadings = mProximitySensor->GetReadings();
@@ -107,42 +107,37 @@ void FootbotLeader::ControlStep() {
         }
     }
 
-    CVector2 directionVector = fpullVector - fpushVector;
+    ql::Vector directionVector = fpullVector - fpushVector;
 
     bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
     bool isTargetSeen = !QLMathUtils::closeToZero(maxLight);
+    bool isAtGoal = maxLight > parThreshold;
 
     // States
-    bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) <= FORWARD_ANGLE && !isDirZero && maxLight < parThreshold;
-    bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
-                      QLMathUtils::angleInDegrees(directionVector.Angle()) <= SIDE_ANGLE && !isDirZero && maxLight < parThreshold;
-    bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
-                      QLMathUtils::angleInDegrees(directionVector.Angle()) >= -SIDE_ANGLE && !isDirZero && maxLight < parThreshold;
+    bool isFollow = directionVector.getAbsAngle() <= FORWARD_ANGLE && !isDirZero && !isAtGoal;
+    bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
+                      directionVector.getAngle() <= SIDE_ANGLE && !isDirZero && !isAtGoal;
+    bool isDirRight = directionVector.getAngle() < -FORWARD_ANGLE &&
+                      directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero && !isAtGoal;
     bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
     bool isIdle = (isDirZero && isTargetSeen) || maxLight > parThreshold;
 
-    std::string actualStateString;
     if (isWander) {
-        state = 0;
-        actualStateString = "WANDER";
+        state = State::WANDER;
     } else if (isFollow) {
-        state = 1;
-        actualStateString = "FOLLOW";
+        state = State::FOLLOW;
     } else if (isDirLeft) {
-        state = 2;
-        actualStateString = "DIR_LEFT";
+        state = State::DIR_LEFT;
     } else if (isDirRight) {
-        state = 3;
-        actualStateString = "DIR_RIGHT";
+        state = State::DIR_RIGHT;
     } else if (isIdle) {
-        state = 4;
+        state = State::IDLE;
         mLed->SetAllColors(CColor::PURPLE);
-        actualStateString = "IDLE";
     }
 
     epoch++;
     if (parStage == StageHelper::Stage::TRAIN) {
-        mStateStats[state] += 1;
+        mStateStats[state.getIndex()] += 1;
         bool isLearned = true;
         for (auto a : mStateStats) {
             if (a < STATE_THRESHOLD) {
@@ -158,19 +153,20 @@ void FootbotLeader::ControlStep() {
         }
         LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     }
-    int actionIndex = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
+    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
     mPrevState = state;
-    std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
+    std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
+    wheelSpeeds[0] *= parWheelVelocity;
+    wheelSpeeds[1] *= parWheelVelocity;
     mGlobalMaxLightReading = std::max(mGlobalMaxLightReading, maxLight);
 
-    mDiffSteering->SetLinearVelocity(action[0], action[1]);
-    std::string actionName = QLUtils::getActionName(action[0], action[1]);
+    mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
     const CVector3 actualPosition = this->mPosition->GetReading().Position;
     std::vector<std::string> toLog = {
             std::to_string(actualPosition.GetX()),
             std::to_string(actualPosition.GetY()),
-            actualStateString,
-            actionName
+            state.getStateName(),
+            action.getActionName()
     };
     ql::Logger::log(this->m_strId, toLog);
 
@@ -179,8 +175,8 @@ void FootbotLeader::ControlStep() {
     LOG << "MaxLight: " << maxLight << std::endl;
     LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
 
-    LOG << "Action taken: " <<  actionName << std::endl;
-    LOG << "State: " << actualStateString << std::endl;
+    LOG << "Action taken: " <<  action.getActionName() << std::endl;
+    LOG << "State: " << state.getStateName() << std::endl;
     LOG << "Global max light: " << mGlobalMaxLightReading << std::endl;
     LOG << "Id: " << this->m_strId << std::endl;
     LOG << "---------------------------------------------" << std::endl;

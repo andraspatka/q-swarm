@@ -68,12 +68,12 @@ void InfectRandomWalk::InitInfectious() {
  *              back
  */
 void InfectRandomWalk::ControlStep() {
-    CVector2 fpushVector;
-    CVector2 fpullVector;
+    ql::Vector fpushVector;
+    ql::Vector fpullVector;
 
     double maxProx = 0.0f;
 
-    int state = -1;
+    State state;
 
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
@@ -95,37 +95,31 @@ void InfectRandomWalk::ControlStep() {
         }
     }
 
-    CVector2 directionVector = -fpushVector;
-    bool isDirZero = QLMathUtils::closeToZero(directionVector.Length());
+    ql::Vector directionVector = -fpushVector;
+    bool isDirZero = directionVector.isZero();
 
     bool isWander = isDirZero;
-    bool isFollow = QLMathUtils::absAngleInDegrees(directionVector.Angle()) <= FORWARD_ANGLE && !isDirZero;
-    bool isDirLeft = QLMathUtils::angleInDegrees(directionVector.Angle()) > FORWARD_ANGLE &&
-                     QLMathUtils::angleInDegrees(directionVector.Angle()) <= SIDE_ANGLE && !isDirZero;
-    bool isDirRight = QLMathUtils::angleInDegrees(directionVector.Angle()) < -FORWARD_ANGLE &&
-                      QLMathUtils::angleInDegrees(directionVector.Angle()) >= -SIDE_ANGLE && !isDirZero;
+    bool isFollow = directionVector.getAbsAngle() <= FORWARD_ANGLE && !isDirZero;
+    bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
+                     directionVector.getAngle() <= SIDE_ANGLE && !isDirZero;
+    bool isDirRight = directionVector.getAngle() < -FORWARD_ANGLE &&
+                      directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero;
 
-    std::string actualState;
-    // States
     if (isWander) {
-        actualState = "WANDER";
-        state = 0;
+        state = State::WANDER;
     } else if (isFollow) {
-        actualState = "FOLLOW";
-        state = 1;
+        state = State::FOLLOW;
     } else if (isDirLeft) {
-        actualState = "DIR_LEFT";
-        state = 2;
+        state = State::DIR_LEFT;
     } else if (isDirRight) {
-        actualState = "DIR_RIGHT";
-        state = 3;
+        state = State::DIR_RIGHT;
     }
 
     if (mInfectedForEpochs > 100) {
         agentType = REMOVED;
     }
 
-    int actionIndex = mQExploiter->exploit(state);
+    Action action = mQExploiter->exploit(state);
 
     CColor agentColor = CColor::WHITE;
     switch (agentType) {
@@ -138,7 +132,7 @@ void InfectRandomWalk::ControlStep() {
             break;
         case REMOVED:
             agentColor = CColor::GRAY50;
-            actionIndex = 0;
+            action = Action::STOP;
             mCamera->Disable();
             break;
     }
@@ -146,16 +140,18 @@ void InfectRandomWalk::ControlStep() {
 
     epoch++;
 
-    std::array<double, 2> action = QLUtils::getActionFromIndex(actionIndex, parWheelVelocity);
-    std::string actionName = QLUtils::getActionName(action[0], action[1]);
-    mDiffSteering->SetLinearVelocity(action[0] , action[1]);
+    std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
+    wheelSpeeds[0] *= parWheelVelocity;
+    wheelSpeeds[1] *= parWheelVelocity;
+
+    mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
 
     const CVector3 actualPosition = this->mPosition->GetReading().Position;
     std::vector<std::string> toLog = {
             std::to_string(actualPosition.GetX()),
             std::to_string(actualPosition.GetY()),
-            actualState,
-            actionName,
+            state.getStateName(),
+            action.getActionName(),
             getAgentTypeAsString()
     };
     ql::Logger::log(this->m_strId, toLog, true);
@@ -163,8 +159,8 @@ void InfectRandomWalk::ControlStep() {
     LOG << "---------------------------------------------" << std::endl;
     LOG << "Id: " << this->m_strId << std::endl;
     LOG << "Type: " << getAgentTypeAsString() << std::endl;
-    LOG << "Action taken: " << actionName << std::endl;
-    LOG << "State: " << actualState << std::endl;
+    LOG << "Action taken: " << action.getActionName() << std::endl;
+    LOG << "State: " << state.getStateName() << std::endl;
 }
 
 void InfectRandomWalk::Destroy() {
