@@ -7,6 +7,8 @@
 #include <tuple>
 #include <cassert>
 #include "thread_safe_random.hpp"
+#include "state.hpp"
+#include "action.hpp"
 
 #define assertm(exp, msg) assert(((void)msg, exp))
 
@@ -108,19 +110,19 @@ namespace ql {
          * @param rewards Contains a list of int-int-double tuples,
          *  where the first value is the row (State), the second value the column (Action) and the third value the reward.
          */
-        void initR(const std::vector<std::tuple<int, int>> &impossibleStateActions,
-                   const std::vector<std::tuple<int, int, double>> &rewards) {
+        void initR(const std::vector<std::tuple<State, Action>> &impossibleStateActions,
+                   const std::vector<std::tuple<State, Action, double>> &rewards) {
             for (auto impState : impossibleStateActions) {
-                int stateIndex = std::get<0>(impState);
-                int actionIndex = std::get<1>(impState);
+                int stateIndex = std::get<0>(impState).getIndex();
+                int actionIndex = std::get<1>(impState).getIndex();
                 assertm(stateIndex < NUM_STATES && stateIndex >= 0, "Invalid state index!");
                 assertm(actionIndex < NUM_ACTIONS && actionIndex >= 0, "Invalid action index!");
                 R[stateIndex][actionIndex] = -1;
             }
 
             for (auto r : rewards) {
-                int stateIndex = std::get<0>(r);
-                int actionIndex = std::get<1>(r);
+                int stateIndex = std::get<0>(r).getIndex();
+                int actionIndex = std::get<1>(r).getIndex();
                 double reward = std::get<2>(r);
                 assertm(stateIndex < NUM_STATES && stateIndex >= 0, "Invalid state index!");
                 assertm(actionIndex < NUM_ACTIONS && actionIndex >= 0, "Invalid action index!");
@@ -160,20 +162,22 @@ namespace ql {
          * @param nextState the next state, the state to which taking the action in @param state leads to.
          * @return
          */
-        int doubleQ(int state, int nextState) {
-            assertm(state < NUM_STATES && state >= 0, "Train: Invalid state index!");
-            assertm(nextState < NUM_STATES && nextState >= 0, "Train: Invalid next state: index!");
+        Action doubleQ(const State& state, const State& nextState) {
+            unsigned short stateIndex = state.getIndex();
+            unsigned short nextStateIndex = nextState.getIndex();
+            assertm(stateIndex < NUM_STATES && stateIndex >= 0, "Train: Invalid state index!");
+            assertm(nextStateIndex < NUM_STATES && nextStateIndex >= 0, "Train: Invalid next state: index!");
 
             const double eGreedyRand = drand48();
             int action = 0;
             if (eGreedyRand < eGreedy) { // exploration
                 do {
                     action = rand() % NUM_ACTIONS;
-                } while (R[state][action] < 0);
+                } while (R[stateIndex][action] < 0);
             } else { // exploitation
                 double maxActionValue = 0;
                 for (int a = 0; a < NUM_ACTIONS; ++a) {
-                    const double qsum = Q1[state][a] + Q1[state][a];
+                    const double qsum = Q1[stateIndex][a] + Q1[stateIndex][a];
                     if (qsum > maxActionValue) {
                         maxActionValue = qsum;
                         action = a;
@@ -192,18 +196,18 @@ namespace ql {
             int actionMaxH = 0;
             double valMaxH = 0;
             for (int a = 0; a < NUM_ACTIONS; ++a) {
-                if (H[state][a] > valMaxH) {
-                    valMaxH = H[state][a];
+                if (H[state.getIndex()][a] > valMaxH) {
+                    valMaxH = H[state.getIndex()][a];
                     actionMaxH = a;
                 }
             }
 
-            H[state][action] = H[state][action] + learningRate * (R[state][action] + discountFactor * Hi[nextState][actionMaxH] - H[state][action]);
+            H[stateIndex][action] = H[stateIndex][action] + learningRate * (R[stateIndex][action] + discountFactor * Hi[nextStateIndex][actionMaxH] - H[stateIndex][action]);
 
             Q1 = isQ1 ? H : Hi;
             Q2 = isQ1 ? Hi : H;
 
-            return action;
+            return Action::getActionFromIndex(action);
         }
 
         /**
