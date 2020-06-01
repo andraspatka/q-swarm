@@ -88,7 +88,12 @@ void FootbotFollow::ControlStep() {
         if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE) {
             CVector2 pullVector = QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
                                                                QLMathUtils::cameraToDistance);
+
+            if (r->Color != CColor::YELLOW) {
+                pullVector *= 1.4;
+            }
             fpullVector += pullVector;
+
             isTargetSeen = true;
         }
     }
@@ -106,12 +111,12 @@ void FootbotFollow::ControlStep() {
     directionVector.clampLength(0.001, 1);
     bool isDirZero = directionVector.isZero();
 
-    bool isWander = isDirZero && !isTargetSeen;
-    bool isFollow = directionVector.getAbsAngle() < FORWARD_ANGLE && !isDirZero;
+    bool isWander = isDirZero && !isTargetSeen; // TODO: isAtGoal is a HACK
+    bool isFollow = directionVector.getAbsAngle() < FORWARD_ANGLE && !isDirZero && !isAtGoal;
     bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
-                     directionVector.getAngle() <= SIDE_ANGLE && !isDirZero;
+                     directionVector.getAngle() <= SIDE_ANGLE && !isDirZero && !isAtGoal;
     bool isDirRight = directionVector.getAngle() < -FORWARD_ANGLE &&
-                      directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero;
+                      directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero && !isAtGoal;
     bool isIdle = isDirZero && isTargetSeen || isAtGoal;
 
     CColor ledColor = CColor::WHITE;
@@ -125,7 +130,7 @@ void FootbotFollow::ControlStep() {
         if (isTargetSeen) {
             ledColor = CColor::YELLOW;
         } else {
-            ledColor = CColor::BLACK;
+            ledColor = CColor::WHITE;
         }
     } else if (isDirLeft) {
         state = State::DIR_LEFT;

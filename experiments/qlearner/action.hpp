@@ -46,6 +46,10 @@ namespace ql {
                     return STOP;
             }
         }
+
+        bool operator==(const Action& rhs) const {
+            return this->getIndex() == rhs.getIndex();
+        }
     };
 
     Action Action::STOP("STOP", 0, {0.0f, 0.0f});

@@ -6,7 +6,6 @@ CManualControlQTUserFunctions::CManualControlQTUserFunctions() :
         m_pcController(NULL) {
     /* No key is pressed initially */
     m_punPressedKeys[DIRECTION_FORWARD] = 0;
-    m_punPressedKeys[DIRECTION_BACKWARD] = 0;
     m_punPressedKeys[DIRECTION_LEFT] = 0;
     m_punPressedKeys[DIRECTION_RIGHT] = 0;
     RegisterUserFunction<CManualControlQTUserFunctions,CFootBotEntity>(&CManualControlQTUserFunctions::Draw);
@@ -24,11 +23,6 @@ void CManualControlQTUserFunctions::KeyPressed(QKeyEvent *pc_event) {
             m_punPressedKeys[DIRECTION_FORWARD] = 1;
             SetDirectionFromKeyEvent();
             break;
-        case Qt::Key_K:
-            /* Backwards */
-            m_punPressedKeys[DIRECTION_BACKWARD] = 1;
-            SetDirectionFromKeyEvent();
-            break;
         case Qt::Key_J:
             /* Left */
             m_punPressedKeys[DIRECTION_LEFT] = 1;
@@ -37,6 +31,10 @@ void CManualControlQTUserFunctions::KeyPressed(QKeyEvent *pc_event) {
         case Qt::Key_L:
             /* Right */
             m_punPressedKeys[DIRECTION_RIGHT] = 1;
+            SetDirectionFromKeyEvent();
+            break;
+        case Qt::Key_M:
+            m_punPressedKeys[DIRECTION_STOP] = 1;
             SetDirectionFromKeyEvent();
             break;
         default:
@@ -58,11 +56,6 @@ void CManualControlQTUserFunctions::KeyReleased(QKeyEvent *pc_event) {
             m_punPressedKeys[DIRECTION_FORWARD] = 0;
             SetDirectionFromKeyEvent();
             break;
-        case Qt::Key_K:
-            /* Backwards */
-            m_punPressedKeys[DIRECTION_BACKWARD] = 0;
-            SetDirectionFromKeyEvent();
-            break;
         case Qt::Key_J:
             /* Left */
             m_punPressedKeys[DIRECTION_LEFT] = 0;
@@ -71,6 +64,11 @@ void CManualControlQTUserFunctions::KeyReleased(QKeyEvent *pc_event) {
         case Qt::Key_L:
             /* Right */
             m_punPressedKeys[DIRECTION_RIGHT] = 0;
+            SetDirectionFromKeyEvent();
+            break;
+        case Qt::Key_K:
+            /* Stop */
+            m_punPressedKeys[DIRECTION_STOP] = 0;
             SetDirectionFromKeyEvent();
             break;
         default:
@@ -104,9 +102,9 @@ void CManualControlQTUserFunctions::EntitySelected(CEntity &c_entity) {
     m_pcController->Select();
     /* Reset key press information */
     m_punPressedKeys[DIRECTION_FORWARD] = 0;
-    m_punPressedKeys[DIRECTION_BACKWARD] = 0;
     m_punPressedKeys[DIRECTION_LEFT] = 0;
     m_punPressedKeys[DIRECTION_RIGHT] = 0;
+    m_punPressedKeys[DIRECTION_STOP] = 0;
 }
 
 void CManualControlQTUserFunctions::EntityDeselected(CEntity &c_entity) {
@@ -119,22 +117,22 @@ void CManualControlQTUserFunctions::EntityDeselected(CEntity &c_entity) {
 }
 
 void CManualControlQTUserFunctions::SetDirectionFromKeyEvent() {
-    double diffSteering[2];
+    double diffSteering[2] = {0, 0};
     if (m_punPressedKeys[DIRECTION_FORWARD]) {
-        diffSteering[0] = 1;
-        diffSteering[1] = 1;
-    }
-    if (m_punPressedKeys[DIRECTION_BACKWARD]) {
-        diffSteering[0] = -1;
-        diffSteering[1] = -1;
+        diffSteering[0] += 1;
+        diffSteering[1] += 1;
     }
     if (m_punPressedKeys[DIRECTION_LEFT]) {
-        diffSteering[0] = 0;
-        diffSteering[1] = 1;
+        diffSteering[0] += 0;
+        diffSteering[1] += 1;
     }
     if (m_punPressedKeys[DIRECTION_RIGHT]) {
-        diffSteering[0] = 1;
-        diffSteering[1] = 0;
+        diffSteering[0] += 1;
+        diffSteering[1] += 0;
+    }
+    if (m_punPressedKeys[DIRECTION_STOP]) {
+        diffSteering[0] += 0;
+        diffSteering[1] += 0;
     }
 
     m_pcController->SetDiffSteering(diffSteering);

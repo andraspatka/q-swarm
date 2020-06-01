@@ -77,9 +77,9 @@ private:
     */
    enum EDirection {
       DIRECTION_FORWARD = 0,
-      DIRECTION_BACKWARD,
       DIRECTION_LEFT,
-      DIRECTION_RIGHT
+      DIRECTION_RIGHT,
+      DIRECTION_STOP
    };
 
    /**

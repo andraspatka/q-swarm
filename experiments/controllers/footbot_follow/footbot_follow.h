@@ -66,8 +66,8 @@ private:
 
     constexpr int static PROX_READING_PER_SIDE = 4;
 
-    constexpr double static ALPHA_PULL = 0.5f;
-    constexpr double static BETA_PUSH = 0.5f;
+    constexpr double static ALPHA_PULL = 0.3f;
+    constexpr double static BETA_PUSH = 0.7f;
 
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
@@ -76,7 +76,7 @@ private:
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.5;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 1.2f;
+    constexpr double static C_PULL = 1.3f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 

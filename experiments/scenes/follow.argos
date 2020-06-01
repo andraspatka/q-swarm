@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="30" learning_rate="0.0" discount_factor="0.8" threshold="30" stage="exploit"/>
+            <params velocity="90" learning_rate="0.0" discount_factor="0.8" threshold="30" stage="exploit"/>
         </footbot_follow_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -29,7 +29,7 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors />
-            <params max_speed="25"/>
+            <params max_speed="30"/>
         </footbot_manualcontrol>
         <footbot_leader_controller id="fgc" library="cmake-build-debug/controllers/footbot_leader/libfootbot_leader.so">
             <actuators>
@@ -43,7 +43,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="20" learning_rate="0.0" discount_factor="0" threshold="0.25" stage="exploit"/>
+            <params velocity="10" learning_rate="0.0" discount_factor="0" threshold="0.25" stage="exploit"/>
         </footbot_leader_controller>
     </controllers>
 
@@ -124,11 +124,11 @@
         <!-- Leader - flock A. -->
         <foot-bot id="leaderA">
             <body position="0.8,1.8,0" orientation="0,0,0" />
-            <controller config="fgc" />
+            <controller config="fmc" />
         </foot-bot>
 
         <!-- End goal for the footbots marked by a light -->
-        <light id="light" position="0,-3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
+        <light id="light" position="2,-3,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
 
     </arena>
 

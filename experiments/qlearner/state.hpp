@@ -34,6 +34,10 @@ namespace ql {
         unsigned short getIndex() const {
             return this->index;
         }
+
+        bool operator==(const State& rhs) const {
+            return this->getIndex() == rhs.getIndex();
+        }
     };
     State State::WANDER("WANDER", CColor::BLACK, 0);
     State State::FOLLOW("FOLLOW", CColor::YELLOW, 1);

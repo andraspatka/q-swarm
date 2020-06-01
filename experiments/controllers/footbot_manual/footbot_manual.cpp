@@ -33,6 +33,11 @@ void CFootBotManualControl::Deselect() {
 }
 
 void CFootBotManualControl::SetDiffSteering(double diffSteer[2]) {
+    if (diffSteer[0] == 0.0f && diffSteer[1] == 0.0f) {
+        m_pcLEDs->SetAllColors(CColor::PURPLE);
+    } else {
+        m_pcLEDs->SetAllColors(CColor::RED);
+    }
     this->diffSteeringVals[0] = diffSteer[0] * parMaxSpeed;
     this->diffSteeringVals[1] = diffSteer[1] * parMaxSpeed;
 }
