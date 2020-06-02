@@ -18,7 +18,9 @@ namespace ql {
         static Action STOP;
         static Action FORWARD;
         static Action TURN_LEFT;
+        static Action TURN_LEFT_SOFT;
         static Action TURN_RIGHT;
+        static Action TURN_RIGHT_SOFT;
 
         const std::string& getActionName() const {
             return actionName;
@@ -56,5 +58,7 @@ namespace ql {
     Action Action::TURN_LEFT("TURN_LEFT", 1, {0.0f, 1.0f});
     Action Action::TURN_RIGHT("TURN_RIGHT", 2, {1.0f, 0.0f});
     Action Action::FORWARD("FORWARD", 3, {1.0f, 1.0f});
+    Action Action::TURN_LEFT_SOFT("TURN_LEFT_SOFT", 4, {0.0f, 0.5f});
+    Action Action::TURN_RIGHT_SOFT("TURN_RIGHT_SOFT", 5, {0.5f, 0.0f});
 }
 #endif

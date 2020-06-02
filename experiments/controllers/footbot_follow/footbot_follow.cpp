@@ -82,19 +82,13 @@ void FootbotFollow::ControlStep() {
     bool isAtGoal = false;
     bool isTargetSeen = false;
     for (auto r : cameraReadings) {
-        if (r->Color == CColor::PURPLE) {
-            isAtGoal = true;
-        }
         if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE) {
-            CVector2 pullVector = QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
+            fpullVector += QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
                                                                QLMathUtils::cameraToDistance);
-
-            if (r->Color != CColor::YELLOW) {
-                pullVector *= 1.4;
-            }
-            fpullVector += pullVector;
-
             isTargetSeen = true;
+            if (r->Color == CColor::PURPLE) {
+                isAtGoal = true;
+            }
         }
     }
 
@@ -107,11 +101,13 @@ void FootbotFollow::ControlStep() {
             i = proxReadings.size() - 1 - PROX_READING_PER_SIDE - 1;
         }
     }
-    ql::Vector directionVector = ALPHA_PULL * fpullVector - BETA_PUSH * fpushVector;
-    directionVector.clampLength(0.001, 1);
+    fpushVector = -fpushVector;
+    fpushVector.clampLength(0, 1);
+    fpullVector.clampLength(0, 1);
+    ql::Vector directionVector = fpullVector * ALPHA_PULL + fpushVector * BETA_PUSH;
     bool isDirZero = directionVector.isZero();
 
-    bool isWander = isDirZero && !isTargetSeen; // TODO: isAtGoal is a HACK
+    bool isWander = isDirZero && !isTargetSeen;
     bool isFollow = directionVector.getAbsAngle() < FORWARD_ANGLE && !isDirZero && !isAtGoal;
     bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
                      directionVector.getAngle() <= SIDE_ANGLE && !isDirZero && !isAtGoal;
@@ -170,7 +166,7 @@ void FootbotFollow::ControlStep() {
 
     mPrevState = state;
 
-    double velocityFactor = (negateVelocity) ? 1 : directionVector.Length();
+    double velocityFactor = 1;
     std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
 
     wheelSpeeds[0] = wheelSpeeds[0] * parWheelVelocity * velocityFactor;
@@ -190,9 +186,7 @@ void FootbotFollow::ControlStep() {
     // LOGGING
     LOG << "Id: " << this->m_strId << std::endl;
     LOG << "Stage: " << parStage << std::endl;
-    LOG << "fpush: " << fpushVector << std::endl;
-    LOG << "fpull: " << fpullVector << std::endl;
-    LOG << "Direction: " << directionVector.Length() << std::endl;
+    LOG << "Direction: " << directionVector.getLength() << std::endl;
     LOG << "VelocityFactor: " << velocityFactor << std::endl;
     LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
     LOG << "Action taken: " << action.getActionName() << std::endl;

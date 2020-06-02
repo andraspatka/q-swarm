@@ -74,8 +74,8 @@
         </distribute>
 
 
-        <foot-bot id="train">
-            <body position="1,2.2,0" orientation="0,0,0" />
+        <foot-bot id="follow">
+            <body position="1.5,1.9,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
 

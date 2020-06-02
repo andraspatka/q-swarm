@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="90" learning_rate="0.0" discount_factor="0.8" threshold="30" stage="exploit"/>
+            <params velocity="30" learning_rate="0.0" discount_factor="0.8" threshold="30" stage="exploit"/>
         </footbot_follow_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -29,7 +29,7 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors />
-            <params max_speed="30"/>
+            <params max_speed="20"/>
         </footbot_manualcontrol>
         <footbot_leader_controller id="fgc" library="cmake-build-debug/controllers/footbot_leader/libfootbot_leader.so">
             <actuators>
@@ -43,7 +43,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="10" learning_rate="0.0" discount_factor="0" threshold="0.25" stage="exploit"/>
+            <params velocity="20" learning_rate="0.0" discount_factor="0" threshold="0.25" stage="exploit"/>
         </footbot_leader_controller>
     </controllers>
 
@@ -67,53 +67,53 @@
         <distribute>
             <position method="uniform" min="-5,-5,0" max="5,5,0" />
             <orientation method="uniform" min="0,0,0" max="360,0,0" />
-            <entity quantity="0" max_trials="100">
+            <entity quantity="10" max_trials="100">
                 <box id="b" size="0.2,0.2,0.5" movable="false"/>
             </entity>
         </distribute>
 
-        <foot-bot id="fba1">
-            <body position="0.4,2.3,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba2">
-            <body position="0.4,1.3,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba3">
-            <body position="0.1,2.3,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba4">
-            <body position="0.1,1.8,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba5">
-            <body position="0.1,1.3,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba6">
-            <body position="-0.2,2.3,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba7">
-            <body position="-0.2,1.8,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fba8">
-            <body position="-0.2,1.3,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
+<!--        <foot-bot id="fba1">-->
+<!--            <body position="0.4,2.3,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="fba2">-->
+<!--            <body position="0.4,1.3,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="fba3">-->
+<!--            <body position="0.1,2.3,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="fba4">-->
+<!--            <body position="0.1,1.8,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="fba5">-->
+<!--            <body position="0.1,1.3,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="fba6">-->
+<!--            <body position="-0.2,2.3,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="fba7">-->
+<!--            <body position="-0.2,1.8,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="fba8">-->
+<!--            <body position="-0.2,1.3,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
 
-        <foot-bot id="fba9">
-            <body position="-0.5,1.8,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
+<!--        <foot-bot id="fba9">-->
+<!--            <body position="-0.5,1.8,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
 
         <distribute>
             <position method="uniform" min="-0.5,1.3,0" max="0.4,2.3,0" />
-            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="0" max_trials="100">
+            <orientation method="uniform" min="360,0,0" max="360,0,0" />
+            <entity quantity="9" max_trials="100">
                 <foot-bot id="">
                     <controller config="ffc" />
                 </foot-bot>
