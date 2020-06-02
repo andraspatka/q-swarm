@@ -34,7 +34,7 @@ namespace ql {
             return wheelSpeed;
         }
 
-        static const Action& getActionFromIndex(unsigned short index) {
+        static const Action& fromIndex(unsigned short index) {
             switch(index) {
                 case 0:
                     return STOP;

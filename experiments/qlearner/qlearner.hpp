@@ -169,18 +169,18 @@ namespace ql {
             assertm(nextStateIndex < NUM_STATES && nextStateIndex >= 0, "Train: Invalid next state: index!");
 
             const double eGreedyRand = drand48();
-            int action = 0;
+            int actionIndex = 0;
             if (eGreedyRand < eGreedy) { // exploration
                 do {
-                    action = rand() % NUM_ACTIONS;
-                } while (R[stateIndex][action] < 0);
+                    actionIndex = rand() % NUM_ACTIONS;
+                } while (R[stateIndex][actionIndex] < 0);
             } else { // exploitation
                 double maxActionValue = 0;
                 for (int a = 0; a < NUM_ACTIONS; ++a) {
                     const double qsum = Q1[stateIndex][a] + Q1[stateIndex][a];
                     if (qsum > maxActionValue) {
                         maxActionValue = qsum;
-                        action = a;
+                        actionIndex = a;
                     }
                 }
             }
@@ -202,12 +202,14 @@ namespace ql {
                 }
             }
 
-            H[stateIndex][action] = H[stateIndex][action] + learningRate * (R[stateIndex][action] + discountFactor * Hi[nextStateIndex][actionMaxH] - H[stateIndex][action]);
+            H[stateIndex][actionIndex] = H[stateIndex][actionIndex] +
+                    learningRate * (R[stateIndex][actionIndex] +
+                    discountFactor * Hi[nextStateIndex][actionMaxH] - H[stateIndex][actionIndex]);
 
             Q1 = isQ1 ? H : Hi;
             Q2 = isQ1 ? Hi : H;
 
-            return Action::getActionFromIndex(action);
+            return Action::fromIndex(actionIndex);
         }
 
         /**

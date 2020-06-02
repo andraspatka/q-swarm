@@ -162,6 +162,7 @@ void FootbotFollow::ControlStep() {
         }
         LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     }
+
     Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
 
     mPrevState = state;
@@ -174,6 +175,7 @@ void FootbotFollow::ControlStep() {
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
 
+    // LOGGING
     const CVector3 actualPosition = this->mPosition->GetReading().Position;
     std::vector<std::string> toLog = {
             std::to_string(actualPosition.GetX()),
@@ -183,7 +185,6 @@ void FootbotFollow::ControlStep() {
     };
     ql::Logger::log(this->m_strId, toLog);
 
-    // LOGGING
     LOG << "Id: " << this->m_strId << std::endl;
     LOG << "Stage: " << parStage << std::endl;
     LOG << "Direction: " << directionVector.getLength() << std::endl;
