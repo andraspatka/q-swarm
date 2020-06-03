@@ -49,6 +49,5 @@ namespace ql {
     State State::DIR_LEFT("DIR_LEFT", CColor::WHITE, 2);
     State State::DIR_RIGHT("DIR_RIGHT", CColor::WHITE, 3);
     State State::IDLE("IDLE", CColor::RED, 4);
-    State State::SEARCH("SEARCH", CColor::CYAN, 5);
 }
 #endif

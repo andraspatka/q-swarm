@@ -39,8 +39,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
                 std::make_tuple(State::WANDER, Action::STOP),
                 std::make_tuple(State::FOLLOW, Action::STOP),
                 std::make_tuple(State::DIR_LEFT, Action::STOP),
-                std::make_tuple(State::DIR_RIGHT, Action::STOP),
-                std::make_tuple(State::SEARCH, Action::STOP)
+                std::make_tuple(State::DIR_RIGHT, Action::STOP)
         };
         std::vector<std::tuple<State, Action, double>> rewards = {
                 std::make_tuple(State::WANDER, Action::FORWARD, 0.2),
@@ -105,13 +104,13 @@ void FootbotFollow::ControlStep() {
         }
     }
     fpushVector = -fpushVector;
-    fpushVector.clampLength(0, 1);
-    fpullVector.clampLength(0, 1);
+    fpushVector.clampZeroAndMax(1);
+    fpullVector.clampZeroAndMax(1);
     ql::Vector directionVector = fpullVector * ALPHA_PULL + fpushVector * BETA_PUSH;
+    directionVector.clampZeroAndMax(1);
     bool isDirZero = directionVector.isZero();
 
-    bool isWander = isDirZero && !isTargetSeen && mPrevState != State::FOLLOW;
-    bool isSearch = mPrevState == State::FOLLOW && isDirZero && !isTargetSeen;
+    bool isWander = isDirZero && !isTargetSeen;
     bool isFollow = directionVector.getAbsAngle() <= FORWARD_ANGLE && !isDirZero && !isAtGoal;
     bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
                      directionVector.getAngle() <= SIDE_ANGLE && !isDirZero && !isAtGoal;
@@ -120,11 +119,9 @@ void FootbotFollow::ControlStep() {
     bool isIdle = isDirZero && isTargetSeen || isAtGoal;
 
     CColor ledColor = CColor::WHITE;
-    bool negateVelocity = false;
     if (isWander) {
         state = State::WANDER;
         ledColor = state.getLedColor();
-        negateVelocity = true;
     } else if (isFollow) {
         state = State::FOLLOW;
         if (isTargetSeen) {
@@ -145,9 +142,6 @@ void FootbotFollow::ControlStep() {
         } else {
             ledColor = CColor::GREEN;
         }
-    } else if (isSearch) {
-        state = State::SEARCH;
-        ledColor = state.getLedColor();
     }
     mLed->SetAllColors(ledColor);
     epoch++;
@@ -164,31 +158,19 @@ void FootbotFollow::ControlStep() {
             mQLearner->setLearningRate(0);
             mLearnedEpoch = epoch;
         }
-        if (mQLearner->getLearningRate() > 0.05f && epoch % 300 == 0) {
+        if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
             mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
         }
 
     }
 
     Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
-
-//    if (state == State::WANDER) {
-//        if (drand48() > 0.7f) {
-//            if (drand48() > 0.5f) {
-//                action = Action::TURN_LEFT;
-//            } else {
-//                action = Action::TURN_RIGHT;
-//            }
-//        }
-//    }
-
     mPrevState = state;
 
-    double velocityFactor = 1;
     std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
 
-    wheelSpeeds[0] = wheelSpeeds[0] * parWheelVelocity * velocityFactor;
-    wheelSpeeds[1] = wheelSpeeds[1] * parWheelVelocity * velocityFactor;
+    wheelSpeeds[0] = wheelSpeeds[0] * parWheelVelocity;
+    wheelSpeeds[1] = wheelSpeeds[1] * parWheelVelocity;
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
 
@@ -200,10 +182,12 @@ void FootbotFollow::ControlStep() {
             LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
         }
         LOG << "Id: " << this->m_strId << std::endl;
-        LOG << "Stage: " << parStage << std::endl;
         LOG << "Direction: " << directionVector.getLength() << std::endl;
-        LOG << "VelocityFactor: " << velocityFactor << std::endl;
-        LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
+        LOG << "Dir angle: " << directionVector.getAngle() << std::endl;
+        LOG << "Push: " << fpushVector.getLength() * BETA_PUSH << std::endl;
+        LOG << "Push angle: " << fpushVector.getAngle() << std::endl;
+        LOG << "Pull: " << fpullVector.getLength() * ALPHA_PULL << std::endl;
+        LOG << "Pull angle: " << fpullVector.getAngle() << std::endl;
         LOG << "Action taken: " << action.getName() << std::endl;
         LOG << "State: " << state.getName() << std::endl;
         LOG << "---------------------------------------------" << std::endl;

@@ -24,12 +24,12 @@ namespace ql {
             return this->length <= 0.01;
         }
 
-        void clampLength(const double minBound, const double maxBound) {
+        void clampZeroAndMax(const double maxBound) {
             if (this->length > maxBound) {
                 this->length = maxBound;
             }
-            if (this->length < minBound) {
-                this->length = minBound;
+            if (this->isZero()) {
+                this->length = 0;
             }
         }
 

@@ -47,7 +47,7 @@
             <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
             <orientation method="uniform" min="0,0,0" max="0,0,0" />
             <entity quantity="35" max_trials="100">
-                <box id="b" size="0.15,0.15,0.5" movable="false"/>
+                <box id="b" size="0.1,0.1,0.5" movable="false"/>
             </entity>
         </distribute>
 

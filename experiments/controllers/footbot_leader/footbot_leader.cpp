@@ -110,7 +110,7 @@ void FootbotLeader::ControlStep() {
 
     fpushVector = -fpushVector;
     ql::Vector directionVector = fpullVector + fpushVector;
-    directionVector.clampLength(0.01, 1);
+    directionVector.clampZeroAndMax(1);
 
     bool isDirZero = QLMathUtils::closeToZero(directionVector.getLength());
     bool isTargetSeen = !QLMathUtils::closeToZero(maxLight);
