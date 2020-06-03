@@ -182,6 +182,7 @@ void FootbotFollow::ControlStep() {
 
         if (parStage == StageHelper::Stage::TRAIN) {
             LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
+            LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
         }
         LOG << "Id: " << this->m_strId << std::endl;
         LOG << "Direction: " << directionVector.getLength() << std::endl;

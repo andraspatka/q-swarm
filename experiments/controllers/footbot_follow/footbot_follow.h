@@ -58,11 +58,11 @@ public:
     virtual void Destroy();
 
 private:
-    constexpr int static NUM_STATES = 6;
+    constexpr int static NUM_STATES = 5;
 
     constexpr int static NUM_ACTIONS = 4;
 
-    constexpr int static STATE_THRESHOLD = 30;
+    constexpr int static STATE_THRESHOLD = 40;
 
     constexpr int static PROX_READING_PER_SIDE = 4;
 
