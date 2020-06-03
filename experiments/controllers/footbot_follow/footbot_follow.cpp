@@ -171,8 +171,21 @@ void FootbotFollow::ControlStep() {
 
     std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
 
-    wheelSpeeds[0] = wheelSpeeds[0] * parWheelVelocity;
-    wheelSpeeds[1] = wheelSpeeds[1] * parWheelVelocity;
+    if ((action == Action::FORWARD || action == Action::TURN_LEFT || action == Action::TURN_RIGHT) && (state != State::WANDER)) {
+        double v = directionVector.getLength() * parWheelVelocity;
+        double angle = directionVector.getAngle();
+        angle = (angle < 0) ? angle + 360 : angle;
+        double w = angle / 10;
+        double phiLeft = v / (2 * WHEEL_RADIUS) + w / (2 * WHEEL_RADIUS);
+        double c = INTERWHEEL_DISTANCE / (2 * WHEEL_RADIUS);
+        double phiRight = c * (v - w);
+
+        wheelSpeeds[0] = phiLeft;
+        wheelSpeeds[1] = phiRight;
+    } else {
+        wheelSpeeds[0] *= parWheelVelocity;
+        wheelSpeeds[1] *= parWheelVelocity;
+    }
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
 

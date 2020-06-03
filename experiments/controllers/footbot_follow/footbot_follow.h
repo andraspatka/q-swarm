@@ -83,6 +83,9 @@ private:
     static constexpr double FORWARD_ANGLE = 30.0f;
     static constexpr double SIDE_ANGLE = 180.0f;
 
+    static constexpr double WHEEL_RADIUS = 0.029112741f;
+    static constexpr double INTERWHEEL_DISTANCE = 0.14f;
+
     QLearner * mQLearner;
 
     QExploiter * mQExploiter;
