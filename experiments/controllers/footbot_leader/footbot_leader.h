@@ -11,9 +11,9 @@
 #include <fstream>
 #include <argos3/plugins/robots/generic/control_interface/ci_leds_actuator.h>
 
-#include <qlearner/ql_utils.hpp>
 #include <qlearner/stage.hpp>
-#include <qlearner/ql_math_utils.hpp>
+#include <potnavi/math_utils.hpp>
+#include <potnavi/polar_vector.hpp>
 #include <qlearner/qlearner.hpp>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <qlearner/qexploiter.hpp>

@@ -80,8 +80,8 @@ void FootbotLeader::ControlStep() {
     double maxLight = 0.0f;
     double maxProx = 0.0f;
 
-    ql::Vector fpushVector;
-    ql::Vector fpullVector;
+    ql::PolarVector fpushVector;
+    ql::PolarVector fpullVector;
 
     State state;
 
@@ -89,9 +89,9 @@ void FootbotLeader::ControlStep() {
     auto proxReadings = mProximitySensor->GetReadings();
 
     for (int i = 0; i <= 23; ++i) {
-        if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
-            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
-                    A, B_PUSH, C_PUSH, QLMathUtils::proxToDistance);
+        if (!MathUtils::closeToZero(proxReadings.at(i).Value)) {
+            fpushVector += MathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
+                                                      A, B_PUSH, C_PUSH, MathUtils::proxToDistance);
             maxProx = std::max(maxProx, proxReadings.at(i).Value);
         }
         if (i == 4) {
@@ -101,19 +101,19 @@ void FootbotLeader::ControlStep() {
 
     // max light reading around the footbot
     for (int i = 0; i < 23; ++i) {
-        if (!QLMathUtils::closeToZero(lightReadings.at(i).Value)) {
-            fpullVector += QLMathUtils::readingToVector(lightReadings.at(i).Value, lightReadings.at(i).Angle,
-                    A, B_PULL, C_PULL, QLMathUtils::ligthToDistance);
+        if (!MathUtils::closeToZero(lightReadings.at(i).Value)) {
+            fpullVector += MathUtils::readingToVector(lightReadings.at(i).Value, lightReadings.at(i).Angle,
+                                                      A, B_PULL, C_PULL, MathUtils::lightToDistance);
             maxLight = std::max(maxLight, lightReadings.at(i).Value);
         }
     }
 
     fpushVector = -fpushVector;
-    ql::Vector directionVector = fpullVector + fpushVector;
+    ql::PolarVector directionVector = fpullVector + fpushVector;
     directionVector.clampZeroAndMax(1);
 
-    bool isDirZero = QLMathUtils::closeToZero(directionVector.getLength());
-    bool isTargetSeen = !QLMathUtils::closeToZero(maxLight);
+    bool isDirZero = MathUtils::closeToZero(directionVector.getLength());
+    bool isTargetSeen = !MathUtils::closeToZero(maxLight);
     bool isAtGoal = maxLight > parThreshold;
 
     // States
@@ -122,7 +122,7 @@ void FootbotLeader::ControlStep() {
                       directionVector.getAngle() <= SIDE_ANGLE && !isDirZero && !isAtGoal;
     bool isDirRight = directionVector.getAngle() < -FORWARD_ANGLE &&
                       directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero && !isAtGoal;
-    bool isWander = QLMathUtils::closeToZero(maxProx) && !isTargetSeen;
+    bool isWander = MathUtils::closeToZero(maxProx) && !isTargetSeen;
     bool isIdle = (isDirZero && isTargetSeen) || maxLight > parThreshold;
 
     if (isWander) {

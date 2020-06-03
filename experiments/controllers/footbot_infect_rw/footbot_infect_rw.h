@@ -13,8 +13,8 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 
 #include <qlearner/qlearner.hpp>
-#include <qlearner/ql_utils.hpp>
-#include <qlearner/ql_math_utils.hpp>
+#include <potnavi/math_utils.hpp>
+#include <potnavi/polar_vector.hpp>
 
 #include <monitoring/logger.hpp>
 #include <qlearner/qexploiter.hpp>

@@ -6,17 +6,17 @@
 using namespace argos;
 
 namespace ql {
-    class Vector {
+    class PolarVector {
         double length;
         double angle;
     public:
-        Vector() : length(0.0f), angle(0.0f) {}
+        PolarVector() : length(0.0f), angle(0.0f) {}
 
-        Vector(const Vector& vector) : length(vector.getLength()), angle(vector.getAngle()) {}
+        PolarVector(const PolarVector& vector) : length(vector.getLength()), angle(vector.getAngle()) {}
 
-        Vector(double length, double angle) : length(length), angle(angle) {}
+        PolarVector(double length, double angle) : length(length), angle(angle) {}
 
-        Vector(double length, CRadians angle) : length(length) {
+        PolarVector(double length, CRadians angle) : length(length) {
             this->angle = angle.GetValue() * argos::CRadians::RADIANS_TO_DEGREES;
         }
 
@@ -52,20 +52,20 @@ namespace ql {
             return this->angle;
         }
 
-        Vector& operator=(const Vector& rhs) {
+        PolarVector& operator=(const PolarVector& rhs) {
             this->length = rhs.getLength();
             this->angle = rhs.getAngle();
             return *this;
         }
 
-        Vector& operator+=(const Vector& rhs) {
-            Vector v3 = operator+(rhs);
+        PolarVector& operator+=(const PolarVector& rhs) {
+            PolarVector v3 = operator+(rhs);
             this->length = v3.length;
             this->angle = v3.angle;
             return *this;
         }
 
-        Vector operator+(const Vector& rhs) const{
+        PolarVector operator+(const PolarVector& rhs) const{
             CVector2 v2;
             v2.FromPolarCoordinates(rhs.length, rhs.getAngleInRadians());
 
@@ -73,12 +73,12 @@ namespace ql {
             v1.FromPolarCoordinates(this->length, this->getAngleInRadians());
 
             CVector2 v3 = v1 + v2;
-            Vector ret = {v3.Length(), v3.Angle().GetValue() * argos::CRadians::RADIANS_TO_DEGREES};
+            PolarVector ret = {v3.Length(), v3.Angle().GetValue() * argos::CRadians::RADIANS_TO_DEGREES};
             ret.length = ret.isZero() ? 0 : ret.length;
             return ret;
         }
 
-        Vector operator-() const {
+        PolarVector operator-() const {
             double angle = this->angle;
             if (this->angle > 0) {
                 angle = -180 + angle;
@@ -88,7 +88,7 @@ namespace ql {
             return {this->length, angle};
         }
 
-        Vector operator*(double factor) const {
+        PolarVector operator*(double factor) const {
             return {factor * this->length, this->angle};
         }
 

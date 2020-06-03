@@ -1,3 +1,5 @@
+#include <potnavi/polar_vector.hpp>
+#include <potnavi/math_utils.hpp>
 #include "footbot_follow.h"
 
 FootbotFollow::FootbotFollow() :
@@ -75,8 +77,8 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
  *              back
  */
 void FootbotFollow::ControlStep() {
-    ql::Vector fpushVector;
-    ql::Vector fpullVector;
+    ql::PolarVector fpushVector;
+    ql::PolarVector fpullVector;
     State state;
 
     auto proxReadings = mProximitySensor->GetReadings();
@@ -85,8 +87,8 @@ void FootbotFollow::ControlStep() {
     bool isTargetSeen = false;
     for (auto r : cameraReadings) {
         if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE) {
-            fpullVector += QLMathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
-                                                               QLMathUtils::cameraToDistance);
+            fpullVector += MathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
+                                                      MathUtils::cameraToDistance);
             isTargetSeen = true;
             if (r->Color == CColor::PURPLE) {
                 isAtGoal = true;
@@ -95,9 +97,9 @@ void FootbotFollow::ControlStep() {
     }
 
     for (int i = 0; i < proxReadings.size(); ++i) {
-        if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
-            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
-                                                        A, B_PUSH, C_PUSH, QLMathUtils::proxToDistance);
+        if (!MathUtils::closeToZero(proxReadings.at(i).Value)) {
+            fpushVector += MathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
+                                                      A, B_PUSH, C_PUSH, MathUtils::proxToDistance);
         }
         if (i == PROX_READING_PER_SIDE) {
             i = proxReadings.size() - 1 - PROX_READING_PER_SIDE - 1;
@@ -106,7 +108,7 @@ void FootbotFollow::ControlStep() {
     fpushVector = -fpushVector;
     fpushVector.clampZeroAndMax(1);
     fpullVector.clampZeroAndMax(1);
-    ql::Vector directionVector = fpullVector * ALPHA_PULL + fpushVector * BETA_PUSH;
+    ql::PolarVector directionVector = fpullVector * ALPHA_PULL + fpushVector * BETA_PUSH;
     directionVector.clampZeroAndMax(1);
     bool isDirZero = directionVector.isZero();
 

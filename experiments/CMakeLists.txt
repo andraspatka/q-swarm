@@ -32,3 +32,5 @@ add_subdirectory(loop_functions)
 add_subdirectory(qlearner)
 
 add_subdirectory(monitoring)
+
+add_subdirectory(potnavi)

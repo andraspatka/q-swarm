@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cmath>
 #include <argos3/core/utility/math/vector2.h>
-#include "vector.hpp"
+#include "polar_vector.hpp"
 
 #define assertm(exp, msg) assert(((void)msg, exp))
 
@@ -13,7 +13,7 @@ using namespace argos;
 
 namespace ql {
 
-    class QLMathUtils {
+    class MathUtils {
     public:
         static constexpr double EPSILON = 0.001;
         static constexpr double CUTOFF_VALUE = 0.05;
@@ -46,11 +46,11 @@ namespace ql {
             return 1 - reading;
         }
 
-        static double ligthToDistance(double reading) {
+        static double lightToDistance(double reading) {
             return (1 - reading) * 2.3;
         }
 
-        static ql::Vector
+        static ql::PolarVector
         readingToVector(double readingLength, argos::CRadians readingAngle, double a, double b, double c,
                         double (*transf)(double)) {
             double length = calculateGauss(a, transf(readingLength), b, c);

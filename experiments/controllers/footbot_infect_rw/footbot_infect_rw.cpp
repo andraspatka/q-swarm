@@ -1,3 +1,5 @@
+#include <potnavi/polar_vector.hpp>
+#include <potnavi/math_utils.hpp>
 #include "footbot_infect_rw.h"
 
 InfectRandomWalk::InfectRandomWalk() :
@@ -68,8 +70,8 @@ void InfectRandomWalk::InitInfectious() {
  *              back
  */
 void InfectRandomWalk::ControlStep() {
-    ql::Vector fpushVector;
-    ql::Vector fpullVector;
+    ql::PolarVector fpushVector;
+    ql::PolarVector fpullVector;
 
     double maxProx = 0.0f;
 
@@ -80,7 +82,7 @@ void InfectRandomWalk::ControlStep() {
 
     CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
     for (auto r : cameraReadings) {
-        if (ql::QLMathUtils::cameraToDistance(r->Distance) <= 1 && r->Color == CColor::RED && agentType == SUSCEPTIBLE) {
+        if (ql::MathUtils::cameraToDistance(r->Distance) <= 1 && r->Color == CColor::RED && agentType == SUSCEPTIBLE) {
             if (drand48() < parInfectionProb) {
                 agentType = INFECTIOUS;
             }
@@ -88,14 +90,14 @@ void InfectRandomWalk::ControlStep() {
     }
 
     for (int i = 0; i <= 23; ++i) {
-        if (!QLMathUtils::closeToZero(proxReadings.at(i).Value)) {
-            fpushVector += QLMathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
-                                                        C_PUSH, QLMathUtils::proxToDistance);
+        if (!MathUtils::closeToZero(proxReadings.at(i).Value)) {
+            fpushVector += MathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
+                                                      C_PUSH, MathUtils::proxToDistance);
             maxProx = std::max(maxProx, proxReadings.at(i).Value);
         }
     }
 
-    ql::Vector directionVector = -fpushVector;
+    ql::PolarVector directionVector = -fpushVector;
     bool isDirZero = directionVector.isZero();
 
     bool isWander = isDirZero;
