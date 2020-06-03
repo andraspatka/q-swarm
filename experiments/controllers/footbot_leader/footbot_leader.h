@@ -117,4 +117,6 @@ private:
 
     // Discount factor. If close to zero, then the agent prefers the immediate reward, otherwise the long term reward.
     double parDiscountFactor;
+
+    bool parShouldLog;
 };

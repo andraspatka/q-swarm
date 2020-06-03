@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="30" learning_rate="1" discount_factor="0.8" threshold="30" stage="exploit"/>
+            <params velocity="30" learning_rate="1" discount_factor="0.8" threshold="30" stage="exploit" logging="true"/>
         </footbot_follow_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -43,7 +43,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="20" learning_rate="0.0" discount_factor="0.8" threshold="0.25" stage="exploit"/>
+            <params velocity="20" learning_rate="0.0" discount_factor="0.8" threshold="0.25" stage="exploit" logging="false"/>
         </footbot_leader_controller>
     </controllers>
 
@@ -83,7 +83,7 @@
         <!-- The footbot which can go to the goal. -->
         <foot-bot id="leader">
             <body position="1.9,1.9,0" orientation="0,0,0" />
-            <controller config="fgc" />
+            <controller config="fmc" />
         </foot-bot>
 
         <!-- End goal for the footbots marked by a light -->
@@ -110,9 +110,7 @@
                 <placement idx="2" position="0,1.5,0.2" look_at="0,0,0" lens_focal_length="40" />
 
             </camera>
-            <!--<user_functions library="cmake-build-debug/loop_functions/manual_control/libmanual_loop_functions.so" label="manual_qtuser_functions" />-->
-            <user_functions library="cmake-build-debug/loop_functions/id/libid_loop_functions"
-                            label="id_qtuser_functions" />
+            <user_functions library="cmake-build-debug/loop_functions/manual_control/libmanual_loop_functions.so" label="manual_qtuser_functions" />
         </qt-opengl>
     </visualization>
 

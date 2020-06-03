@@ -111,7 +111,7 @@ namespace ql {
          *  where the first value is the row (State), the second value the column (Action) and the third value the reward.
          */
         void initR(const std::vector<std::tuple<State, Action>> &impossibleStateActions,
-                   const std::vector<std::tuple<State, Action, double>> &rewards) {
+                   const std::vector<std::tuple<State, Action, double>> &rewards, const State& terminalState) {
             for (auto impState : impossibleStateActions) {
                 int stateIndex = std::get<0>(impState).getIndex();
                 int actionIndex = std::get<1>(impState).getIndex();
@@ -141,7 +141,7 @@ namespace ql {
                         Q1[i][j] = -1;
                         Q2[i][j] = -1;
                     }
-                    if (i == NUM_STATES - 1) { // terminal state
+                    if (i == terminalState.getIndex()) { // terminal state
                         Q[i][j] = 0;
                         Q1[i][j] = 0;
                         Q2[i][j] = 0;

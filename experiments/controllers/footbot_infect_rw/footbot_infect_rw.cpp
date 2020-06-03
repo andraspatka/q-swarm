@@ -150,8 +150,8 @@ void InfectRandomWalk::ControlStep() {
     std::vector<std::string> toLog = {
             std::to_string(actualPosition.GetX()),
             std::to_string(actualPosition.GetY()),
-            state.getStateName(),
-            action.getActionName(),
+            state.getName(),
+            action.getName(),
             getAgentTypeAsString()
     };
     ql::Logger::log(this->m_strId, toLog, true);
@@ -159,8 +159,8 @@ void InfectRandomWalk::ControlStep() {
     LOG << "---------------------------------------------" << std::endl;
     LOG << "Id: " << this->m_strId << std::endl;
     LOG << "Type: " << getAgentTypeAsString() << std::endl;
-    LOG << "Action taken: " << action.getActionName() << std::endl;
-    LOG << "State: " << state.getStateName() << std::endl;
+    LOG << "Action taken: " << action.getName() << std::endl;
+    LOG << "State: " << state.getName() << std::endl;
 }
 
 void InfectRandomWalk::Destroy() {

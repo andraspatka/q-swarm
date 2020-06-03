@@ -7,7 +7,6 @@
 #include <iostream>
 #include <vector>
 
-
 #define assertm(exp, msg) assert(((void)msg, exp))
 
 namespace ql {
@@ -21,6 +20,16 @@ namespace ql {
         static void clearMyLogs(const std::string &footbotId) {
             std::string fileName = std::string(Logger::LOG_DIRECTORY) + "/" + footbotId + ".csv";
             std::remove(fileName.c_str());
+        }
+
+        static void logPositionStateAndAction(double positionX, double positionY, const std::string& stateName, const std::string& actionName, const std::string &id) {
+            std::vector<std::string> toLog = {
+                    std::to_string(positionX),
+                    std::to_string(positionY),
+                    stateName,
+                    actionName
+            };
+            log(id, toLog);
         }
 
         static void log(const std::string &footbotId, std::vector<std::string> values, bool isDiseaseSim = false) {

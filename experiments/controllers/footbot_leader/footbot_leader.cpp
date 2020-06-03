@@ -25,6 +25,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "discount_factor", parDiscountFactor);
     GetNodeAttribute(t_node, "threshold", parThreshold);
     GetNodeAttribute(t_node, "stage", parStageString);
+    GetNodeAttribute(t_node, "logging", parShouldLog);
 
     parStage = StageHelper::ParseStageFromString(parStageString);
 
@@ -41,7 +42,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
                 std::make_tuple(State::FOLLOW, Action::FORWARD, 1),
                 std::make_tuple(State::IDLE, Action::STOP, 2)
         };
-        mQLearner->initR(impossibleStates, rewards);
+        mQLearner->initR(impossibleStates, rewards, State::IDLE);
     }
     if (parStage == StageHelper::Stage::EXPLOIT) {
         mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
@@ -153,7 +154,6 @@ void FootbotLeader::ControlStep() {
         if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
             mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
         }
-        LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     }
     Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
     mPrevState = state;
@@ -163,25 +163,24 @@ void FootbotLeader::ControlStep() {
     mGlobalMaxLightReading = std::max(mGlobalMaxLightReading, maxLight);
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
-    const CVector3 actualPosition = this->mPosition->GetReading().Position;
-    std::vector<std::string> toLog = {
-            std::to_string(actualPosition.GetX()),
-            std::to_string(actualPosition.GetY()),
-            state.getStateName(),
-            action.getActionName()
-    };
-    ql::Logger::log(this->m_strId, toLog);
 
-    // LOGGING
-    LOG << "Stage: " << StageHelper::ParseStringFromStage(parStage) << std::endl;
-    LOG << "MaxLight: " << maxLight << std::endl;
-    LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
+    if (parShouldLog) {
+        auto position = this->mPosition->GetReading().Position;
+        ql::Logger::logPositionStateAndAction(position.GetX(), position.GetY(), state.getName(), action.getName(), this->m_strId);
 
-    LOG << "Action taken: " <<  action.getActionName() << std::endl;
-    LOG << "State: " << state.getStateName() << std::endl;
-    LOG << "Global max light: " << mGlobalMaxLightReading << std::endl;
-    LOG << "Id: " << this->m_strId << std::endl;
-    LOG << "---------------------------------------------" << std::endl;
+        if (parStage == StageHelper::Stage::TRAIN) {
+            LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
+        }
+        LOG << "Stage: " << StageHelper::ParseStringFromStage(parStage) << std::endl;
+        LOG << "MaxLight: " << maxLight << std::endl;
+        LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
+
+        LOG << "Action taken: " << action.getName() << std::endl;
+        LOG << "State: " << state.getName() << std::endl;
+        LOG << "Global max light: " << mGlobalMaxLightReading << std::endl;
+        LOG << "Id: " << this->m_strId << std::endl;
+        LOG << "---------------------------------------------" << std::endl;
+    }
 }
 
 void FootbotLeader::Destroy() {

@@ -58,7 +58,7 @@ public:
     virtual void Destroy();
 
 private:
-    constexpr int static NUM_STATES = 5;
+    constexpr int static NUM_STATES = 6;
 
     constexpr int static NUM_ACTIONS = 4;
 
@@ -66,8 +66,8 @@ private:
 
     constexpr int static PROX_READING_PER_SIDE = 4;
 
-    constexpr double static ALPHA_PULL = 0.3f;
-    constexpr double static BETA_PUSH = 0.7f;
+    constexpr double static ALPHA_PULL = 0.4f;
+    constexpr double static BETA_PUSH = 0.6f;
 
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
@@ -127,4 +127,6 @@ private:
 
     // Discount factor. If close to zero, then the agent prefers the immediate reward, otherwise the long term reward.
     double parDiscountFactor;
+
+    bool parShouldLog;
 };

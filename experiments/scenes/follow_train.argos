@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="30" learning_rate="1" discount_factor="0.2" threshold="30" stage="train"/>
+            <params velocity="30" learning_rate="1" discount_factor="0.8" threshold="30" stage="train" logging="false"/>
         </footbot_follow_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -43,7 +43,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="20" learning_rate="0" discount_factor="0" threshold="0.25" stage="exploit"/>
+            <params velocity="20" learning_rate="0" discount_factor="0" threshold="0.25" stage="exploit" logging="false"/>
         </footbot_leader_controller>
     </controllers>
 
@@ -72,10 +72,10 @@
                 <box id="b" size="0.15,0.15,0.5" movable="false"/>
             </entity>
         </distribute>
-        <light id="light" position="-0.8,-0.7,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
+<!--        <light id="light" position="-0.8,-0.7,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />-->
 
         <!-- The footbot which can go to the goal. -->
-        <foot-bot id="follow-leader1">
+        <foot-bot id="follow-man">
             <body position="0,-2.3,0" orientation="0,0,0" />
             <controller config="fgc" />
         </foot-bot>
@@ -89,6 +89,16 @@
             <body position="2.2,2.2,0" orientation="-130,0,0" />
             <controller config="ffc" />
         </foot-bot>
+
+        <distribute>
+            <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
+            <orientation method="uniform" min="0,0,0" max="360,0,0" />
+            <entity quantity="10" max_trials="100">
+                <foot-bot id="">
+                    <controller config="fgc" />
+                </foot-bot>
+            </entity>
+        </distribute>
 
 
         <!-- Manual control footbot. -->

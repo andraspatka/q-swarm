@@ -22,7 +22,7 @@ namespace ql {
         static Action TURN_RIGHT;
         static Action TURN_RIGHT_SOFT;
 
-        const std::string& getActionName() const {
+        const std::string& getName() const {
             return actionName;
         }
 

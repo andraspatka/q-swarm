@@ -13,7 +13,6 @@ namespace ql {
 
     class QLUtils {
     public:
-
     };
 }
 #endif

@@ -12,6 +12,7 @@ FootbotFollow::FootbotFollow() :
 * 2 DIR_LEFT   -1      0           0           0
 * 3 DIR_RIGHT  -1      0           0           0
 * 4 IDLE        2      0           0           0
+* 5 SEARCH     -1      0           0           0
 */
 void FootbotFollow::Init(TConfigurationNode &t_node) {
 
@@ -29,6 +30,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "discount_factor", parDiscountFactor);
     GetNodeAttribute(t_node, "threshold", parThreshold);
     GetNodeAttribute(t_node, "stage", parStageString);
+    GetNodeAttribute(t_node, "logging", parShouldLog);
 
     parStage = StageHelper::ParseStageFromString(parStageString);
     if (parStage == StageHelper::TRAIN) {
@@ -37,14 +39,15 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
                 std::make_tuple(State::WANDER, Action::STOP),
                 std::make_tuple(State::FOLLOW, Action::STOP),
                 std::make_tuple(State::DIR_LEFT, Action::STOP),
-                std::make_tuple(State::DIR_RIGHT, Action::STOP)
+                std::make_tuple(State::DIR_RIGHT, Action::STOP),
+                std::make_tuple(State::SEARCH, Action::STOP)
         };
         std::vector<std::tuple<State, Action, double>> rewards = {
                 std::make_tuple(State::WANDER, Action::FORWARD, 0.2),
                 std::make_tuple(State::FOLLOW, Action::FORWARD, 1),
                 std::make_tuple(State::IDLE, Action::STOP, 2)
         };
-        mQLearner->initR(impossibleStates, rewards);
+        mQLearner->initR(impossibleStates, rewards, State::IDLE);
         mStateStats.fill(0);
     }
     if (parStage == StageHelper::Stage::EXPLOIT) {
@@ -107,8 +110,9 @@ void FootbotFollow::ControlStep() {
     ql::Vector directionVector = fpullVector * ALPHA_PULL + fpushVector * BETA_PUSH;
     bool isDirZero = directionVector.isZero();
 
-    bool isWander = isDirZero && !isTargetSeen;
-    bool isFollow = directionVector.getAbsAngle() < FORWARD_ANGLE && !isDirZero && !isAtGoal;
+    bool isWander = isDirZero && !isTargetSeen && mPrevState != State::FOLLOW;
+    bool isSearch = mPrevState == State::FOLLOW && isDirZero && !isTargetSeen;
+    bool isFollow = directionVector.getAbsAngle() <= FORWARD_ANGLE && !isDirZero && !isAtGoal;
     bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
                      directionVector.getAngle() <= SIDE_ANGLE && !isDirZero && !isAtGoal;
     bool isDirRight = directionVector.getAngle() < -FORWARD_ANGLE &&
@@ -141,6 +145,9 @@ void FootbotFollow::ControlStep() {
         } else {
             ledColor = CColor::GREEN;
         }
+    } else if (isSearch) {
+        state = State::SEARCH;
+        ledColor = state.getLedColor();
     }
     mLed->SetAllColors(ledColor);
     epoch++;
@@ -157,13 +164,23 @@ void FootbotFollow::ControlStep() {
             mQLearner->setLearningRate(0);
             mLearnedEpoch = epoch;
         }
-        if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
+        if (mQLearner->getLearningRate() > 0.05f && epoch % 300 == 0) {
             mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
         }
-        LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
+
     }
 
     Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
+
+//    if (state == State::WANDER) {
+//        if (drand48() > 0.7f) {
+//            if (drand48() > 0.5f) {
+//                action = Action::TURN_LEFT;
+//            } else {
+//                action = Action::TURN_RIGHT;
+//            }
+//        }
+//    }
 
     mPrevState = state;
 
@@ -175,24 +192,22 @@ void FootbotFollow::ControlStep() {
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
 
-    // LOGGING
-    const CVector3 actualPosition = this->mPosition->GetReading().Position;
-    std::vector<std::string> toLog = {
-            std::to_string(actualPosition.GetX()),
-            std::to_string(actualPosition.GetY()),
-            state.getStateName(),
-            action.getActionName()
-    };
-    ql::Logger::log(this->m_strId, toLog);
+    if (parShouldLog) {
+        const CVector3 position = this->mPosition->GetReading().Position;
+        ql::Logger::logPositionStateAndAction(position.GetX(), position.GetY(), state.getName(), action.getName(), this->m_strId);
 
-    LOG << "Id: " << this->m_strId << std::endl;
-    LOG << "Stage: " << parStage << std::endl;
-    LOG << "Direction: " << directionVector.getLength() << std::endl;
-    LOG << "VelocityFactor: " << velocityFactor << std::endl;
-    LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
-    LOG << "Action taken: " << action.getActionName() << std::endl;
-    LOG << "State: " << state.getStateName() << std::endl;
-    LOG << "---------------------------------------------" << std::endl;
+        if (parStage == StageHelper::Stage::TRAIN) {
+            LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
+        }
+        LOG << "Id: " << this->m_strId << std::endl;
+        LOG << "Stage: " << parStage << std::endl;
+        LOG << "Direction: " << directionVector.getLength() << std::endl;
+        LOG << "VelocityFactor: " << velocityFactor << std::endl;
+        LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
+        LOG << "Action taken: " << action.getName() << std::endl;
+        LOG << "State: " << state.getName() << std::endl;
+        LOG << "---------------------------------------------" << std::endl;
+    }
 }
 
 void FootbotFollow::Destroy() {

@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="25" learning_rate="1" discount_factor="0.4" threshold="0.24" stage="train"/>
+            <params velocity="25" learning_rate="1" discount_factor="0.4" threshold="0.24" stage="train" logging="true"/>
         </footbot_leader_controller>
     </controllers>
 
