@@ -110,104 +110,42 @@ void FootbotFollow::ControlStep() {
     fpullVector.clampZeroAndMax(1);
     ql::PolarVector directionVector = fpullVector * ALPHA_PULL + fpushVector * BETA_PUSH;
     directionVector.clampZeroAndMax(1);
-    bool isDirZero = directionVector.isZero();
 
-    bool isWander = isDirZero && !isTargetSeen;
-    bool isFollow = directionVector.getAbsAngle() <= FORWARD_ANGLE && !isDirZero && !isAtGoal;
-    bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
-                     directionVector.getAngle() <= SIDE_ANGLE && !isDirZero && !isAtGoal;
-    bool isDirRight = directionVector.getAngle() < -FORWARD_ANGLE &&
-                      directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero && !isAtGoal;
-    bool isIdle = isDirZero && isTargetSeen || isAtGoal;
-
-    CColor ledColor = CColor::WHITE;
-    if (isWander) {
-        state = State::WANDER;
-        ledColor = state.getLedColor();
-    } else if (isFollow) {
-        state = State::FOLLOW;
-        if (isTargetSeen) {
-            ledColor = CColor::YELLOW;
-        } else {
-            ledColor = CColor::WHITE;
-        }
-    } else if (isDirLeft) {
-        state = State::DIR_LEFT;
-        ledColor = state.getLedColor();
-    } else if (isDirRight) {
-        state = State::DIR_RIGHT;
-        ledColor = state.getLedColor();
-    } else if (isIdle) {
-        state = State::IDLE;
-        if (isAtGoal) {
-            ledColor = CColor::YELLOW;
-        } else {
-            ledColor = CColor::GREEN;
-        }
+    mLed->SetAllColors(CColor::WHITE);
+    if (isTargetSeen || isAtGoal) {
+        mLed->SetAllColors(CColor::YELLOW);
     }
-    mLed->SetAllColors(ledColor);
-    epoch++;
-    if (parStage == StageHelper::Stage::TRAIN) {
-        mStateStats[state.getIndex()] += 1;
-        bool isLearned = true;
-        for (auto a : mStateStats) {
-            if (a < STATE_THRESHOLD) {
-                isLearned = false;
-                break;
-            }
-        }
-        if (isLearned && epoch < mLearnedEpoch) {
-            mQLearner->setLearningRate(0);
-            mLearnedEpoch = epoch;
-        }
-        if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
-            mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
-        }
-
-    }
-
-    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
     mPrevState = state;
 
-    std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
+    std::array<double, 2> wheelSpeeds = {1.0f, 1.0f};
 
-    if ((action == Action::FORWARD || action == Action::TURN_LEFT || action == Action::TURN_RIGHT) && (state != State::WANDER)) {
+    if (!directionVector.isZero()) {
         double v = directionVector.getLength() * parWheelVelocity;
-        double angle = directionVector.getAngle();
-        angle = (angle < 0) ? angle + 360 : angle;
-        double w = angle / 10;
-        double phiLeft = v / (2 * WHEEL_RADIUS) + w / (2 * WHEEL_RADIUS);
-        double c = INTERWHEEL_DISTANCE / (2 * WHEEL_RADIUS);
-        double phiRight = c * (v - w);
+        double angle = (v == 0) ? 0 : directionVector.getAngle();
+        double c = (WHEEL_RADIUS / 2) * (1 + 1 / INTERWHEEL_DISTANCE);
+        double w = -angle;
+        w = 0.7 * prevW + 0.3 * w;
+        prevW = w;
+        prevW2 = prevW;
 
+        double phiLeft = (v + w) / c;
+        double phiRight = (v - w) / c;
+        phiLeft = ql::MathUtils::clampValue(phiLeft, -parWheelVelocity, parWheelVelocity);
+        phiRight = ql::MathUtils::clampValue(phiRight, -parWheelVelocity, parWheelVelocity);
         wheelSpeeds[0] = phiLeft;
+        LOG << "Phi1: " << wheelSpeeds[0] << std::endl;
         wheelSpeeds[1] = phiRight;
+        LOG << "Phi2: " << wheelSpeeds[1] << std::endl;
+
+        LOG << "v: " << v << std::endl;
+        LOG << "w: " << w << std::endl;
+        LOG << "max v: " << parWheelVelocity << std::endl;
     } else {
         wheelSpeeds[0] *= parWheelVelocity;
         wheelSpeeds[1] *= parWheelVelocity;
     }
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
-
-    if (parShouldLog) {
-        const CVector3 position = this->mPosition->GetReading().Position;
-        ql::Logger::logPositionStateAndAction(position.GetX(), position.GetY(), state.getName(), action.getName(), this->m_strId);
-
-        if (parStage == StageHelper::Stage::TRAIN) {
-            LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
-            LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
-        }
-        LOG << "Id: " << this->m_strId << std::endl;
-        LOG << "Direction: " << directionVector.getLength() << std::endl;
-        LOG << "Dir angle: " << directionVector.getAngle() << std::endl;
-        LOG << "Push: " << fpushVector.getLength() * BETA_PUSH << std::endl;
-        LOG << "Push angle: " << fpushVector.getAngle() << std::endl;
-        LOG << "Pull: " << fpullVector.getLength() * ALPHA_PULL << std::endl;
-        LOG << "Pull angle: " << fpullVector.getAngle() << std::endl;
-        LOG << "Action taken: " << action.getName() << std::endl;
-        LOG << "State: " << state.getName() << std::endl;
-        LOG << "---------------------------------------------" << std::endl;
-    }
 }
 
 void FootbotFollow::Destroy() {

@@ -76,7 +76,7 @@ private:
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.5;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 1.4f;
+    constexpr double static C_PULL = 1.2f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 
@@ -95,6 +95,9 @@ private:
     int epoch = 0;
 
     int mLearnedEpoch = 4000;
+
+    double prevW = 0.0f;
+    double prevW2 = 0.0f;
 
     std::array<int, NUM_STATES> mStateStats;
 

@@ -16,7 +16,7 @@
             </actuators>
             <sensors>
                 <footbot_proximity implementation="default" show_rays="true" />
-                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
+                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="false" />
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
@@ -29,7 +29,7 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors />
-            <params max_speed="25"/>
+            <params max_speed="20"/>
         </footbot_manualcontrol>
         <footbot_leader_controller id="fgc" library="cmake-build-debug/controllers/footbot_leader/libfootbot_leader.so">
             <actuators>
@@ -68,14 +68,26 @@
         <distribute>
             <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
             <orientation method="uniform" min="0,0,0" max="0,0,0" />
-            <entity quantity="13" max_trials="100">
-                <box id="b" size="0.15,0.15,0.5" movable="false"/>
+            <entity quantity="30" max_trials="100">
+                <box id="b" size="0.1,0.1,0.5" movable="false"/>
             </entity>
         </distribute>
 
 
         <foot-bot id="follow">
             <body position="1.5,1.9,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+        <foot-bot id="follow2">
+            <body position="1.5,1.7,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+        <foot-bot id="follow3">
+            <body position="1.5,1.5,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+        <foot-bot id="follow4">
+            <body position="1.3,1.5,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
 

@@ -23,6 +23,16 @@ namespace ql {
             return value < EPSILON && value > -EPSILON;
         }
 
+        static double clampValue(double value, double minBound, double maxBound) {
+            if (value < minBound) {
+                return minBound;
+            }
+            if (value > maxBound) {
+                return maxBound;
+            }
+            return value;
+        }
+
         /**
          *
          * @param a height of the gauss curve
