@@ -45,11 +45,15 @@ namespace ql {
                 std::cout << "Logger: There was a problem opening the output file!\n";
                 exit(1);
             }
-            for (int i = 0; i < values.size() - 1; ++i) {
+            for (int i = 0; i < values.size(); ++i) {
                 std::replace(values[i].begin(), values[i].end(), ',', '.');
-                file << values[i] << ",";
+                file << values[i];
+                if (i != values.size() - 1) {
+                    file << ",";
+                } else {
+                    file << "\n";
+                }
             }
-            file << values[values.size() - 1] << "\n";
 
             file.close();
         }

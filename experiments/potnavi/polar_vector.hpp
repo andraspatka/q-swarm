@@ -21,7 +21,7 @@ namespace ql {
         }
 
         bool isZero() {
-            return this->length <= 0.01;
+            return this->length <= 0.05;
         }
 
         void clampZeroAndMax(const double maxBound) {

@@ -83,9 +83,6 @@ private:
     static constexpr double FORWARD_ANGLE = 30.0f;
     static constexpr double SIDE_ANGLE = 180.0f;
 
-    static constexpr double WHEEL_RADIUS = 0.029112741f;
-    static constexpr double INTERWHEEL_DISTANCE = 0.14f;
-
     QLearner * mQLearner;
 
     QExploiter * mQExploiter;
@@ -95,9 +92,6 @@ private:
     int epoch = 0;
 
     int mLearnedEpoch = 4000;
-
-    double prevW = 0.0f;
-    double prevW2 = 0.0f;
 
     std::array<int, NUM_STATES> mStateStats;
 

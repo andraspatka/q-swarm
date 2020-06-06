@@ -41,6 +41,6 @@ plt.title('Push-pull forces for the follower agent')
 plt.grid()
 plt.legend()
 
-plt.savefig('pushpull.png', transparent=False, dpi=300)
+plt.savefig('png/pushpull_follow.png', transparent=False, dpi=300)
 plt.show()
 

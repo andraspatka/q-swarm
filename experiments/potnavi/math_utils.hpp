@@ -1,5 +1,5 @@
-#ifndef QL_MATH_UTILS
-#define QL_MATH_UTILS
+#ifndef MATH_UTILS
+#define MATH_UTILS
 
 #include <array>
 #include <cassert>
@@ -19,6 +19,13 @@ namespace ql {
         static constexpr double CUTOFF_VALUE = 0.05;
         static constexpr double CAMERA_READING_MAX_VALUE = 120.0f;
 
+        static constexpr double WHEEL_RADIUS = 0.029112741f;
+        static constexpr double INTERWHEEL_DISTANCE = 0.14f;
+
+        static constexpr double C = (WHEEL_RADIUS / 2) * (1 + 1 / (INTERWHEEL_DISTANCE / 2) ); // 0.22
+
+        static constexpr double PI_OVER_TWO = 1.57079632679;
+
         static bool closeToZero(double value) {
             return value < EPSILON && value > -EPSILON;
         }
@@ -31,6 +38,16 @@ namespace ql {
                 return maxBound;
             }
             return value;
+        }
+
+        static std::array<double, 2> vectorToLinearVelocity(const PolarVector& vector) {
+            double v = vector.getLength() * PI_OVER_TWO;
+            double w = -clampValue(vector.getAngleInRadians().GetValue(), -PI_OVER_TWO, PI_OVER_TWO);
+
+            double phiLeft = (v + w) / C;
+            double phiRight = (v - w) / C;
+
+            return{ phiLeft * 10, phiRight * 10};
         }
 
         /**

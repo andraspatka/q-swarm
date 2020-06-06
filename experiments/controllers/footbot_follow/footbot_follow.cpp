@@ -117,32 +117,10 @@ void FootbotFollow::ControlStep() {
     }
     mPrevState = state;
 
-    std::array<double, 2> wheelSpeeds = {1.0f, 1.0f};
+    std::array<double, 2> wheelSpeeds = {0.0f, 0.0f};
 
     if (!directionVector.isZero()) {
-        double v = directionVector.getLength() * parWheelVelocity;
-        double angle = (v == 0) ? 0 : directionVector.getAngle();
-        double c = (WHEEL_RADIUS / 2) * (1 + 1 / INTERWHEEL_DISTANCE);
-        double w = -angle;
-        w = 0.7 * prevW + 0.3 * w;
-        prevW = w;
-        prevW2 = prevW;
-
-        double phiLeft = (v + w) / c;
-        double phiRight = (v - w) / c;
-        phiLeft = ql::MathUtils::clampValue(phiLeft, -parWheelVelocity, parWheelVelocity);
-        phiRight = ql::MathUtils::clampValue(phiRight, -parWheelVelocity, parWheelVelocity);
-        wheelSpeeds[0] = phiLeft;
-        LOG << "Phi1: " << wheelSpeeds[0] << std::endl;
-        wheelSpeeds[1] = phiRight;
-        LOG << "Phi2: " << wheelSpeeds[1] << std::endl;
-
-        LOG << "v: " << v << std::endl;
-        LOG << "w: " << w << std::endl;
-        LOG << "max v: " << parWheelVelocity << std::endl;
-    } else {
-        wheelSpeeds[0] *= parWheelVelocity;
-        wheelSpeeds[1] *= parWheelVelocity;
+        wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(directionVector);
     }
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);

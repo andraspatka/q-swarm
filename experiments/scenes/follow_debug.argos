@@ -68,7 +68,7 @@
         <distribute>
             <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
             <orientation method="uniform" min="0,0,0" max="0,0,0" />
-            <entity quantity="30" max_trials="100">
+            <entity quantity="5" max_trials="100">
                 <box id="b" size="0.1,0.1,0.5" movable="false"/>
             </entity>
         </distribute>
@@ -90,6 +90,16 @@
             <body position="1.3,1.5,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
+
+<!--        <distribute>-->
+<!--            <position method="uniform" min="1.2,1.3,0" max="1.9,2.3,0" />-->
+<!--            <orientation method="uniform" min="360,0,0" max="360,0,0" />-->
+<!--            <entity quantity="10" max_trials="100">-->
+<!--                <foot-bot id="">-->
+<!--                    <controller config="ffc" />-->
+<!--                </foot-bot>-->
+<!--            </entity>-->
+<!--        </distribute>-->
 
 
         <!-- The footbot which can go to the goal. -->
