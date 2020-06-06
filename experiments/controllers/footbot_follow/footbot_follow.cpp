@@ -8,13 +8,11 @@ FootbotFollow::FootbotFollow() :
         epoch(0) {}
 
 /**
-*            STOP    TURN_LEFT   TURN_RIGHT  FORWARD
-* 0 WANDER     -1      0           0           0.2
-* 1 FOLLOW     -1      0           0           1
-* 2 DIR_LEFT   -1      0           0           0
-* 3 DIR_RIGHT  -1      0           0           0
-* 4 IDLE        2      0           0           0
-* 5 SEARCH     -1      0           0           0
+*                     FOLLOW  WANDER STAY AVOID
+* 0 GOAL_REACHED      0      0       1    0
+* 1 LEADER_DETECTED   0      0      -1    0
+* 2 OBSTACLE_DETECTED 0      0      -1    0
+* 3 UNKNOWN           0      0      -1    0
 */
 void FootbotFollow::Init(TConfigurationNode &t_node) {
 
@@ -38,15 +36,12 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     if (parStage == StageHelper::TRAIN) {
         mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
         std::vector<std::tuple<State, Action>> impossibleStates = {
-                std::make_tuple(State::WANDER, Action::STOP),
-                std::make_tuple(State::FOLLOW, Action::STOP),
-                std::make_tuple(State::DIR_LEFT, Action::STOP),
-                std::make_tuple(State::DIR_RIGHT, Action::STOP)
+                std::make_tuple(FollowerState::LEADER_DETECTED, FollowerAction::STAY),
+                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::STAY),
+                std::make_tuple(FollowerState::UNKNOWN, FollowerAction::STAY)
         };
         std::vector<std::tuple<State, Action, double>> rewards = {
-                std::make_tuple(State::WANDER, Action::FORWARD, 0.2),
-                std::make_tuple(State::FOLLOW, Action::FORWARD, 1),
-                std::make_tuple(State::IDLE, Action::STOP, 2)
+                std::make_tuple(FollowerState::GOAL_REACHED, FollowerAction::STAY, 1)
         };
         mQLearner->initR(impossibleStates, rewards, State::IDLE);
         mStateStats.fill(0);
@@ -77,53 +72,138 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
  *              back
  */
 void FootbotFollow::ControlStep() {
-    ql::PolarVector fpushVector;
-    ql::PolarVector fpullVector;
-    State state;
+    PolarVector pushVector;
+    PolarVector pullVector;
+    PolarVector leaderVector;
+    FollowerState state;
+
+    string id = this->m_strId;
 
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
     bool isAtGoal = false;
     bool isTargetSeen = false;
+    bool isLeaderSeen = false;
+
+    PolarVector minVector(20, 0);
     for (auto r : cameraReadings) {
         if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE) {
-            fpullVector += MathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
-                                                      MathUtils::cameraToDistance);
-            isTargetSeen = true;
-            if (r->Color == CColor::PURPLE) {
-                isAtGoal = true;
+            PolarVector targetVector = MathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
+                                                               MathUtils::cameraToDistance);
+            if (targetVector.getLength() < minVector.getLength()) {
+                minVector = targetVector;
             }
+            pullVector += targetVector;
+            isTargetSeen = true;
+            if (r->Color == CColor::RED || r->Color == CColor::PURPLE) {
+                isLeaderSeen = true;
+                leaderVector = targetVector;
+            }
+//            if (r->Color == CColor::PURPLE) {
+//                isAtGoal = true;
+//            }
         }
     }
 
     for (int i = 0; i < proxReadings.size(); ++i) {
         if (!MathUtils::closeToZero(proxReadings.at(i).Value)) {
-            fpushVector += MathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
-                                                      A, B_PUSH, C_PUSH, MathUtils::proxToDistance);
+            pushVector += MathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle,
+                                                     A, B_PUSH, C_PUSH, MathUtils::proxToDistance);
         }
         if (i == PROX_READING_PER_SIDE) {
             i = proxReadings.size() - 1 - PROX_READING_PER_SIDE - 1;
         }
     }
-    fpushVector = -fpushVector;
-    fpushVector.clampZeroAndMax(1);
-    fpullVector.clampZeroAndMax(1);
-    ql::PolarVector directionVector = fpullVector * ALPHA_PULL + fpushVector * BETA_PUSH;
-    directionVector.clampZeroAndMax(1);
+    pushVector = -pushVector;
+    pushVector.clampZeroAndMax(1);
+    pullVector.clampZeroAndMax(1);
 
-    mLed->SetAllColors(CColor::WHITE);
-    if (isTargetSeen || isAtGoal) {
-        mLed->SetAllColors(CColor::YELLOW);
+    bool isGoalReached = isLeaderSeen && leaderVector.isZero();
+    bool isObstacleDetected = !pushVector.isZero();
+    bool isLeaderDetected = isLeaderSeen;
+    bool isIndirectLeaderDetected = isTargetSeen;
+    bool isUnknown = pushVector.isZero() && pullVector.isZero() && !isTargetSeen;
+
+    FollowerAction action;
+    if (mPrevState == FollowerState::LEADER_DETECTED && isObstacleDetected) {
+
     }
+    if (isGoalReached) {
+        state = FollowerState::GOAL_REACHED;
+        action = FollowerAction::STAY;
+    } else if (isObstacleDetected) {
+        state = FollowerState::OBSTACLE_DETECTED;
+        action = FollowerAction::AVOID;
+    } else if (isLeaderDetected) {
+        state = FollowerState::LEADER_DETECTED;
+        action = FollowerAction::FOLLOW_LEADER;
+    } else if (isIndirectLeaderDetected) {
+        state = FollowerState::INDIRECT_LEADER_DETECTED;
+        action = FollowerAction::FOLLOW_INDIRECT_LEADER;
+    } else if (isUnknown) {
+        state = FollowerState::UNKNOWN;
+        action = FollowerAction::WANDER;
+    }
+    mLed->SetAllColors(state.getLedColor());
+
+    int numStatesAtATime = isGoalReached + isLeaderDetected + isObstacleDetected + isUnknown;
+    if (numStatesAtATime > 1) {
+        int bp = 0;
+    }
+
+    if (state.getName() == "INVALID") {
+        int bp2 = 0;
+    }
+//    epoch++;
+//    if (parStage == StageHelper::Stage::TRAIN) {
+//        mStateStats[state.getIndex()] += 1;
+//        bool isLearned = true;
+//        for (auto a : mStateStats) {
+//            if (a < STATE_THRESHOLD) {
+//                isLearned = false;
+//                break;
+//            }
+//        }
+//        if (isLearned && epoch < mLearnedEpoch) {
+//            mQLearner->setLearningRate(0);
+//            mLearnedEpoch = epoch;
+//        }
+//        if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
+//            mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
+//        }
+//
+//    }
+
+//    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
+
+
     mPrevState = state;
 
     std::array<double, 2> wheelSpeeds = {0.0f, 0.0f};
 
-    if (!directionVector.isZero()) {
-        wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(directionVector);
+    if (id == "17") {
+        int bp = 0;
+    }
+
+
+    if (action == FollowerAction::FOLLOW_LEADER) {
+        wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(leaderVector);
+    } else if (action == FollowerAction::FOLLOW_INDIRECT_LEADER) {
+        wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(pullVector);
+    } else if (action == FollowerAction::AVOID) {
+        wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(pushVector);
+    } else if (action == FollowerAction::WANDER) {
+        wheelSpeeds = {parWheelVelocity, parWheelVelocity};
+    } else if (action == FollowerAction::STAY) {
+        wheelSpeeds = {0.0, 0.0f};
     }
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
+
+    LOG << this->m_strId << std::endl;
+    LOG << "state: " << state.getName() << std::endl;
+    LOG << "action: " << action.getName() << std::endl;
+    LOG << "-----------------------------------------------" << std::endl;
 }
 
 void FootbotFollow::Destroy() {

@@ -16,8 +16,8 @@
 #include <potnavi/math_utils.hpp>
 #include <potnavi/polar_vector.hpp>
 #include <qlearner/stage.hpp>
-#include <qlearner/action.hpp>
-#include <qlearner/state.hpp>
+#include <qlearner/follower_action.hpp>
+#include <qlearner/follower_state.hpp>
 
 #include <monitoring/logger.hpp>
 #include <qlearner/qexploiter.hpp>
@@ -58,7 +58,7 @@ public:
     virtual void Destroy();
 
 private:
-    constexpr int static NUM_STATES = 5;
+    constexpr int static NUM_STATES = 4;
 
     constexpr int static NUM_ACTIONS = 4;
 
