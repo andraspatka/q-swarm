@@ -49,12 +49,12 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
         mQExploiter->readQ("qmats/leader-train.qlmat");
     }
 
-    mLed->SetAllColors(CColor::RED);
+    mLed->SetSingleColor(12, CColor::RED);
     Logger::clearMyLogs(this->m_strId);
 }
 
 void FootbotLeader::Reset() {
-    mLed->SetAllColors(CColor::RED);
+    mLed->SetSingleColor(12, CColor::RED);
 }
 
 /**
@@ -135,7 +135,7 @@ void FootbotLeader::ControlStep() {
         state = State::DIR_RIGHT;
     } else if (isIdle) {
         state = State::IDLE;
-        mLed->SetAllColors(CColor::PURPLE);
+        mLed->SetSingleColor(12, CColor::PURPLE);
     }
 
     epoch++;

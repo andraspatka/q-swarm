@@ -34,17 +34,17 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
 
     parStage = StageHelper::ParseStageFromString(parStageString);
     if (parStage == StageHelper::TRAIN) {
-        mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
-        std::vector<std::tuple<State, Action>> impossibleStates = {
-                std::make_tuple(FollowerState::LEADER_DETECTED, FollowerAction::STAY),
-                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::STAY),
-                std::make_tuple(FollowerState::UNKNOWN, FollowerAction::STAY)
-        };
-        std::vector<std::tuple<State, Action, double>> rewards = {
-                std::make_tuple(FollowerState::GOAL_REACHED, FollowerAction::STAY, 1)
-        };
-        mQLearner->initR(impossibleStates, rewards, State::IDLE);
-        mStateStats.fill(0);
+//        mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
+//        std::vector<std::tuple<State, Action>> impossibleStates = {
+//                std::make_tuple(FollowerState::LEADER_DETECTED, FollowerAction::STAY),
+//                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::STAY),
+//                std::make_tuple(FollowerState::UNKNOWN, FollowerAction::STAY)
+//        };
+//        std::vector<std::tuple<State, Action, double>> rewards = {
+//                std::make_tuple(FollowerState::GOAL_REACHED, FollowerAction::STAY, 1)
+//        };
+//        mQLearner->initR(impossibleStates, rewards, State::IDLE);
+//        mStateStats.fill(0);
     }
     if (parStage == StageHelper::Stage::EXPLOIT) {
         mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
@@ -74,7 +74,6 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
 void FootbotFollow::ControlStep() {
     PolarVector pushVector;
     PolarVector pullVector;
-    PolarVector leaderVector;
     FollowerState state;
 
     string id = this->m_strId;
@@ -82,28 +81,36 @@ void FootbotFollow::ControlStep() {
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
     bool isAtGoal = false;
-    bool isTargetSeen = false;
+    bool isTargetSeen;
     bool isLeaderSeen = false;
-
-    PolarVector minVector(20, 0);
+    bool isIndirectLeaderSeen = false;
+    CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob closestLeaderBlob(CColor::RED, CRadians::TWO_PI, 1000.0f);
+    CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob closestIndirectLeaderBlob(CColor::YELLOW, CRadians::TWO_PI, 1000.0f);
     for (auto r : cameraReadings) {
-        if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE) {
-            PolarVector targetVector = MathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
-                                                               MathUtils::cameraToDistance);
-            if (targetVector.getLength() < minVector.getLength()) {
-                minVector = targetVector;
-            }
-            pullVector += targetVector;
-            isTargetSeen = true;
-            if (r->Color == CColor::RED || r->Color == CColor::PURPLE) {
-                isLeaderSeen = true;
-                leaderVector = targetVector;
-            }
-//            if (r->Color == CColor::PURPLE) {
-//                isAtGoal = true;
-//            }
+        if (r->Distance < closestLeaderBlob.Distance && r->Color == CColor::RED) {
+            closestLeaderBlob.Angle = r->Angle;
+            closestLeaderBlob.Distance = r->Distance;
+            isLeaderSeen = true;
+        }
+        if (r->Distance < closestIndirectLeaderBlob.Distance && r->Color == CColor::YELLOW) {
+            closestIndirectLeaderBlob.Angle = r->Angle;
+            closestIndirectLeaderBlob.Distance = r->Distance;
+            isIndirectLeaderSeen = true;
+        }
+        if (r->Color == CColor::PURPLE) {
+            isAtGoal = true;
         }
     }
+
+    if (isLeaderSeen) {
+        pullVector = MathUtils::readingToVector(closestLeaderBlob.Distance, closestLeaderBlob.Angle, A, B_PULL, C_PULL,
+                                                MathUtils::cameraToDistance);
+    } else if (isIndirectLeaderSeen) {
+        pullVector = MathUtils::readingToVector(closestIndirectLeaderBlob.Distance, closestIndirectLeaderBlob.Angle, A, B_PULL, C_PULL,
+                                                MathUtils::cameraToDistance);
+    }
+
+    isTargetSeen = isIndirectLeaderSeen || isLeaderSeen;
 
     for (int i = 0; i < proxReadings.size(); ++i) {
         if (!MathUtils::closeToZero(proxReadings.at(i).Value)) {
@@ -114,46 +121,45 @@ void FootbotFollow::ControlStep() {
             i = proxReadings.size() - 1 - PROX_READING_PER_SIDE - 1;
         }
     }
+
     pushVector = -pushVector;
     pushVector.clampZeroAndMax(1);
-    pullVector.clampZeroAndMax(1);
 
-    bool isGoalReached = isLeaderSeen && leaderVector.isZero();
-    bool isObstacleDetected = !pushVector.isZero();
-    bool isLeaderDetected = isLeaderSeen;
-    bool isIndirectLeaderDetected = isTargetSeen;
-    bool isUnknown = pushVector.isZero() && pullVector.isZero() && !isTargetSeen;
+    bool isTargetFollow = pullVector.isNotZero() && pushVector.isZero() && !isAtGoal && isTargetSeen ||
+            pushVector.isNotZero() && isTargetSeen && pullVector.isNotZero() && pullVector.angleWithAnotherVector(pushVector) <= 90.0f && !isAtGoal;
+    bool isTargetReached = isAtGoal || pullVector.isZero() && isTargetSeen && pushVector.isZero();
+    bool isObstacleDetected = pullVector.isZero() && !isTargetSeen && pushVector.isNotZero() && !isTargetReached
+            || pullVector.angleWithAnotherVector(pushVector) >= 90.0f && pushVector.isNotZero() && !isTargetReached;
+    bool isNoTargetToFollow = pullVector.isZero() && pushVector.isZero() && !isTargetSeen && !isAtGoal;
 
     FollowerAction action;
-    if (mPrevState == FollowerState::LEADER_DETECTED && isObstacleDetected) {
-
-    }
-    if (isGoalReached) {
-        state = FollowerState::GOAL_REACHED;
+    CColor color = CColor::WHITE;
+    if (isNoTargetToFollow) {
+        state = FollowerState::NO_TARGET_TO_FOLLOW;
+        action = FollowerAction::WANDER;
+        color = state.getLedColor();
+    } else if (isTargetFollow) {
+        state = FollowerState::TARGET_FOLLOW;
+        action = FollowerAction::FOLLOW_LEADER;
+        color = state.getLedColor();
+        if (pullVector.getAbsAngle() > 30.0f) {
+            color = CColor::WHITE;
+        }
+    } else if (isTargetReached) {
+        state = FollowerState::TARGET_REACHED;
         action = FollowerAction::STAY;
+        color = state.getLedColor();
+        if (isAtGoal) {
+            color = CColor::YELLOW;
+        } else {
+            color = CColor::GREEN;
+        }
     } else if (isObstacleDetected) {
         state = FollowerState::OBSTACLE_DETECTED;
+        color = state.getLedColor();
         action = FollowerAction::AVOID;
-    } else if (isLeaderDetected) {
-        state = FollowerState::LEADER_DETECTED;
-        action = FollowerAction::FOLLOW_LEADER;
-    } else if (isIndirectLeaderDetected) {
-        state = FollowerState::INDIRECT_LEADER_DETECTED;
-        action = FollowerAction::FOLLOW_INDIRECT_LEADER;
-    } else if (isUnknown) {
-        state = FollowerState::UNKNOWN;
-        action = FollowerAction::WANDER;
     }
-    mLed->SetAllColors(state.getLedColor());
-
-    int numStatesAtATime = isGoalReached + isLeaderDetected + isObstacleDetected + isUnknown;
-    if (numStatesAtATime > 1) {
-        int bp = 0;
-    }
-
-    if (state.getName() == "INVALID") {
-        int bp2 = 0;
-    }
+    mLed->SetSingleColor(12, color);
 //    epoch++;
 //    if (parStage == StageHelper::Stage::TRAIN) {
 //        mStateStats[state.getIndex()] += 1;
@@ -181,14 +187,7 @@ void FootbotFollow::ControlStep() {
 
     std::array<double, 2> wheelSpeeds = {0.0f, 0.0f};
 
-    if (id == "17") {
-        int bp = 0;
-    }
-
-
     if (action == FollowerAction::FOLLOW_LEADER) {
-        wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(leaderVector);
-    } else if (action == FollowerAction::FOLLOW_INDIRECT_LEADER) {
         wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(pullVector);
     } else if (action == FollowerAction::AVOID) {
         wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(pushVector);
@@ -203,6 +202,9 @@ void FootbotFollow::ControlStep() {
     LOG << this->m_strId << std::endl;
     LOG << "state: " << state.getName() << std::endl;
     LOG << "action: " << action.getName() << std::endl;
+    LOG << "pull vector angle: " << pullVector.getAngle() << std::endl;
+    LOG << "pull vector length: " << pullVector.getLength() << std::endl;
+
     LOG << "-----------------------------------------------" << std::endl;
 }
 
