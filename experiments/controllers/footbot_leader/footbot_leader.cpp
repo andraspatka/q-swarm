@@ -155,7 +155,7 @@ void FootbotLeader::ControlStep() {
             mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
         }
     }
-    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
+    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit<State, Action>(state) : mQLearner->doubleQ<State, Action>(mPrevState, state);
     mPrevState = state;
     std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
     wheelSpeeds[0] *= parWheelVelocity;

@@ -8,11 +8,11 @@ FootbotFollow::FootbotFollow() :
         epoch(0) {}
 
 /**
-*                     FOLLOW  WANDER STAY AVOID
-* 0 GOAL_REACHED      0      0       1    0
-* 1 LEADER_DETECTED   0      0      -1    0
-* 2 OBSTACLE_DETECTED 0      0      -1    0
-* 3 UNKNOWN           0      0      -1    0
+*                           FOLLOW  WANDER STAY AVOID
+* 0 NO_TARGET_TO_FOLLOW     0      0       -1    0
+* 1 TARGET_FOLLOW           0      0       -1    0
+* 2 TARGET_REACHED          0      0        2    0
+* 3 OBSTACLE_DETECTED       0      0       -1    0
 */
 void FootbotFollow::Init(TConfigurationNode &t_node) {
 
@@ -34,17 +34,18 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
 
     parStage = StageHelper::ParseStageFromString(parStageString);
     if (parStage == StageHelper::TRAIN) {
-//        mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
-//        std::vector<std::tuple<State, Action>> impossibleStates = {
-//                std::make_tuple(FollowerState::LEADER_DETECTED, FollowerAction::STAY),
-//                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::STAY),
-//                std::make_tuple(FollowerState::UNKNOWN, FollowerAction::STAY)
-//        };
-//        std::vector<std::tuple<State, Action, double>> rewards = {
-//                std::make_tuple(FollowerState::GOAL_REACHED, FollowerAction::STAY, 1)
-//        };
-//        mQLearner->initR(impossibleStates, rewards, State::IDLE);
-//        mStateStats.fill(0);
+        mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.25);
+        std::vector<std::tuple<State, Action>> impossibleStates = {
+                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::STAY),
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::STAY),
+                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::STAY)
+        };
+        std::vector<std::tuple<State, Action, double>> rewards = {
+                std::make_tuple(FollowerState::TARGET_REACHED, FollowerAction::STAY, 100),
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::WANDER, 1),
+        };
+        mQLearner->initR(impossibleStates, rewards, FollowerState::TARGET_REACHED);
+        mStateStats.fill(0);
     }
     if (parStage == StageHelper::Stage::EXPLOIT) {
         mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
@@ -132,22 +133,18 @@ void FootbotFollow::ControlStep() {
             || pullVector.angleWithAnotherVector(pushVector) >= 90.0f && pushVector.isNotZero() && !isTargetReached;
     bool isNoTargetToFollow = pullVector.isZero() && pushVector.isZero() && !isTargetSeen && !isAtGoal;
 
-    FollowerAction action;
     CColor color = CColor::WHITE;
     if (isNoTargetToFollow) {
         state = FollowerState::NO_TARGET_TO_FOLLOW;
-        action = FollowerAction::WANDER;
         color = state.getLedColor();
     } else if (isTargetFollow) {
         state = FollowerState::TARGET_FOLLOW;
-        action = FollowerAction::FOLLOW_LEADER;
         color = state.getLedColor();
         if (pullVector.getAbsAngle() > 30.0f) {
             color = CColor::WHITE;
         }
     } else if (isTargetReached) {
         state = FollowerState::TARGET_REACHED;
-        action = FollowerAction::STAY;
         color = state.getLedColor();
         if (isAtGoal) {
             color = CColor::YELLOW;
@@ -157,37 +154,36 @@ void FootbotFollow::ControlStep() {
     } else if (isObstacleDetected) {
         state = FollowerState::OBSTACLE_DETECTED;
         color = state.getLedColor();
-        action = FollowerAction::AVOID;
     }
     mLed->SetSingleColor(12, color);
-//    epoch++;
-//    if (parStage == StageHelper::Stage::TRAIN) {
-//        mStateStats[state.getIndex()] += 1;
-//        bool isLearned = true;
-//        for (auto a : mStateStats) {
-//            if (a < STATE_THRESHOLD) {
-//                isLearned = false;
-//                break;
-//            }
-//        }
-//        if (isLearned && epoch < mLearnedEpoch) {
-//            mQLearner->setLearningRate(0);
-//            mLearnedEpoch = epoch;
-//        }
-//        if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
-//            mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
-//        }
-//
-//    }
+    epoch++;
+    if (parStage == StageHelper::Stage::TRAIN) {
+        mStateStats[state.getIndex()] += 1;
+        bool isLearned = true;
+        for (auto a : mStateStats) {
+            if (a < STATE_THRESHOLD) {
+                isLearned = false;
+                break;
+            }
+        }
+        if (isLearned && epoch < mLearnedEpoch) {
+            mQLearner->setLearningRate(0);
+            mLearnedEpoch = epoch;
+        }
+        if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
+            mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
+        }
 
-//    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
-
+    }
+    FollowerAction action = (parStage == StageHelper::Stage::EXPLOIT) ?
+            mQExploiter->exploit<FollowerState, FollowerAction>(state) :
+                    mQLearner->doubleQ<FollowerState, FollowerAction>(mPrevState, state);
 
     mPrevState = state;
 
     std::array<double, 2> wheelSpeeds = {0.0f, 0.0f};
 
-    if (action == FollowerAction::FOLLOW_LEADER) {
+    if (action == FollowerAction::FOLLOW) {
         wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(pullVector);
     } else if (action == FollowerAction::AVOID) {
         wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(pushVector);
@@ -204,6 +200,7 @@ void FootbotFollow::ControlStep() {
     LOG << "action: " << action.getName() << std::endl;
     LOG << "pull vector angle: " << pullVector.getAngle() << std::endl;
     LOG << "pull vector length: " << pullVector.getLength() << std::endl;
+    LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
 
     LOG << "-----------------------------------------------" << std::endl;
 }

@@ -162,7 +162,8 @@ namespace ql {
          * @param nextState the next state, the state to which taking the action in @param state leads to.
          * @return
          */
-        Action doubleQ(const State& state, const State& nextState) {
+        template<typename StateType, typename ActionType>
+        ActionType doubleQ(const StateType& state, const StateType& nextState) {
             unsigned short stateIndex = state.getIndex();
             unsigned short nextStateIndex = nextState.getIndex();
             assertm(stateIndex < NUM_STATES && stateIndex >= 0, "Train: Invalid state index!");
@@ -209,7 +210,7 @@ namespace ql {
             Q1 = isQ1 ? H : Hi;
             Q2 = isQ1 ? Hi : H;
 
-            return Action::fromIndex(actionIndex);
+            return ActionType::fromIndex(actionIndex);
         }
 
         /**

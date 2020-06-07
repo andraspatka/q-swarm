@@ -84,7 +84,7 @@ private:
 
     QExploiter * mQExploiter;
 
-    State mPrevState = State::WANDER;
+    FollowerState mPrevState = FollowerState::NO_TARGET_TO_FOLLOW;
 
     int epoch = 0;
 
