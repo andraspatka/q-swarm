@@ -17,7 +17,7 @@ namespace ql {
     public:
         static constexpr double EPSILON = 0.001;
         static constexpr double CUTOFF_VALUE = 0.05;
-        static constexpr double CAMERA_READING_MAX_VALUE = 120.0f;
+        static constexpr double CAMERA_READING_MAX_VALUE = 95.0f;
 
         static constexpr double WHEEL_RADIUS = 0.029112741f;
         static constexpr double INTERWHEEL_DISTANCE = 0.14f;
@@ -66,7 +66,7 @@ namespace ql {
         }
 
         static double cameraToDistance(double reading) {
-            return (reading / CAMERA_READING_MAX_VALUE) * 5.5;
+            return (reading / CAMERA_READING_MAX_VALUE) * 3;
         }
 
         static double proxToDistance(double reading) {

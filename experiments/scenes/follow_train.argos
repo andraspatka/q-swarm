@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="20" learning_rate="1" discount_factor="0.7" threshold="30" stage="train" logging="true"/>
+            <params velocity="20" learning_rate="1" discount_factor="0.4" threshold="30" stage="train" logging="true"/>
         </footbot_follow_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -43,7 +43,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="16" learning_rate="0" discount_factor="0" threshold="0.25" stage="exploit" logging="false"/>
+            <params velocity="15" learning_rate="0" discount_factor="0" threshold="0.25" stage="exploit" logging="false"/>
         </footbot_leader_controller>
     </controllers>
 
@@ -51,42 +51,60 @@
     <arena size="10, 10, 4" center="0,0,0.5">
 
         <!-- Arena walls -->
-        <box id="wall_north" size="5,0.1,0.5" movable="false">
-            <body position="0,2.5,0" orientation="0,0,0" />
+        <box id="wall_north" size="4,0.1,0.5" movable="false">
+            <body position="0,2,0" orientation="0,0,0" />
         </box>
-        <box id="wall_south" size="5,0.1,0.5" movable="false">
-            <body position="0,-2.5,0" orientation="0,0,0" />
+        <box id="wall_south" size="4,0.1,0.5" movable="false">
+            <body position="0,-2,0" orientation="0,0,0" />
         </box>
-        <box id="wall_east" size="0.1,5,0.5" movable="false">
-            <body position="2.5,0,0" orientation="0,0,0" />
+        <box id="wall_east" size="0.1,4,0.5" movable="false">
+            <body position="2,0,0" orientation="0,0,0" />
         </box>
-        <box id="wall_west" size="0.1,5,0.5" movable="false">
-            <body position="-2.5,0,0" orientation="0,0,0" />
+        <box id="wall_west" size="0.1,4,0.5" movable="false">
+            <body position="-2,0,0" orientation="0,0,0" />
+        </box>
+
+        <box id="obstacleRight" size="0.5,0.5,0.5" movable="false">
+            <body position="-0.6,0,0" orientation="0,0,0" />
+        </box>
+
+        <box id="obstacleLeft" size="0.5,0.5,0.5" movable="false">
+            <body position="0.6,0,0" orientation="0,0,0" />
         </box>
 
         <!-- boxes distributed uniformly in position and rotation around Z. -->
         <distribute>
             <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
             <orientation method="uniform" min="0,0,0" max="0,0,0" />
-            <entity quantity="15" max_trials="100">
-                <box id="b" size="0.15,0.15,0.5" movable="false"/>
+            <entity quantity="0" max_trials="100">
+                <box id="b" size="0.1,0.1,0.5" movable="false"/>
             </entity>
         </distribute>
 <!--        <light id="light" position="-0.8,-0.7,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />-->
 
         <!-- The footbot which can go to the goal. -->
         <foot-bot id="follow-leader1">
-            <body position="0,-2.3,0" orientation="0,0,0" />
+            <body position="1,0,0" orientation="0,0,0" />
             <controller config="fgc" />
         </foot-bot>
 
         <foot-bot id="follow-leader2">
-            <body position="1.9,1.7,0" orientation="0,0,0" />
+            <body position="-1.8,-1.8,0" orientation="0,0,0" />
+            <controller config="fgc" />
+        </foot-bot>
+
+        <foot-bot id="follow-leader3">
+            <body position="-1.8,1.8,0" orientation="270,0,0" />
+            <controller config="fgc" />
+        </foot-bot>
+
+        <foot-bot id="follow-leader4">
+            <body position="1.8,-1.8,0" orientation="270,0,0" />
             <controller config="fgc" />
         </foot-bot>
 
         <foot-bot id="follow-train">
-            <body position="1.9,2.3,0" orientation="270,0,0" />
+            <body position="1.9,1.8,0" orientation="270,0,0" />
             <controller config="ffc" />
         </foot-bot>
 

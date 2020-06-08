@@ -69,16 +69,13 @@ private:
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
     // The pull gauss curve's centre point is the prox sensor's coverage limit
-    constexpr double static B_PULL = 5.5f;
+    constexpr double static B_PULL = 3.0f;
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.5;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 1.3f;
+    constexpr double static C_PULL = 0.65f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
-
-    static constexpr double FORWARD_ANGLE = 30.0f;
-    static constexpr double SIDE_ANGLE = 180.0f;
 
     QLearner * mQLearner;
 
@@ -88,7 +85,9 @@ private:
 
     int epoch = 0;
 
-    int mLearnedEpoch = 4000;
+    int mLearnedEpoch = 10000;
+
+    double maxCamera = 0;
 
     std::array<int, NUM_STATES> mStateStats;
 

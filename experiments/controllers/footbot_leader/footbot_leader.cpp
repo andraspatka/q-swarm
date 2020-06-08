@@ -121,7 +121,7 @@ void FootbotLeader::ControlStep() {
     bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
                       directionVector.getAngle() <= SIDE_ANGLE && !isDirZero && !isAtGoal;
     bool isDirRight = directionVector.getAngle() < -FORWARD_ANGLE &&
-                      directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero && !isAtGoal;
+                      directionVector.getAngle() > -SIDE_ANGLE && !isDirZero && !isAtGoal;
     bool isWander = MathUtils::closeToZero(maxProx) && !isTargetSeen;
     bool isIdle = (isDirZero && isTargetSeen) || maxLight > parThreshold;
 

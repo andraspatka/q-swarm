@@ -13,9 +13,9 @@ mpl.rcParams['lines.linewidth'] = 4
 
 
 B_PUSH = 0  # The robot's centre
-B_PULL = 5.5
+B_PULL = 3
 C_PUSH = 0.5  # width of the gauss curve
-C_PULL = 1.4
+C_PULL = 0.65
 cut_off = 0.05
 A = 1  # height of the gauss curve
 x_plt = np.linspace(0, B_PULL, num=100)
