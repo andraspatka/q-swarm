@@ -145,11 +145,13 @@ void FootbotFollow::ControlStep() {
     pushVector.clampZeroAndMax(1);
     pullVector.clampZeroAndMax(1);
 
-    bool isTargetFollow = pullVector.isNotZero() && pushVector.isZero() && !isAtGoal && isTargetSeen ||
-            pushVector.isNotZero() && isTargetSeen && pullVector.isNotZero() && pullVector.angleWithAnotherVector(pushVector) <= 90.0f && !isAtGoal;
-    bool isTargetReached = isAtGoal || pullVector.isZero() && isTargetSeen && pushVector.isZero();
+    bool isPullPushVectorAngleMoreThan90 = pullVector.angleWithAnotherVector(pushVector) >= 90.0f;
+
+    bool isTargetFollow = pullVector.isNotZero() && pushVector.isZero() && isTargetSeen ||
+            pushVector.isNotZero() && isTargetSeen && pullVector.isNotZero() && !isPullPushVectorAngleMoreThan90;
+    bool isTargetReached = isAtGoal && !isTargetSeen || pullVector.isZero() && isTargetSeen && pushVector.isZero();
     bool isObstacleDetected = pullVector.isZero() && !isTargetSeen && pushVector.isNotZero() && !isTargetReached
-            || pullVector.angleWithAnotherVector(pushVector) >= 90.0f && pushVector.isNotZero() && !isTargetReached;
+            || isPullPushVectorAngleMoreThan90 && pushVector.isNotZero() && !isTargetReached;
     bool isNoTargetToFollow = pullVector.isZero() && pushVector.isZero() && !isTargetSeen && !isAtGoal;
 
     CColor color = CColor::WHITE;
@@ -166,7 +168,7 @@ void FootbotFollow::ControlStep() {
         state = FollowerState::TARGET_REACHED;
         color = state.getLedColor();
         if (isAtGoal) {
-            color = CColor::YELLOW;
+            color = CColor::PURPLE;
         } else {
             color = CColor::GREEN;
         }
@@ -214,15 +216,15 @@ void FootbotFollow::ControlStep() {
         wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(pushVector);
     } else if (action == FollowerAction::WANDER) {
         wheelSpeeds = {parWheelVelocity, parWheelVelocity};
-//        if (drand48() > 0.8) {
-//            if (drand48() > 0.5) {
-//                wheelSpeeds = {parWheelVelocity, -parWheelVelocity};
-//            } else {
-//                wheelSpeeds = {-parWheelVelocity, parWheelVelocity};
-//            }
-//        } else {
-//            wheelSpeeds = {parWheelVelocity, parWheelVelocity};
-//        }
+        if (drand48() > 0.8) {
+            if (drand48() > 0.5) {
+                wheelSpeeds = {parWheelVelocity, -parWheelVelocity};
+            } else {
+                wheelSpeeds = {-parWheelVelocity, parWheelVelocity};
+            }
+        } else {
+            wheelSpeeds = {parWheelVelocity, parWheelVelocity};
+        }
     } else if (action == FollowerAction::STAY) {
         wheelSpeeds = {0.0, 0.0f};
     }

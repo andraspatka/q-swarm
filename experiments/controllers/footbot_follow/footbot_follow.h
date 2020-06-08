@@ -73,7 +73,7 @@ private:
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.5;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 0.65f;
+    constexpr double static C_PULL = 0.6f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 
