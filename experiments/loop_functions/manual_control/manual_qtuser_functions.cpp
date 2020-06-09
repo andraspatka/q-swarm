@@ -8,7 +8,7 @@ CManualControlQTUserFunctions::CManualControlQTUserFunctions() :
     m_punPressedKeys[DIRECTION_FORWARD] = 0;
     m_punPressedKeys[DIRECTION_LEFT] = 0;
     m_punPressedKeys[DIRECTION_RIGHT] = 0;
-    RegisterUserFunction<CManualControlQTUserFunctions,CEntity>(&CManualControlQTUserFunctions::Draw);
+    RegisterUserFunction<CManualControlQTUserFunctions,CFootBotEntity>(&CManualControlQTUserFunctions::Draw);
 }
 
 void CManualControlQTUserFunctions::KeyPressed(QKeyEvent *pc_event) {
@@ -78,7 +78,7 @@ void CManualControlQTUserFunctions::KeyReleased(QKeyEvent *pc_event) {
     }
 }
 
-void CManualControlQTUserFunctions::Draw(CEntity& c_entity) {
+void CManualControlQTUserFunctions::Draw(CFootBotEntity& c_entity) {
     /* The position of the text is expressed wrt the reference point of the footbot
      * For a foot-bot, the reference point is the center of its base.
      * See also the description in

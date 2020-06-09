@@ -1,8 +1,8 @@
-add_library(footbot_follow MODULE
-            footbot_follow.cpp
-            footbot_follow.h)
+add_library(footbot_flock MODULE
+        footbot_flock.cpp
+        footbot_flock.h)
 target_link_libraries(
-        footbot_follow
+        footbot_flock
         qlearn
         potnavi
         monitoring

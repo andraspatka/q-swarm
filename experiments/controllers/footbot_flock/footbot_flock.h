@@ -16,8 +16,8 @@
 #include <potnavi/math_utils.hpp>
 #include <potnavi/polar_vector.hpp>
 #include <qlearner/stage.hpp>
-#include <qlearner/follower_action.hpp>
-#include <qlearner/follower_state.hpp>
+#include <qlearner/action.hpp>
+#include <qlearner/state.hpp>
 
 #include <monitoring/logger.hpp>
 #include <qlearner/qexploiter.hpp>
@@ -25,17 +25,17 @@
 using namespace argos;
 using namespace ql;
 
-class FootbotFollow : public CCI_Controller {
+class FootbotFlock : public CCI_Controller {
 
 public:
     /** Used for initializations. */
-    FootbotFollow();
+    FootbotFlock();
 
     /**
      * Caution: Using the destructor is not recommended.
      * Allocate and free all memory in Init() and Destroy()
      */
-    virtual ~FootbotFollow() {}
+    virtual ~FootbotFlock() {}
 
     /**
      * Function for initialization.
@@ -58,7 +58,7 @@ public:
     virtual void Destroy();
 
 private:
-    constexpr int static NUM_STATES = 4;
+    constexpr int static NUM_STATES = 5;
 
     constexpr int static NUM_ACTIONS = 4;
 
@@ -66,28 +66,32 @@ private:
 
     constexpr int static PROX_READING_PER_SIDE = 4;
 
+    constexpr double static ALPHA_PULL = 0.5f;
+    constexpr double static BETA_PUSH = 0.5f;
+
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
     // The pull gauss curve's centre point is the prox sensor's coverage limit
-    constexpr double static B_PULL = 3.0f;
+    constexpr double static B_PULL = 5.5f;
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.5;
     // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 0.6f;
+    constexpr double static C_PULL = 1.4f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
+
+    static constexpr double FORWARD_ANGLE = 30.0f;
+    static constexpr double SIDE_ANGLE = 180.0f;
 
     QLearner * mQLearner;
 
     QExploiter * mQExploiter;
 
-    FollowerState mPrevState = FollowerState::NO_TARGET_TO_FOLLOW;
+    State mPrevState = State::WANDER;
 
     int epoch = 0;
 
-    int mLearnedEpoch = 10000;
-
-    double maxCamera = 0;
+    int mLearnedEpoch = 4000;
 
     std::array<int, NUM_STATES> mStateStats;
 

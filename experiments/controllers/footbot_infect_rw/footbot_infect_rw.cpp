@@ -32,7 +32,7 @@ void InfectRandomWalk::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "infect_prob", parInfectionProb);
 
     mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
-    mQExploiter->readQ("qmats/follow-train.qlmat");
+    mQExploiter->readQ("qmats/snake-train.qlmat");
     InitInfectious();
 }
 

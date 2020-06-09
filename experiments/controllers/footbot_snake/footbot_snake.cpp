@@ -1,8 +1,8 @@
 #include <potnavi/polar_vector.hpp>
 #include <potnavi/math_utils.hpp>
-#include "footbot_follow.h"
+#include "footbot_snake.h"
 
-FootbotFollow::FootbotFollow() :
+FootbotSnake::FootbotSnake() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
         epoch(0) {}
@@ -14,7 +14,7 @@ FootbotFollow::FootbotFollow() :
 * 2 TARGET_REACHED          0      0        2    0
 * 3 OBSTACLE_DETECTED       0      0       -1    0
 */
-void FootbotFollow::Init(TConfigurationNode &t_node) {
+void FootbotSnake::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mLed = GetActuator<CCI_LEDsActuator>("leds");
@@ -50,7 +50,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     }
     if (parStage == StageHelper::Stage::EXPLOIT) {
         mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
-        mQExploiter->readQ("qmats/follow-train.qlmat");
+        mQExploiter->readQ("qmats/snake-train.qlmat");
     }
     ql::Logger::clearMyLogs(this->m_strId);
 }
@@ -73,7 +73,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
  *
  *              back
  */
-void FootbotFollow::ControlStep() {
+void FootbotSnake::ControlStep() {
     PolarVector pushVector;
     PolarVector pullVector;
     FollowerState state;
@@ -148,10 +148,10 @@ void FootbotFollow::ControlStep() {
     bool isPullPushVectorAngleMoreThan90 = pullVector.angleWithAnotherVector(pushVector) >= 90.0f;
 
     bool isTargetFollow = pullVector.isNotZero() && pushVector.isZero() && isTargetSeen ||
-            pushVector.isNotZero() && isTargetSeen && pullVector.isNotZero() && !isPullPushVectorAngleMoreThan90;
+                          pushVector.isNotZero() && isTargetSeen && pullVector.isNotZero() && !isPullPushVectorAngleMoreThan90;
     bool isTargetReached = isAtGoal && !isTargetSeen || pullVector.isZero() && isTargetSeen && pushVector.isZero();
     bool isObstacleDetected = pullVector.isZero() && !isTargetSeen && pushVector.isNotZero() && !isTargetReached
-            || isPullPushVectorAngleMoreThan90 && pushVector.isNotZero() && !isTargetReached;
+                              || isPullPushVectorAngleMoreThan90 && pushVector.isNotZero() && !isTargetReached;
     bool isNoTargetToFollow = pullVector.isZero() && pushVector.isZero() && !isTargetSeen && !isAtGoal;
 
     CColor color = CColor::WHITE;
@@ -203,8 +203,8 @@ void FootbotFollow::ControlStep() {
 
     }
     FollowerAction action = (parStage == StageHelper::Stage::EXPLOIT) ?
-            mQExploiter->exploit<FollowerState, FollowerAction>(state) :
-                    mQLearner->doubleQ<FollowerState, FollowerAction>(mPrevState, state);
+                            mQExploiter->exploit<FollowerState, FollowerAction>(state) :
+                            mQLearner->doubleQ<FollowerState, FollowerAction>(mPrevState, state);
 
     mPrevState = state;
 
@@ -242,7 +242,7 @@ void FootbotFollow::ControlStep() {
     LOG << "-----------------------------------------------" << std::endl;
 }
 
-void FootbotFollow::Destroy() {
+void FootbotSnake::Destroy() {
     if (parStage == StageHelper::Stage::TRAIN) {
         mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
         delete mQLearner;
@@ -256,4 +256,4 @@ void FootbotFollow::Destroy() {
  * Register the controller.
  * This is needed in order for argos to be able to bind the scene to this controller.
  */
-REGISTER_CONTROLLER(FootbotFollow, "footbot_follow_controller")
+REGISTER_CONTROLLER(FootbotSnake, "footbot_snake_controller")
