@@ -10,32 +10,21 @@ namespace ql {
         enum AgentType {
             SUSCEPTIBLE,
             INFECTIOUS,
-            REMOVED
+            RECOVERED,
+            DECEASED
         };
 
-        static std::string ParseAgentTypeAsgetAgentTypeAsString() {
-            switch (this->agentType) {
+        static std::string GetAgentTypeAsString(AgentType agentType) {
+            switch (agentType) {
                 case INFECTIOUS:
                     return "INFECTIOUS";
                 case SUSCEPTIBLE:
                     return "SUSCEPTIBLE";
-                case REMOVED:
-                    return "REMOVED";
+                case RECOVERED:
+                    return "RECOVERED";
+                case DECEASED:
+                    return "DECEASED";
             }
-        }
-
-        static Stage ParseStageFromString(const std::string& stageString) {
-            if (stageString == "train") return Stage::TRAIN;
-            if (stageString == "exploit") return Stage::EXPLOIT;
-            std::cerr << "Invalid Stage value: " << stageString;
-            exit(1);
-        }
-
-        static std::string ParseStringFromStage(const Stage &stage) {
-            if (stage == Stage::TRAIN) return "TRAIN";
-            if (stage == Stage::EXPLOIT) return "EXPLOIT";
-            std::cerr << "Invalid Stage value: " << stage;
-            exit(1);
         }
     };
 }

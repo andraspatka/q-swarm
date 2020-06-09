@@ -7,21 +7,13 @@ InfectRandomWalk::InfectRandomWalk() :
         mProximitySensor(NULL),
         epoch(0) {}
 
-/**
- *
- *            STOP    TURN_LEFT   TURN_RIGHT  FORWARD
- * 0 WANDER     -1      0           0           0.2
- * 1 FOLLOW     -1      0           0           1
- * 2 DIR_LEFT   -1      0           0           0
- * 3 DIR_RIGHT  -1      0           0           0
- * 4 IDLE        2      0           0           0
- */
 void InfectRandomWalk::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mLed = GetActuator<CCI_LEDsActuator>("leds");
     mProximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     mCamera = GetSensor<CCI_ColoredBlobOmnidirectionalCameraSensor>("colored_blob_omnidirectional_camera");
+    mLightSensor = GetSensor<CCI_FootBotLightSensor>("footbot_light");
     mPosition = GetSensor<CCI_PositioningSensor>("positioning");
 
     mCamera->Enable();
@@ -30,9 +22,18 @@ void InfectRandomWalk::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "velocity", parWheelVelocity);
     GetNodeAttribute(t_node, "infectious", parNoOfInfectious);
     GetNodeAttribute(t_node, "infect_prob", parInfectionProb);
+    GetNodeAttribute(t_node, "sick_for", parSickFor);
+    GetNodeAttribute(t_node, "mortality", parMortality);
+    GetNodeAttribute(t_node, "social_distancing", parShouldSocialDistance);
+
+    if (parShouldSocialDistance) {
+        GetNodeAttribute(t_node, "social_distance_conform", parSocialDistancingConformity);
+    }
+
 
     mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
-    mQExploiter->readQ("qmats/snake-train.qlmat");
+    mQExploiter->readQ("qmats/flock-train.qlmat");
+    mId = this->GetId();
     InitInfectious();
 }
 
@@ -41,13 +42,18 @@ void InfectRandomWalk::Reset() {
 }
 
 void InfectRandomWalk::InitInfectious() {
-    ql::Logger::clearMyLogs(this->m_strId);
-    int idNumber = std::stoi(this->m_strId);
+    ql::Logger::clearMyLogs(mId);
+    int idNumber = std::stoi(mId);
     mInfectedForEpochs = 0;
     if (idNumber < parNoOfInfectious) {
-        agentType = AGENT_TYPE::INFECTIOUS;
+        agentType = AgentTypeHelper::AgentType::INFECTIOUS;
     } else {
-        agentType = AGENT_TYPE::SUSCEPTIBLE;
+        agentType = AgentTypeHelper::AgentType::SUSCEPTIBLE;
+    }
+
+    mDiesAfterEpochs = rand() % 250 + 51;
+    if (drand48() < parMortality) {
+        isGoingToDie = true;
     }
 }
 
@@ -73,18 +79,37 @@ void InfectRandomWalk::ControlStep() {
     ql::PolarVector fpushVector;
     ql::PolarVector fpullVector;
 
-    double maxProx = 0.0f;
-
+    double maxLight = 0.0f;
     State state;
+    epoch++;
 
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
+    auto lightReadings = mLightSensor->GetReadings();
 
-    CCI_ColoredBlobOmnidirectionalCameraSensor::SBlob minDistanceBlob(CColor::WHITE, CRadians::TWO_PI, 1000.0f);
+    short countInfectious = 0;
     for (auto r : cameraReadings) {
-        if (ql::MathUtils::cameraToDistance(r->Distance) <= 1 && r->Color == CColor::RED && agentType == SUSCEPTIBLE) {
+        if (ql::MathUtils::cameraToDistance(r->Distance) <= 1.2 && r->Color == CColor::ORANGE && agentType == AgentTypeHelper::AgentType::SUSCEPTIBLE) {
+            countInfectious++;
+        }
+    }
+    mPrevMaxInfectiousSeen = std::max(countInfectious, mPrevMaxInfectiousSeen);
+    if (mPrevMaxInfectiousSeen > 0 && countInfectious == 0) {
+        LOG << "Prev count infectious" << mPrevMaxInfectiousSeen << std::endl;
+        for (int i = 0; i < mPrevMaxInfectiousSeen; ++i) {
             if (drand48() < parInfectionProb) {
-                agentType = INFECTIOUS;
+                agentType = AgentTypeHelper::AgentType::INFECTIOUS;
+            }
+        }
+        mPrevMaxInfectiousSeen = 0;
+    }
+
+    if (agentType == AgentTypeHelper::AgentType::INFECTIOUS) {
+        for (auto r : lightReadings) {
+            if (!MathUtils::closeToZero(r.Value)) {
+                fpullVector += MathUtils::readingToVector(r.Value, r.Angle,
+                                                          A, B_PULL, C_PULL, MathUtils::lightToDistance);
+                maxLight = std::max(maxLight, r.Value);
             }
         }
     }
@@ -93,19 +118,22 @@ void InfectRandomWalk::ControlStep() {
         if (!MathUtils::closeToZero(proxReadings.at(i).Value)) {
             fpushVector += MathUtils::readingToVector(proxReadings.at(i).Value, proxReadings.at(i).Angle, A, B_PUSH,
                                                       C_PUSH, MathUtils::proxToDistance);
-            maxProx = std::max(maxProx, proxReadings.at(i).Value);
         }
     }
 
-    ql::PolarVector directionVector = -fpushVector;
+    ql::PolarVector directionVector = - fpushVector;
+    directionVector += fpullVector;
     bool isDirZero = directionVector.isZero();
 
-    bool isWander = isDirZero;
-    bool isFollow = directionVector.getAbsAngle() <= FORWARD_ANGLE && !isDirZero;
+    bool isDoneWithDisease = agentType == AgentTypeHelper::DECEASED;
+
+    bool isIdle = maxLight > LIGHT_READING_THRESHOLD || isDoneWithDisease;
+    bool isWander = isDirZero && !isIdle;
+    bool isFollow = directionVector.getAbsAngle() <= FORWARD_ANGLE && !isDirZero && !isIdle;
     bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
-                     directionVector.getAngle() <= SIDE_ANGLE && !isDirZero;
+                     directionVector.getAngle() <= SIDE_ANGLE && !isDirZero && !isIdle;
     bool isDirRight = directionVector.getAngle() < -FORWARD_ANGLE &&
-                      directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero;
+                      directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero && !isIdle;
 
     if (isWander) {
         state = State::WANDER;
@@ -115,34 +143,48 @@ void InfectRandomWalk::ControlStep() {
         state = State::DIR_LEFT;
     } else if (isDirRight) {
         state = State::DIR_RIGHT;
+    } else if (isIdle) {
+        state = State::IDLE;
     }
 
-    if (mInfectedForEpochs > 100) {
-        agentType = REMOVED;
+    if (mInfectedForEpochs > parSickFor) {
+        agentType = AgentTypeHelper::AgentType::RECOVERED;
+    }
+    if (agentType == AgentTypeHelper::AgentType::INFECTIOUS && mInfectedForEpochs > mDiesAfterEpochs && isGoingToDie) {
+        agentType = AgentTypeHelper::AgentType::DECEASED;
     }
 
     Action action = mQExploiter->exploit<State, Action>(state);
 
-    CColor agentColor = CColor::WHITE;
     switch (agentType) {
-        case INFECTIOUS:
-            agentColor = CColor::RED;
+        case AgentTypeHelper::AgentType::INFECTIOUS:
             mInfectedForEpochs++;
+            mCamera->Disable();
+            mLed->SetAllColors(CColor::RED);
+            mLed->SetSingleColor(12, CColor::ORANGE);
             break;
-        case SUSCEPTIBLE:
-            agentColor = CColor::CYAN;
+        case AgentTypeHelper::AgentType::SUSCEPTIBLE:
+            mLed->SetAllColors(CColor::CYAN);
             break;
-        case REMOVED:
-            agentColor = CColor::GRAY50;
-            action = Action::STOP;
+        case AgentTypeHelper::AgentType::DECEASED:
+            mLed->SetAllColors(CColor::GRAY50);
+            mCamera->Disable();
+            break;
+        case AgentTypeHelper::AgentType::RECOVERED:
+            mLed->SetAllColors(CColor::GREEN);
             mCamera->Disable();
             break;
     }
-    mLed->SetAllColors(agentColor);
-
-    epoch++;
 
     std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
+    if (action == Action::TURN_RIGHT) {
+        wheelSpeeds[0] = 1.0f;
+        wheelSpeeds[1] = 0.0f;
+    }
+    if (action == Action::TURN_LEFT) {
+        wheelSpeeds[0] = 0.0f;
+        wheelSpeeds[1] = 1.0f;
+    }
     wheelSpeeds[0] *= parWheelVelocity;
     wheelSpeeds[1] *= parWheelVelocity;
 
@@ -154,13 +196,13 @@ void InfectRandomWalk::ControlStep() {
             std::to_string(actualPosition.GetY()),
             state.getName(),
             action.getName(),
-            getAgentTypeAsString()
+            AgentTypeHelper::GetAgentTypeAsString(this->agentType)
     };
-    ql::Logger::log(this->m_strId, toLog, true);
-    // LOGGING
+    ql::Logger::log(mId, toLog, true);
+
     LOG << "---------------------------------------------" << std::endl;
-    LOG << "Id: " << this->m_strId << std::endl;
-    LOG << "Type: " << getAgentTypeAsString() << std::endl;
+    LOG << "Id: " << mId << std::endl;
+    LOG << "Type: " << AgentTypeHelper::GetAgentTypeAsString(this->agentType) << std::endl;
     LOG << "Action taken: " << action.getName() << std::endl;
     LOG << "State: " << state.getName() << std::endl;
 }
@@ -168,18 +210,6 @@ void InfectRandomWalk::ControlStep() {
 void InfectRandomWalk::Destroy() {
     delete mQExploiter;
 }
-
-std::string InfectRandomWalk::getAgentTypeAsString() {
-    switch (this->agentType) {
-        case INFECTIOUS:
-            return "INFECTIOUS";
-        case SUSCEPTIBLE:
-            return "SUSCEPTIBLE";
-        case REMOVED:
-            return "REMOVED";
-    }
-}
-
 /**
  * Register the controller.
  * This is needed in order for argos to be able to bind the scene to this controller.

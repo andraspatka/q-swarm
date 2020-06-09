@@ -18,6 +18,7 @@
 
 #include <monitoring/logger.hpp>
 #include <qlearner/qexploiter.hpp>
+#include <qlearner/agent_type.hpp>
 
 using namespace argos;
 using namespace ql;
@@ -58,37 +59,41 @@ public:
 
     constexpr int static NUM_ACTIONS = 4;
 
-    enum AGENT_TYPE {
-        SUSCEPTIBLE,
-        INFECTIOUS,
-        REMOVED
-    };
-
 private:
 
     void InitInfectious();
 
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
-    // The pull gauss curve's centre point is the prox sensor's coverage limit
-    constexpr double static B_PULL = 6.0f;
+    // The pull gauss curve's centre point is the light sensor
+    constexpr double static B_PULL = 2.3f;
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.5f;
-    // Width of the gauss curve for pulling forces
-    constexpr double static C_PULL = 1.4f;
+    // Width of the gauss curve for pulling forces: light sensor
+    constexpr double static C_PULL = 0.6f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
+
+    constexpr double static LIGHT_READING_THRESHOLD = 0.36;
 
     double const FORWARD_ANGLE = 20.0f;
     double const SIDE_ANGLE = 180.0f;
 
-    std::string getAgentTypeAsString();
-
     ql::QExploiter * mQExploiter;
+
+    std::string mId;
 
     int epoch = 0;
 
     int mInfectedForEpochs = 0;
+
+
+    bool prevHadContactWithInfected = false;
+
+    short mPrevMaxInfectiousSeen;
+
+    bool isGoingToDie = false;
+    unsigned short mDiesAfterEpochs = 0;
 
     /** ACTUATORS AND SENSORS */
     /* Pointer to the differential steering actuator. */
@@ -106,14 +111,20 @@ private:
     /* Pointer to the footbot positioning sensor. */
     CCI_PositioningSensor* mPosition;
 
-    AGENT_TYPE agentType;
+    CCI_FootBotLightSensor *mLightSensor;
+
+    AgentTypeHelper::AgentType agentType;
 
     /** PARAMETERS FROM THE ARGOS FILE */
 
     /* Wheel speed. */
     Real parWheelVelocity;
 
+//    COVID
     double parInfectionProb;
-
     int parNoOfInfectious;
+    int parSickFor;
+    double parMortality;
+    bool parShouldSocialDistance;
+    double parSocialDistancingConformity;
 };

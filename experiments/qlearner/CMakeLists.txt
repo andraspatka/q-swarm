@@ -3,6 +3,7 @@ add_library(qlearn MODULE
         qexploiter.hpp
         state.hpp
         follower_state.hpp
+        agent_type.hpp
         action.hpp
         follower_action.hpp
         stage.hpp
