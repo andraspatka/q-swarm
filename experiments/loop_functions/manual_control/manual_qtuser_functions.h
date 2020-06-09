@@ -61,7 +61,7 @@ public:
     */
    virtual void EntityDeselected(CEntity& c_entity);
 
-    void Draw(CFootBotEntity& c_entity);
+   void Draw(CFootBotEntity& c_entity);
 
 private:
 

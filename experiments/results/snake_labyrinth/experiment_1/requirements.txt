@@ -1,0 +1,6 @@
+ - required files
+ - outputs:
+	video
+	6-8 frames -> doksi
+	trajectory plot script and png
+	csv logs

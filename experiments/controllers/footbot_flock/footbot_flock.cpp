@@ -1,8 +1,8 @@
 #include <potnavi/polar_vector.hpp>
 #include <potnavi/math_utils.hpp>
-#include "footbot_follow.h"
+#include "footbot_flock.h"
 
-FootbotFollow::FootbotFollow() :
+FootbotFlock::FootbotFlock() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
         epoch(0) {}
@@ -14,9 +14,8 @@ FootbotFollow::FootbotFollow() :
 * 2 DIR_LEFT   -1      0           0           0
 * 3 DIR_RIGHT  -1      0           0           0
 * 4 IDLE        2      0           0           0
-* 5 SEARCH     -1      0           0           0
 */
-void FootbotFollow::Init(TConfigurationNode &t_node) {
+void FootbotFlock::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     mLed = GetActuator<CCI_LEDsActuator>("leds");
@@ -53,7 +52,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
     }
     if (parStage == StageHelper::Stage::EXPLOIT) {
         mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
-        mQExploiter->readQ("qmats/follow-train.qlmat");
+        mQExploiter->readQ("qmats/flock-train.qlmat");
     }
     ql::Logger::clearMyLogs(this->m_strId);
 }
@@ -76,7 +75,7 @@ void FootbotFollow::Init(TConfigurationNode &t_node) {
  *
  *              back
  */
-void FootbotFollow::ControlStep() {
+void FootbotFlock::ControlStep() {
     ql::PolarVector fpushVector;
     ql::PolarVector fpullVector;
     State state;
@@ -166,7 +165,7 @@ void FootbotFollow::ControlStep() {
 
     }
 
-    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit(state) : mQLearner->doubleQ(mPrevState, state);
+    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit<State,Action>(state) : mQLearner->doubleQ<State,Action>(mPrevState, state);
     mPrevState = state;
 
     std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
@@ -197,7 +196,7 @@ void FootbotFollow::ControlStep() {
     }
 }
 
-void FootbotFollow::Destroy() {
+void FootbotFlock::Destroy() {
     if (parStage == StageHelper::Stage::TRAIN) {
         mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
         delete mQLearner;
@@ -211,4 +210,4 @@ void FootbotFollow::Destroy() {
  * Register the controller.
  * This is needed in order for argos to be able to bind the scene to this controller.
  */
-REGISTER_CONTROLLER(FootbotFollow, "footbot_follow_controller")
+REGISTER_CONTROLLER(FootbotFlock, "footbot_flock_controller")

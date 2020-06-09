@@ -18,9 +18,7 @@ namespace ql {
         static Action STOP;
         static Action FORWARD;
         static Action TURN_LEFT;
-        static Action TURN_LEFT_SOFT;
         static Action TURN_RIGHT;
-        static Action TURN_RIGHT_SOFT;
 
         const std::string& getName() const {
             return actionName;
@@ -35,7 +33,7 @@ namespace ql {
         }
 
         static const Action& fromIndex(unsigned short index) {
-            switch(index) {
+            switch (index) {
                 case 0:
                     return STOP;
                 case 1:

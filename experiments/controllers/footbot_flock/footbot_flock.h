@@ -25,17 +25,17 @@
 using namespace argos;
 using namespace ql;
 
-class FootbotFollow : public CCI_Controller {
+class FootbotFlock : public CCI_Controller {
 
 public:
     /** Used for initializations. */
-    FootbotFollow();
+    FootbotFlock();
 
     /**
      * Caution: Using the destructor is not recommended.
      * Allocate and free all memory in Init() and Destroy()
      */
-    virtual ~FootbotFollow() {}
+    virtual ~FootbotFlock() {}
 
     /**
      * Function for initialization.

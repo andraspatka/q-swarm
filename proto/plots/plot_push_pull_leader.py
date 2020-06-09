@@ -41,6 +41,6 @@ plt.xlim(xmin=0, xmax=B_PULL)
 plt.grid()
 plt.legend()
 
-plt.savefig('pushpull.png', transparent=True, dpi=300)
+plt.savefig('png/pushpull_leader.png', transparent=True, dpi=300)
 plt.show()
 

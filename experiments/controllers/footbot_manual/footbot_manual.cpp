@@ -11,7 +11,7 @@ CFootBotManualControl::CFootBotManualControl() :
 void CFootBotManualControl::Init(TConfigurationNode& t_node) {
    m_pcWheels = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
    m_pcLEDs   = GetActuator<CCI_LEDsActuator>("leds");
-   m_pcLEDs->SetAllColors(CColor::WHITE);
+   m_pcLEDs->SetSingleColor(12, CColor::WHITE);
    GetNodeAttribute(t_node, "max_speed", this->parMaxSpeed);
 }
 
@@ -24,19 +24,19 @@ void CFootBotManualControl::ControlStep() {
 
 void CFootBotManualControl::Select() {
    m_bSelected = true;
-   m_pcLEDs->SetAllColors(CColor::RED);
+   m_pcLEDs->SetSingleColor(12, CColor::RED);
 }
 
 void CFootBotManualControl::Deselect() {
    m_bSelected = false;
-   m_pcLEDs->SetAllColors(CColor::WHITE);
+   m_pcLEDs->SetSingleColor(12, CColor::WHITE);
 }
 
 void CFootBotManualControl::SetDiffSteering(double diffSteer[2]) {
     if (diffSteer[0] == 0.0f && diffSteer[1] == 0.0f) {
-        m_pcLEDs->SetAllColors(CColor::PURPLE);
+        m_pcLEDs->SetSingleColor(12, CColor::PURPLE);
     } else {
-        m_pcLEDs->SetAllColors(CColor::RED);
+        m_pcLEDs->SetSingleColor(12, CColor::RED);
     }
     this->diffSteeringVals[0] = diffSteer[0] * parMaxSpeed;
     this->diffSteeringVals[1] = diffSteer[1] * parMaxSpeed;

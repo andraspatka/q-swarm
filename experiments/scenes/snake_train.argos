@@ -9,7 +9,7 @@
 
     <!-- Controllers -->
     <controllers>
-        <footbot_follow_controller id="ffc" library="cmake-build-debug/controllers/footbot_follow/libfootbot_follow.so">
+        <footbot_snake_controller id="ffc" library="cmake-build-debug/controllers/footbot_snake/libfootbot_snake.so">
             <actuators>
                 <differential_steering implementation="default" />
                 <leds implementation="default" medium="leds" />
@@ -22,7 +22,7 @@
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
             <params velocity="20" learning_rate="1" discount_factor="0.4" threshold="30" stage="train" logging="true"/>
-        </footbot_follow_controller>
+        </footbot_snake_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
                 <differential_steering implementation="default" />
@@ -80,7 +80,7 @@
                 <box id="b" size="0.1,0.1,0.5" movable="false"/>
             </entity>
         </distribute>
-<!--        <light id="light" position="-0.8,-0.7,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />-->
+        <!--        <light id="light" position="-0.8,-0.7,2" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />-->
 
         <!-- The footbot which can go to the goal. -->
         <foot-bot id="follow-leader1">
@@ -103,7 +103,7 @@
             <controller config="fgc" />
         </foot-bot>
 
-        <foot-bot id="follow-train">
+        <foot-bot id="snake-train">
             <body position="1.9,1.8,0" orientation="270,0,0" />
             <controller config="ffc" />
         </foot-bot>
@@ -120,10 +120,10 @@
 
 
         <!-- Manual control footbot. -->
-<!--        <foot-bot id="fmc">
-            <body position="2,2,0" orientation="0,0,0" />
-            <controller config="fmc" />
-        </foot-bot>-->
+        <!--        <foot-bot id="fmc">
+                    <body position="2,2,0" orientation="0,0,0" />
+                    <controller config="fmc" />
+                </foot-bot>-->
 
 
     </arena>

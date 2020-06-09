@@ -33,7 +33,7 @@ void CManualControlQTUserFunctions::KeyPressed(QKeyEvent *pc_event) {
             m_punPressedKeys[DIRECTION_RIGHT] = 1;
             SetDirectionFromKeyEvent();
             break;
-        case Qt::Key_M:
+        case Qt::Key_K:
             m_punPressedKeys[DIRECTION_STOP] = 1;
             SetDirectionFromKeyEvent();
             break;

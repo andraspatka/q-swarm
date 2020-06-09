@@ -31,5 +31,5 @@ plt.scatter(2, -3, s=200,c=goalColor, label="Goal")
 plt.grid()
 plt.legend()
 
-plt.savefig('follow_swarm.png', transparent=False, dpi=300)
+plt.savefig('png/follow_swarm.png', transparent=False, dpi=300)
 plt.show()
