@@ -29,7 +29,7 @@ void InfectRandomWalk::Init(TConfigurationNode &t_node) {
     if (parShouldSocialDistance) {
         GetNodeAttribute(t_node, "social_distance_conform", parSocialDistancingConformity);
     }
-
+    srand48(time(nullptr));
 
     mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
     mQExploiter->readQ("qmats/flock-train.qlmat");
@@ -42,7 +42,7 @@ void InfectRandomWalk::Reset() {
 }
 
 void InfectRandomWalk::InitInfectious() {
-    ql::Logger::clearMyLogs(mId);
+    ql::Logger::clearMyLogs(mId, true);
     int idNumber = std::stoi(mId);
     mInfectedForEpochs = 0;
     if (idNumber < parNoOfInfectious) {
@@ -51,9 +51,10 @@ void InfectRandomWalk::InitInfectious() {
         agentType = AgentTypeHelper::AgentType::SUSCEPTIBLE;
     }
 
-    mDiesAfterEpochs = rand() % 250 + 51;
-    if (drand48() < parMortality) {
-        isGoingToDie = true;
+    if (parShouldSocialDistance) {
+        if (idNumber < parSocialDistancingConformity) {
+            mConformsToSocialDistancing = true;
+        }
     }
 }
 
@@ -79,6 +80,8 @@ void InfectRandomWalk::ControlStep() {
     ql::PolarVector fpushVector;
     ql::PolarVector fpullVector;
 
+    PolarVector socialDistancingVector;
+
     double maxLight = 0.0f;
     State state;
     epoch++;
@@ -87,15 +90,20 @@ void InfectRandomWalk::ControlStep() {
     auto cameraReadings = mCamera->GetReadings().BlobList;
     auto lightReadings = mLightSensor->GetReadings();
 
+    bool infectedSeesInfectious = false;
     short countInfectious = 0;
     for (auto r : cameraReadings) {
         if (ql::MathUtils::cameraToDistance(r->Distance) <= 1.2 && r->Color == CColor::ORANGE && agentType == AgentTypeHelper::AgentType::SUSCEPTIBLE) {
             countInfectious++;
         }
+        socialDistancingVector += MathUtils::readingToVector(r->Distance, r->Angle,
+                                                             A, B_PUSH_CAMERA, C_PUSH_CAMERA, MathUtils::cameraToDistance);
+        if (r->Color == CColor::ORANGE && agentType == AgentTypeHelper::AgentType::INFECTIOUS) {
+            infectedSeesInfectious = true;
+        }
     }
     mPrevMaxInfectiousSeen = std::max(countInfectious, mPrevMaxInfectiousSeen);
     if (mPrevMaxInfectiousSeen > 0 && countInfectious == 0) {
-        LOG << "Prev count infectious" << mPrevMaxInfectiousSeen << std::endl;
         for (int i = 0; i < mPrevMaxInfectiousSeen; ++i) {
             if (drand48() < parInfectionProb) {
                 agentType = AgentTypeHelper::AgentType::INFECTIOUS;
@@ -104,13 +112,17 @@ void InfectRandomWalk::ControlStep() {
         mPrevMaxInfectiousSeen = 0;
     }
 
-    if (agentType == AgentTypeHelper::AgentType::INFECTIOUS) {
-        for (auto r : lightReadings) {
-            if (!MathUtils::closeToZero(r.Value)) {
+
+    for (auto r : lightReadings) {
+        if (!MathUtils::closeToZero(r.Value)) {
+            if (agentType == AgentTypeHelper::AgentType::INFECTIOUS) {
                 fpullVector += MathUtils::readingToVector(r.Value, r.Angle,
                                                           A, B_PULL, C_PULL, MathUtils::lightToDistance);
-                maxLight = std::max(maxLight, r.Value);
+            } else if (agentType != AgentTypeHelper::AgentType::DECEASED && agentType != AgentTypeHelper::AgentType::RECOVERED){
+                fpushVector += MathUtils::readingToVector(r.Value, r.Angle,
+                                                          A, B_PUSH, C_PUSH, MathUtils::lightToDistance);
             }
+            maxLight = std::max(maxLight, r.Value);
         }
     }
 
@@ -121,13 +133,20 @@ void InfectRandomWalk::ControlStep() {
         }
     }
 
+    if (mConformsToSocialDistancing) {
+        fpushVector += socialDistancingVector;
+    }
+
+
     ql::PolarVector directionVector = - fpushVector;
     directionVector += fpullVector;
     bool isDirZero = directionVector.isZero();
 
     bool isDoneWithDisease = agentType == AgentTypeHelper::DECEASED;
+    bool isInQuarantine = maxLight > LIGHT_READING_THRESHOLD && agentType == AgentTypeHelper::AgentType::INFECTIOUS ||
+            maxLight > EXTENDED_LIGHT_READING_THRESHOLD && infectedSeesInfectious;
 
-    bool isIdle = maxLight > LIGHT_READING_THRESHOLD || isDoneWithDisease;
+    bool isIdle = isInQuarantine || isDoneWithDisease;
     bool isWander = isDirZero && !isIdle;
     bool isFollow = directionVector.getAbsAngle() <= FORWARD_ANGLE && !isDirZero && !isIdle;
     bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
@@ -147,10 +166,17 @@ void InfectRandomWalk::ControlStep() {
         state = State::IDLE;
     }
 
+    if (mInfectedForEpochs == 0 && agentType == AgentTypeHelper::AgentType::INFECTIOUS) {
+        mDiesAfterEpochs = rand() % 250 + 51;
+        if (drand48() < parMortality) {
+            mIsGoingToDie = true;
+        }
+    }
+
     if (mInfectedForEpochs > parSickFor) {
         agentType = AgentTypeHelper::AgentType::RECOVERED;
     }
-    if (agentType == AgentTypeHelper::AgentType::INFECTIOUS && mInfectedForEpochs > mDiesAfterEpochs && isGoingToDie) {
+    if (agentType == AgentTypeHelper::AgentType::INFECTIOUS && mInfectedForEpochs > mDiesAfterEpochs && mIsGoingToDie) {
         agentType = AgentTypeHelper::AgentType::DECEASED;
     }
 
@@ -159,7 +185,9 @@ void InfectRandomWalk::ControlStep() {
     switch (agentType) {
         case AgentTypeHelper::AgentType::INFECTIOUS:
             mInfectedForEpochs++;
-            mCamera->Disable();
+            if (!parShouldSocialDistance) {
+                mCamera->Disable();
+            }
             mLed->SetAllColors(CColor::RED);
             mLed->SetSingleColor(12, CColor::ORANGE);
             break;
@@ -172,8 +200,21 @@ void InfectRandomWalk::ControlStep() {
             break;
         case AgentTypeHelper::AgentType::RECOVERED:
             mLed->SetAllColors(CColor::GREEN);
-            mCamera->Disable();
+            if (!parShouldSocialDistance) {
+                mCamera->Disable();
+            }
             break;
+    }
+    if (state == State::WANDER) {
+        if (drand48() > 0.85f) {
+            if (drand48() < 0.5f) {
+                action = Action::TURN_RIGHT;
+            } else {
+                action = Action::TURN_LEFT;
+            }
+        } else {
+            action = Action::FORWARD;
+        }
     }
 
     std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
@@ -185,6 +226,7 @@ void InfectRandomWalk::ControlStep() {
         wheelSpeeds[0] = 0.0f;
         wheelSpeeds[1] = 1.0f;
     }
+
     wheelSpeeds[0] *= parWheelVelocity;
     wheelSpeeds[1] *= parWheelVelocity;
 
@@ -203,8 +245,6 @@ void InfectRandomWalk::ControlStep() {
     LOG << "---------------------------------------------" << std::endl;
     LOG << "Id: " << mId << std::endl;
     LOG << "Type: " << AgentTypeHelper::GetAgentTypeAsString(this->agentType) << std::endl;
-    LOG << "Action taken: " << action.getName() << std::endl;
-    LOG << "State: " << state.getName() << std::endl;
 }
 
 void InfectRandomWalk::Destroy() {

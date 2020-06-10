@@ -17,8 +17,9 @@ namespace ql {
         static constexpr const char* LOG_DIRECTORY = "logs";
     public:
 
-        static void clearMyLogs(const std::string &footbotId) {
-            std::string fileName = std::string(Logger::LOG_DIRECTORY) + "/" + footbotId + ".csv";
+        static void clearMyLogs(const std::string &footbotId, bool isDiseaseSim = false) {
+            std::string fileName = (!isDiseaseSim) ? std::string(Logger::LOG_DIRECTORY) + "/" + footbotId + ".csv"
+                    : std::string(Logger::LOG_DIRECTORY) + "/disease/" + footbotId + ".csv";
             std::remove(fileName.c_str());
         }
 

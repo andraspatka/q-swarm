@@ -21,7 +21,7 @@
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
-            <params velocity="30" infectious="5" infect_prob="0.05" mortality="0.065" social_distancing="false" sick_for="200"/>
+            <params velocity="30" infectious="1" infect_prob="0.75" mortality="0.065" social_distancing="false" sick_for="200"/>
         </infect_random_walk>
     </controllers>
 
@@ -52,8 +52,6 @@
             </entity>
         </distribute>
 
-<!--        <light id="quarantine" position="5.4,0,1.5" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />-->
-
     </arena>
 
     <!-- Physics engines -->
@@ -72,7 +70,6 @@
             <!-- Camera position, bird-eye view. -->
             <camera>
                 <placement idx="0" position="0,0,11.5" look_at="0,0,0" lens_focal_length="50" />
-
             </camera>
             <user_functions library="cmake-build-debug/loop_functions/id/libid_loop_functions" label="id_qtuser_functions" />
         </qt-opengl>

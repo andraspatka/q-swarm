@@ -68,13 +68,17 @@ private:
     // The pull gauss curve's centre point is the light sensor
     constexpr double static B_PULL = 2.3f;
     // Width of the gauss curve for pushing forces
-    constexpr double static C_PUSH = 0.5f;
+    constexpr double static C_PUSH = 0.65f;
     // Width of the gauss curve for pulling forces: light sensor
     constexpr double static C_PULL = 0.6f;
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 
-    constexpr double static LIGHT_READING_THRESHOLD = 0.36;
+    constexpr double static B_PUSH_CAMERA = 0.0f;
+    constexpr double static C_PUSH_CAMERA = 0.7f;
+
+    constexpr double static LIGHT_READING_THRESHOLD = 0.75;
+    constexpr double static EXTENDED_LIGHT_READING_THRESHOLD = 0.6;
 
     double const FORWARD_ANGLE = 20.0f;
     double const SIDE_ANGLE = 180.0f;
@@ -87,13 +91,11 @@ private:
 
     int mInfectedForEpochs = 0;
 
-
-    bool prevHadContactWithInfected = false;
-
     short mPrevMaxInfectiousSeen;
 
-    bool isGoingToDie = false;
+    bool mIsGoingToDie = false;
     unsigned short mDiesAfterEpochs = 0;
+    bool mConformsToSocialDistancing = false;
 
     /** ACTUATORS AND SENSORS */
     /* Pointer to the differential steering actuator. */

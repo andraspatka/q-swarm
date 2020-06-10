@@ -15,14 +15,14 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors>
-                <footbot_proximity implementation="default" show_rays="true" />
-                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
-                <footbot_light implementation="rot_z_only" show_rays="true" />
+                <footbot_proximity implementation="default" show_rays="false" />
+                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="false" />
+                <footbot_light implementation="rot_z_only" show_rays="false" />
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
-            <params velocity="30" infectious="3" infect_prob="5" mortaliy="6.5" sick_for="200"
-                    social_distancing="false" social_distance_conform="0.5"/>
+            <params velocity="30" infectious="3" infect_prob="0.5" mortality="0.065" sick_for="200"
+                    social_distancing="true" social_distance_conform="30" />
         </infect_random_walk>
     </controllers>
 
@@ -30,29 +30,30 @@
     <arena size="20, 20, 4" center="0,0,0.5">
 
         <!-- Arena walls -->
-        <box id="wall_north" size="10,0.1,0.5" movable="false">
-            <body position="0,2.5,0" orientation="0,0,0" />
+        <box id="wall_north" size="6,0.1,0.5" movable="false">
+            <body position="0,4,0" orientation="0,0,0" />
         </box>
-        <box id="wall_south" size="10,0.1,0.5" movable="false">
-            <body position="0,-2.5,0" orientation="0,0,0" />
+        <box id="wall_south" size="6,0.1,0.5" movable="false">
+            <body position="0,-2,0" orientation="0,0,0" />
         </box>
-        <box id="wall_east" size="0.1,10,0.5" movable="false">
-            <body position="2.5,0,0" orientation="0,0,0" />
+        <box id="wall_east" size="0.1,6,0.5" movable="false">
+            <body position="3,1,0" orientation="0,0,0" />
         </box>
-        <box id="wall_west" size="0.1,10,0.5" movable="false">
-            <body position="-2.5,0,0" orientation="0,0,0" />
+        <box id="wall_west" size="0.1,6,0.5" movable="false">
+            <body position="-3,1,0" orientation="0,0,0" />
         </box>
 
         <distribute>
-            <position method="uniform" min="-2.5,-2.5,0" max="2.5,2.5,0" />
+            <position method="uniform" min="-3,-2,0" max="3,4,0" />
             <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="30" max_trials="100">
+            <entity quantity="50" max_trials="100">
                 <foot-bot id="">
                     <controller config="irw" />
                 </foot-bot>
             </entity>
         </distribute>
 
+<!--        <light id="quarantine" position="0,-3,0.4" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />-->
     </arena>
 
     <!-- Physics engines -->
@@ -70,12 +71,10 @@
         <qt-opengl>
             <!-- Camera position, bird-eye view. -->
             <camera>
-                <placement idx="0" position="0,1,4.34" look_at="0,0,0" lens_focal_length="20" />
-                <placement idx="2" position="0,1.5,0.2" look_at="0,0,0" lens_focal_length="40" />
-
+                <placement idx="0" position="0,0,11.5" look_at="0,0,0" lens_focal_length="50" />
             </camera>
-            <user_functions library="cmake-build-debug/loop_functions/id/libid_loop_functions"
-                            label="id_qtuser_functions" />
+            <user_functions library="cmake-build-debug/loop_functions/quarantine/libquarantine_loop_functions"
+                            label="quarantine_qtuser_functions" />
         </qt-opengl>
     </visualization>
 
