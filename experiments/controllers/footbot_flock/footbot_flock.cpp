@@ -107,7 +107,7 @@ void FootbotFlock::ControlStep() {
     fpushVector = -fpushVector;
     fpushVector.clampZeroAndMax(1);
     fpullVector.clampZeroAndMax(1);
-    ql::PolarVector directionVector = fpullVector * ALPHA_PULL + fpushVector * BETA_PUSH;
+    ql::PolarVector directionVector = fpullVector + fpushVector;
     directionVector.clampZeroAndMax(1);
     bool isDirZero = directionVector.isZero();
 
@@ -144,7 +144,7 @@ void FootbotFlock::ControlStep() {
             ledColor = CColor::GREEN;
         }
     }
-    mLed->SetAllColors(ledColor);
+    mLed->SetSingleColor(12, ledColor);
     epoch++;
     if (parStage == StageHelper::Stage::TRAIN) {
         mStateStats[state.getIndex()] += 1;
@@ -170,6 +170,15 @@ void FootbotFlock::ControlStep() {
 
     std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
 
+//    if (action == Action::TURN_RIGHT) {
+//        wheelSpeeds[0] = 1.0f;
+//        wheelSpeeds[1] = 0.0f;
+//    }
+//    if (action == Action::TURN_LEFT) {
+//        wheelSpeeds[0] = 0.0f;
+//        wheelSpeeds[1] = 1.0f;
+//    }
+
     wheelSpeeds[0] = wheelSpeeds[0] * parWheelVelocity;
     wheelSpeeds[1] = wheelSpeeds[1] * parWheelVelocity;
 
@@ -186,9 +195,7 @@ void FootbotFlock::ControlStep() {
         LOG << "Id: " << this->m_strId << std::endl;
         LOG << "Direction: " << directionVector.getLength() << std::endl;
         LOG << "Dir angle: " << directionVector.getAngle() << std::endl;
-        LOG << "Push: " << fpushVector.getLength() * BETA_PUSH << std::endl;
         LOG << "Push angle: " << fpushVector.getAngle() << std::endl;
-        LOG << "Pull: " << fpullVector.getLength() * ALPHA_PULL << std::endl;
         LOG << "Pull angle: " << fpullVector.getAngle() << std::endl;
         LOG << "Action taken: " << action.getName() << std::endl;
         LOG << "State: " << state.getName() << std::endl;
