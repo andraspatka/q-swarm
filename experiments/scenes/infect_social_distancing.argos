@@ -22,7 +22,7 @@
             </sensors>
             <!-- Parameters -->
             <params velocity="30" infectious="3" infect_prob="0.5" mortality="0.065" sick_for="200"
-                    social_distancing="true" social_distance_conform="30" />
+                    social_distancing="true" social_distance_conform="50" />
         </infect_random_walk>
     </controllers>
 

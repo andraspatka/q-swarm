@@ -75,7 +75,7 @@ private:
     constexpr double static A = 1.0f;
 
     constexpr double static B_PUSH_CAMERA = 0.0f;
-    constexpr double static C_PUSH_CAMERA = 0.7f;
+    constexpr double static C_PUSH_CAMERA = 0.8f;
 
     constexpr double static LIGHT_READING_THRESHOLD = 0.75;
     constexpr double static EXTENDED_LIGHT_READING_THRESHOLD = 0.6;

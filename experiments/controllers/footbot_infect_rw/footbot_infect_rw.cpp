@@ -52,9 +52,7 @@ void InfectRandomWalk::InitInfectious() {
     }
 
     if (parShouldSocialDistance) {
-        if (idNumber < parSocialDistancingConformity) {
-            mConformsToSocialDistancing = true;
-        }
+        mConformsToSocialDistancing = idNumber < parSocialDistancingConformity;
     }
 }
 

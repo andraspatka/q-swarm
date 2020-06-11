@@ -43,7 +43,7 @@ for index, row in aggData.iterrows():
 
     i = i + 1
 
-plt.title(f"Quarantine: {NUMBER_OF_AGENTS} agents, {INFECTED} infected, {CHANCE_TO_INFECT}% chance of infection")
+plt.title(f"Quarantine: {NUMBER_OF_AGENTS} agents, {INFECTED} infected, {CHANCE_TO_INFECT}% chance of infection, \n{CONFORM_TO_POLICY}% conforms to social distancing")
 plt.plot(epochs, infected, c='red', label='Infectious')
 plt.plot(epochs, susceptible, c='cyan', label='Susceptible')
 plt.plot(epochs, deceased, c='grey', label='Deceased')
