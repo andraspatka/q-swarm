@@ -4,7 +4,7 @@
     <!-- General configuration -->
     <framework>
         <system threads="4" />
-        <experiment length="0" ticks_per_second="10" random_seed="124" />
+        <experiment length="0" ticks_per_second="10" random_seed="115" />
     </framework>
 
     <!-- Controllers -->
@@ -60,7 +60,7 @@
             </entity>
         </distribute>
 
-        <light id="quarantine" position="0,-5,0.4" orientation="0,0,0" color="yellow" intensity="8.0" medium="leds" />
+        <light id="quarantine" position="0,-5,1" orientation="0,0,0" color="yellow" intensity="8.0" medium="leds" />
     </arena>
 
     <!-- Physics engines -->

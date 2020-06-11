@@ -91,7 +91,7 @@ private:
 
     int mInfectedForEpochs = 0;
 
-    short mPrevMaxInfectiousSeen;
+    short mPrevMaxInfectiousSeen = 0;
 
     bool mIsGoingToDie = false;
     unsigned short mDiesAfterEpochs = 0;
