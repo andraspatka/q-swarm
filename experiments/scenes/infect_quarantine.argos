@@ -4,7 +4,7 @@
     <!-- General configuration -->
     <framework>
         <system threads="4" />
-        <experiment length="0" ticks_per_second="10" random_seed="124" />
+        <experiment length="0" ticks_per_second="10" random_seed="123" />
     </framework>
 
     <!-- Controllers -->
@@ -21,7 +21,7 @@
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
-            <params velocity="30" infectious="1" infect_prob="0.75" mortality="0.065" social_distancing="false" sick_for="200"/>
+            <params velocity="40" infectious="10" infect_prob="0.5" mortality="0.065" social_distancing="false" sick_for="200"/>
         </infect_random_walk>
     </controllers>
 
@@ -29,42 +29,37 @@
     <arena size="20, 20, 4" center="0,0,0.5">
 
         <!-- Arena walls -->
-        <box id="wall_north" size="6,0.1,0.1" movable="false">
-            <body position="0,4,0" orientation="0,0,0" />
+        <box id="wall_north" size="8,0.1,0.1" movable="false">
+            <body position="0,5,0" orientation="0,0,0" />
         </box>
-        <box id="quarantine_wall1" size="2,0.1,0.1" movable="false">
-            <body position="-2,-2,0" orientation="0,0,0" />
+        <box id="wall_east" size="0.1,8,0.1" movable="false">
+            <body position="4,1,0" orientation="0,0,0" />
         </box>
-        <box id="quarantine_wall2" size="2,0.1,0.1" movable="false">
-            <body position="2,-2,0" orientation="0,0,0" />
+        <box id="wall_west" size="0.1,8,0.1" movable="false">
+            <body position="-4,1,0" orientation="0,0,0" />
         </box>
-        <box id="quarantine_wall3" size="2,0.1,0.1" movable="false">
-            <body position="0,-4,0" orientation="0,0,0" />
+        <box id="quarantine_wall_diag_up" size="3.7,0.1,0.1" movable="false">
+            <body position="3,-4.5,0" orientation="55,0,0" />
         </box>
-        <box id="quarantine_wall_up" size="0.1,2,0.1" movable="false">
-            <body position="1,-3,0" orientation="0,0,0" />
+        <box id="quarantine_wall_diag_down" size="3.7,0.1,0.1" movable="false">
+            <body position="-3,-4.5,0" orientation="-55,0,0" />
         </box>
-        <box id="quarantine_wall_down" size="0.1,2,0.1" movable="false">
-            <body position="-1,-3,0" orientation="0,0,0" />
-        </box>
-        <box id="wall_east" size="0.1,6,0.1" movable="false">
-            <body position="3,1,0" orientation="0,0,0" />
-        </box>
-        <box id="wall_west" size="0.1,6,0.1" movable="false">
-            <body position="-3,1,0" orientation="0,0,0" />
+
+        <box id="quarantine_wall_right" size="4,0.1,0.1" movable="false">
+            <body position="0,-6,0" orientation="0,0,0" />
         </box>
 
         <distribute>
-            <position method="uniform" min="-3,-2,0" max="3,4,0" />
-            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="50" max_trials="100">
+            <position method="uniform" min="-4,-3,0" max="4,5,0" />
+            <orientation method="gaussian" mean="90,0,0" std_dev="360,0,0" />
+            <entity quantity="100" max_trials="100">
                 <foot-bot id="">
                     <controller config="irw" />
                 </foot-bot>
             </entity>
         </distribute>
 
-        <light id="quarantine" position="0,-3,0.4" orientation="0,0,0" color="yellow" intensity="3.0" medium="leds" />
+        <light id="quarantine" position="0,-5,0.4" orientation="0,0,0" color="yellow" intensity="8.0" medium="leds" />
     </arena>
 
 
@@ -83,7 +78,7 @@
         <qt-opengl>
             <!-- Camera position, bird-eye view. -->
             <camera>
-                <placement idx="0" position="0,0,11.5" look_at="0,0,0" lens_focal_length="50" />
+                <placement idx="0" position="0,0,16.5" look_at="0,0,0" lens_focal_length="50" />
             </camera>
             <user_functions library="cmake-build-debug/loop_functions/quarantine/libquarantine_loop_functions"
                             label="quarantine_qtuser_functions" />

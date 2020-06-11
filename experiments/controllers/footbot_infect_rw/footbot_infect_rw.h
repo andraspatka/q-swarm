@@ -77,8 +77,8 @@ private:
     constexpr double static B_PUSH_CAMERA = 0.0f;
     constexpr double static C_PUSH_CAMERA = 0.8f;
 
-    constexpr double static LIGHT_READING_THRESHOLD = 0.75;
-    constexpr double static EXTENDED_LIGHT_READING_THRESHOLD = 0.6;
+    constexpr double static LIGHT_READING_THRESHOLD = 0.8;
+    constexpr double static EXTENDED_LIGHT_READING_THRESHOLD = 0.75;
 
     double const FORWARD_ANGLE = 20.0f;
     double const SIDE_ANGLE = 180.0f;

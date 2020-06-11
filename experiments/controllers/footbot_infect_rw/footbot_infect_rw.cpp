@@ -116,7 +116,7 @@ void InfectRandomWalk::ControlStep() {
             if (agentType == AgentTypeHelper::AgentType::INFECTIOUS) {
                 fpullVector += MathUtils::readingToVector(r.Value, r.Angle,
                                                           A, B_PULL, C_PULL, MathUtils::lightToDistance);
-            } else if (agentType != AgentTypeHelper::AgentType::DECEASED && agentType != AgentTypeHelper::AgentType::RECOVERED){
+            } else if (agentType != AgentTypeHelper::AgentType::DECEASED) {
                 fpushVector += MathUtils::readingToVector(r.Value, r.Angle,
                                                           A, B_PUSH, C_PUSH, MathUtils::lightToDistance);
             }
