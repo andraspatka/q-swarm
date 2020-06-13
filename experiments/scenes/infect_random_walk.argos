@@ -71,7 +71,7 @@
             <camera>
                 <placement idx="0" position="0,0,16.5" look_at="0,0,0" lens_focal_length="50" />
             </camera>
-            <user_functions library="cmake-build-debug/loop_functions/id/libid_loop_functions" label="id_qtuser_functions" />
+<!--            <user_functions library="cmake-build-debug/loop_functions/id/libid_loop_functions" label="id_qtuser_functions" />-->
         </qt-opengl>
     </visualization>
 

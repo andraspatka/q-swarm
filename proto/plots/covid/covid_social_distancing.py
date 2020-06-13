@@ -53,7 +53,7 @@ for rkc in infected_chance_to_infect_conform:
 
         i = i + 1
 
-    plt.title(f"Quarantine: {NUMBER_OF_AGENTS} agents, {INFECTED} infected, {CHANCE_TO_INFECT}% chance of infection, \n{CONFORM_TO_POLICY}% conforms to social distancing")
+    plt.title(f"Isolation: {NUMBER_OF_AGENTS} agents, {INFECTED} infected, {CHANCE_TO_INFECT}% chance of infection, \n{CONFORM_TO_POLICY}% conforms to social distancing")
     plt.plot(epochs, infected, c='red', label='Infectious')
     plt.plot(epochs, susceptible, c='cyan', label='Susceptible')
     plt.plot(epochs, deceased, c='grey', label='Deceased')

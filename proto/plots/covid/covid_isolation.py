@@ -17,7 +17,7 @@ for rk in infected_chance_to_infect:
     INFECTED = rk[1]
     PERCENTAGE = rk[1]
     CHANCE_TO_INFECT = rk[0]
-    FOLDER_ROOT = '../../../experiments/results/covid/quarantine/'
+    FOLDER_ROOT = '../../../experiments/results/covid/isolation/'
     EXPERIMENT = f"r_{CHANCE_TO_INFECT}_k_{PERCENTAGE}"
 
     PATH = FOLDER_ROOT + EXPERIMENT + '/logs/'
@@ -49,12 +49,12 @@ for rk in infected_chance_to_infect:
 
         i = i + 1
 
-    plt.title(f"Quarantine: {NUMBER_OF_AGENTS} agents, {INFECTED} infected, {CHANCE_TO_INFECT}% chance of infection")
+    plt.title(f"Isolation: {NUMBER_OF_AGENTS} agents, {INFECTED} infected, {CHANCE_TO_INFECT}% chance of infection")
     plt.plot(epochs, infected, c='red', label='Infectious')
     plt.plot(epochs, susceptible, c='cyan', label='Susceptible')
     plt.plot(epochs, deceased, c='grey', label='Deceased')
     plt.plot(epochs, recovered, c='green', label='Recovered')
     plt.legend()
     plt.grid()
-    plt.savefig(f"png/quarantine/covid_quarantine_{EXPERIMENT}.png", transparent=False, dpi=300)
+    plt.savefig(f"png/isolation/covid_isolation_{EXPERIMENT}.png", transparent=False, dpi=300)
     plt.show()

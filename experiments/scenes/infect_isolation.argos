@@ -59,7 +59,7 @@
             </entity>
         </distribute>
 
-        <light id="quarantine" position="0,-5,1" orientation="0,0,0" color="yellow" intensity="8.0" medium="leds" />
+        <light id="isolation" position="0,-5,1" orientation="0,0,0" color="yellow" intensity="8.0" medium="leds" />
     </arena>
 
 
