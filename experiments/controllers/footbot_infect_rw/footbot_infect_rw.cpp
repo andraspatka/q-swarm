@@ -105,6 +105,7 @@ void InfectRandomWalk::ControlStep() {
         for (int i = 0; i < mPrevMaxInfectiousSeen; ++i) {
             if (drand48() < parInfectionProb) {
                 agentType = AgentTypeHelper::AgentType::INFECTIOUS;
+                break;
             }
         }
         mPrevMaxInfectiousSeen = 0;
@@ -118,7 +119,7 @@ void InfectRandomWalk::ControlStep() {
                                                           A, B_PULL, C_PULL, MathUtils::lightToDistance);
             } else if (agentType != AgentTypeHelper::AgentType::DECEASED) {
                 fpushVector += MathUtils::readingToVector(r.Value, r.Angle,
-                                                          A, B_PUSH, C_PUSH, MathUtils::lightToDistance);
+                                                          A, 0, C_PUSH_CAMERA, MathUtils::lightToDistance);
             }
             maxLight = std::max(maxLight, r.Value);
         }
@@ -140,11 +141,11 @@ void InfectRandomWalk::ControlStep() {
     directionVector += fpullVector;
     bool isDirZero = directionVector.isZero();
 
-    bool isDoneWithDisease = agentType == AgentTypeHelper::DECEASED;
-    bool isInQuarantine = maxLight > LIGHT_READING_THRESHOLD && agentType == AgentTypeHelper::AgentType::INFECTIOUS ||
+    bool isDeceased = agentType == AgentTypeHelper::DECEASED;
+    bool isInIsolation = maxLight > LIGHT_READING_THRESHOLD && agentType == AgentTypeHelper::AgentType::INFECTIOUS ||
             maxLight > EXTENDED_LIGHT_READING_THRESHOLD && infectedSeesInfectious;
 
-    bool isIdle = isInQuarantine || isDoneWithDisease;
+    bool isIdle = isInIsolation || isDeceased;
     bool isWander = isDirZero && !isIdle;
     bool isFollow = directionVector.getAbsAngle() <= FORWARD_ANGLE && !isDirZero && !isIdle;
     bool isDirLeft = directionVector.getAngle() > FORWARD_ANGLE &&
@@ -240,9 +241,9 @@ void InfectRandomWalk::ControlStep() {
     };
     ql::Logger::log(mId, toLog, true);
 
-    LOG << "---------------------------------------------" << std::endl;
-    LOG << "Id: " << mId << std::endl;
-    LOG << "Type: " << AgentTypeHelper::GetAgentTypeAsString(this->agentType) << std::endl;
+//    LOG << "---------------------------------------------" << std::endl;
+//    LOG << "Id: " << mId << std::endl;
+//    LOG << "Type: " << AgentTypeHelper::GetAgentTypeAsString(this->agentType) << std::endl;
 }
 
 void InfectRandomWalk::Destroy() {

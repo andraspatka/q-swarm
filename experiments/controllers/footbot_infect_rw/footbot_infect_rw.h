@@ -65,20 +65,22 @@ private:
 
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;
-    // The pull gauss curve's centre point is the light sensor
-    constexpr double static B_PULL = 2.3f;
     // Width of the gauss curve for pushing forces
     constexpr double static C_PUSH = 0.65f;
+
+    // The pull gauss curve's centre point is the light sensor
+    constexpr double static B_PULL = 3.4f;
     // Width of the gauss curve for pulling forces: light sensor
-    constexpr double static C_PULL = 0.6f;
+    constexpr double static C_PULL = 10.0f;
+
     // Height of the gauss curve
     constexpr double static A = 1.0f;
 
     constexpr double static B_PUSH_CAMERA = 0.0f;
     constexpr double static C_PUSH_CAMERA = 0.8f;
 
-    constexpr double static LIGHT_READING_THRESHOLD = 0.8;
-    constexpr double static EXTENDED_LIGHT_READING_THRESHOLD = 0.75;
+    constexpr double static LIGHT_READING_THRESHOLD = 0.77;
+    constexpr double static EXTENDED_LIGHT_READING_THRESHOLD = 0.7;
 
     double const FORWARD_ANGLE = 20.0f;
     double const SIDE_ANGLE = 180.0f;
