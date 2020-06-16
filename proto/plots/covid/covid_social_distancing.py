@@ -11,7 +11,8 @@ NUMBER_OF_AGENTS = 100
 infected_chance_to_infect_conform = [
     (5, 5, 20), (5, 5, 60), (5, 5, 80),
     (25, 1, 20), (25, 1, 60), (25, 1, 80),
-    (50, 5, 20), (50, 5, 60), (50, 5, 80)
+    (50, 5, 20), (50, 5, 60), (50, 5, 80),
+    (50, 10, 20), (50, 10, 60), (50, 10, 80)
 ]
 
 for rkc in infected_chance_to_infect_conform:
@@ -58,7 +59,9 @@ for rkc in infected_chance_to_infect_conform:
     plt.plot(epochs, susceptible, c='cyan', label='Susceptible')
     plt.plot(epochs, deceased, c='grey', label='Deceased')
     plt.plot(epochs, recovered, c='green', label='Recovered')
+    plt.xlabel("Epochs")
+    plt.ylabel("Number of agents")
     plt.legend()
     plt.grid()
-    plt.savefig(f"png/social_distancing/covid_social_distance_{EXPERIMENT}.png", transparent=False, dpi=300)
+    plt.savefig(f"png/social_distancing/covid_social_distance_{EXPERIMENT}.png", transparent=False, dpi=300, bbox_inches="tight")
     plt.show()
