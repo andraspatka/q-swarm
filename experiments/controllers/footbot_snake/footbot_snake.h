@@ -64,7 +64,7 @@ private:
 
     constexpr int static STATE_THRESHOLD = 40;
 
-    constexpr int static PROX_READING_PER_SIDE = 4;
+    constexpr int static PROX_READING_PER_SIDE = 5;
 
     // The push gauss curve's centre point is the robot
     constexpr double static B_PUSH = 0.0f;

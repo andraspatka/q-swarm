@@ -15,7 +15,7 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors>
-                <footbot_proximity implementation="default" show_rays="false" />
+                <footbot_proximity implementation="default" show_rays="true" />
                 <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
                 <positioning implementation="default" />
             </sensors>
@@ -104,6 +104,10 @@
             </entity>
         </distribute>
 
+        <box id="obst" size="0.2,0.2,0.1" movable="false">
+            <body position="-1,2,0" orientation="0,0,0" />
+        </box>
+
         <foot-bot id="fb1">
             <body position="0.4,2.3,0" orientation="0,0,0" />
             <controller config="ffc" />
@@ -117,29 +121,30 @@
             <controller config="ffc" />
         </foot-bot>
         <foot-bot id="fb4">
-            <body position="0.0,1.8,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fb5">
             <body position="0.0,1.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-        <foot-bot id="fb6">
-            <body position="-0.8,1.8,0" orientation="0,0,0" />
+        <foot-bot id="fb5">
+            <body position="-0.8,1.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-        <!--        <foot-bot id="fb6">-->
-        <!--            <body position="-0.4,2.3,0" orientation="0,0,0" />-->
-        <!--            <controller config="ffc" />-->
-        <!--        </foot-bot>-->
-        <!--        <foot-bot id="fb7">-->
-        <!--            <body position="-0.4,1.8,0" orientation="0,0,0" />-->
-        <!--            <controller config="ffc" />-->
-        <!--        </foot-bot>-->
-        <!--        <foot-bot id="fb8">-->
-        <!--            <body position="-0.4,1.3,0" orientation="0,0,0" />-->
-        <!--            <controller config="ffc" />-->
-        <!--        </foot-bot>-->
+
+        <foot-bot id="fb6">
+            <body position="-0.8,2.3,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+        <foot-bot id="fb7">
+            <body position="-0.4,2.3,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+        <foot-bot id="fb8">
+            <body position="-0.4,1.8,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+        <foot-bot id="fb9">
+            <body position="-0.4,1.3,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
 
 
 
@@ -159,6 +164,14 @@
             <body position="0.8,1.8,0" orientation="0,0,0" />
             <controller config="fmc" />
         </foot-bot>
+<!--        <foot-bot id="leader2">-->
+<!--            <body position="0.8,1.8,0" orientation="0,0,0" />-->
+<!--            <controller config="fmc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="leader3">-->
+<!--            <body position="0.8,1.8,0" orientation="0,0,0" />-->
+<!--            <controller config="fmc" />-->
+<!--        </foot-bot>-->
 
         <!--        <foot-bot id="leaderB">-->
         <!--            <body position="-0.8,1.8,0" orientation="270,0,0" />-->

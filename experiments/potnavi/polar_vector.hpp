@@ -28,7 +28,8 @@ namespace ql {
         void Init(double length, double angle) {
             if (length == 0) {
                 this->length = 0;
-                this->angle = 0;
+                this->angle = angle;
+//                this->angle = 0;
             } else {
                 this->length = length;
                 this->angle = angle;
@@ -50,6 +51,15 @@ namespace ql {
             if (this->isZero()) {
                 this->length = 0;
                 this->angle = 0;
+            }
+        }
+
+        void clamp(const double minBound, const double maxBound) {
+            if (this->length > maxBound) {
+                this->length = maxBound;
+            }
+            if (this->length < minBound) {
+                this->length = minBound;
             }
         }
 

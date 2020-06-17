@@ -47,7 +47,7 @@ namespace ql {
             double phiLeft = (v + w) / C;
             double phiRight = (v - w) / C;
 
-            return{ phiLeft * 10, phiRight * 10};
+            return{ phiLeft * 6, phiRight * 6};
         }
 
         /**
