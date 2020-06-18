@@ -119,4 +119,6 @@ private:
     double parDiscountFactor;
 
     bool parShouldLog;
+
+    bool parIgnoreGoal;
 };

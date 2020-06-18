@@ -8,11 +8,12 @@ FootbotSnake::FootbotSnake() :
         epoch(0) {}
 
 /**
-*                           FOLLOW  WANDER STAY AVOID
-* 0 NO_TARGET_TO_FOLLOW     0      0.2       -1    0
-* 1 TARGET_FOLLOW           0      0       -1    0
-* 2 TARGET_REACHED          0      0        2    0
-* 3 OBSTACLE_DETECTED       0      0       -1    0
+*                                   FOLLOW  WANDER STAY AVOID
+* 0 NO_TARGET_TO_FOLLOW             0      0.2     -1    0
+* 1 TARGET_FOLLOW                   1      0       -1    0
+* 2 TARGET_REACHED                  0      0        2    0
+* 3 OBSTACLE_DETECTED               0      0       -1    0
+* 4 OBSTACLE_AND_TARGET_DETECTED    0      0       -1    0
 */
 void FootbotSnake::Init(TConfigurationNode &t_node) {
 
@@ -28,22 +29,25 @@ void FootbotSnake::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "velocity", parWheelVelocity);
     GetNodeAttribute(t_node, "learning_rate", parLearnRate);
     GetNodeAttribute(t_node, "discount_factor", parDiscountFactor);
-    GetNodeAttribute(t_node, "threshold", parThreshold);
     GetNodeAttribute(t_node, "stage", parStageString);
     GetNodeAttribute(t_node, "logging", parShouldLog);
 
     parStage = StageHelper::ParseStageFromString(parStageString);
     srand(12);
     if (parStage == StageHelper::TRAIN) {
-        mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.4);
+        mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
         std::vector<std::tuple<State, Action>> impossibleStates = {
                 std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::STAY),
                 std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::STAY),
-                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::STAY)
+                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::STAY),
+                std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, FollowerAction::STAY),
         };
         std::vector<std::tuple<State, Action, double>> rewards = {
                 std::make_tuple(FollowerState::TARGET_REACHED, FollowerAction::STAY, 2),
-                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::WANDER, 0.2),
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::WANDER, 0.1),
+                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::FOLLOW, 1),
+                std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, FollowerAction::AVOID, 1),
+                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::AVOID, 1),
         };
         mQLearner->initR(impossibleStates, rewards, FollowerState::TARGET_REACHED);
         mStateStats.fill(0);
@@ -100,7 +104,7 @@ void FootbotSnake::ControlStep() {
             closestIndirectLeaderBlob.Angle = r->Angle;
             closestIndirectLeaderBlob.Distance = r->Distance;
             isIndirectLeaderSeen = true;
-        } // TODO: PI_OVER_FOUR or PI_OVER_TWO or PI_OVER_SIX?
+        }
         if (r->Distance < closestIndirectLeaderBlobFront.Distance && r->Color == CColor::YELLOW && r->Angle.GetAbsoluteValue() < argos::CRadians::PI_OVER_FOUR.GetValue()) {
             closestIndirectLeaderBlobFront.Angle = r->Angle;
             closestIndirectLeaderBlobFront.Distance = r->Distance;
@@ -142,81 +146,63 @@ void FootbotSnake::ControlStep() {
 
     pushVector = -pushVector;
     pushVector.clampZeroAndMax(1);
-    pullVector.clamp(0.01, 1);
+    pullVector.clamp(0.0001, 1);
 
     bool isTargetFollow = pushVector.isZero() && isTargetSeen;
     bool isTargetReached = isAtGoal && !isTargetSeen;
     bool isObstacleDetected = pushVector.isNotZero() && !isAtGoal && !isTargetSeen;
-    bool isObstacleAndTargetDetectedFront = isTargetSeen && pushVector.isNotZero() && pullVector.getAbsAngle() <= 60.0f;
-    bool isObstacleAndTargetDetectedBack = isTargetSeen && pushVector.isNotZero() && pullVector.getAbsAngle() > 60.0f; // TODO: Angle?
+    bool isObstacleAndTargetDetected = isTargetSeen && pushVector.isNotZero();
     bool isNoTargetToFollow = pullVector.isZero() && pushVector.isZero() && !isTargetSeen && !isAtGoal;
 
-    FollowerAction action;
     CColor color = CColor::WHITE;
     if (isNoTargetToFollow) {
-        action = FollowerAction::WANDER;
         state = FollowerState::NO_TARGET_TO_FOLLOW;
         color = state.getLedColor();
     } else if (isTargetFollow) {
         state = FollowerState::TARGET_FOLLOW;
         color = state.getLedColor();
-        action = FollowerAction::FOLLOW;
         if (!isIndirectLeaderInFrontSeen && !isLeaderSeen || pullVector.isZero()) {
             color = CColor::WHITE;
         }
     } else if (isTargetReached) {
         state = FollowerState::TARGET_REACHED;
-        action = FollowerAction::STAY;
         color = state.getLedColor();
     } else if (isObstacleDetected) {
         state = FollowerState::OBSTACLE_DETECTED;
         color = state.getLedColor();
-        action = FollowerAction::AVOID;
-    } else if (isObstacleAndTargetDetectedFront) {
-        state = FollowerState::OBSTACLE_DETECTED_TARGET_FRONT;
-        action = FollowerAction::AVOID;
+    } else if (isObstacleAndTargetDetected) {
+        state = FollowerState::OBSTACLE_AND_TARGET_DETECTED;
         color = state.getLedColor();
-    } else if (isObstacleAndTargetDetectedBack) {
-        state = FollowerState::OBSTACLE_DETECTED_TARGET_BACK;
-        action = FollowerAction::FOLLOW;
-        color = state.getLedColor();
-    }
-
-    if (state.getName() == "INVALID") {
-        int bp = 0;
-    }
-    int numStates = isTargetReached + isNoTargetToFollow + isTargetFollow + isObstacleDetected +
-            isObstacleAndTargetDetectedBack + isObstacleAndTargetDetectedFront;
-
-    if (numStates > 1) {
-        int bp = 0;
+        if (pullVector.getAbsAngle() > 60.0f) {
+            color = CColor::WHITE;
+        }
     }
 
     mLed->SetSingleColor(12, color);
     epoch++;
-//    if (parStage == StageHelper::Stage::TRAIN) {
-//        mStateStats[state.getIndex()] += 1;
-//        bool isLearned = true;
-//        for (auto a : mStateStats) {
-//            if (a < STATE_THRESHOLD) {
-//                isLearned = false;
-//                break;
-//            }
-//        }
-//        if (isLearned && epoch < mLearnedEpoch) {
-//            mQLearner->setLearningRate(0);
-//            mLearnedEpoch = epoch;
-//        }
-//        if (mQLearner->getLearningRate() > 0.05f && epoch % 350 == 0) {
-//            mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
-//        }
-//        LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
-//        LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
-//
-//    }
-//    FollowerAction action = (parStage == StageHelper::Stage::EXPLOIT) ?
-//                            mQExploiter->exploit<FollowerState, FollowerAction>(state) :
-//                            mQLearner->doubleQ<FollowerState, FollowerAction>(mPrevState, state);
+    if (parStage == StageHelper::Stage::TRAIN) {
+        mStateStats[state.getIndex()] += 1;
+        bool isLearned = true;
+        for (auto a : mStateStats) {
+            if (a < STATE_THRESHOLD) {
+                isLearned = false;
+                break;
+            }
+        }
+        if (isLearned && epoch < mLearnedEpoch) {
+            mQLearner->setLearningRate(0);
+            mLearnedEpoch = epoch;
+        }
+        if (mQLearner->getLearningRate() > 0.05f && epoch % 350 == 0) {
+            mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
+        }
+        LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
+        LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
+
+    }
+    FollowerAction action = (parStage == StageHelper::Stage::EXPLOIT) ?
+                            mQExploiter->exploit<FollowerState, FollowerAction>(state) :
+                            mQLearner->doubleQ<FollowerState, FollowerAction>(mPrevState, state);
 
     mPrevState = state;
 

@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="20" learning_rate="0.0" discount_factor="0.8" threshold="30" stage="exploit" logging="true"/>
+            <params velocity="20" learning_rate="0.0" discount_factor="0.5" threshold="30" stage="exploit" logging="true"/>
         </footbot_snake_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -29,7 +29,7 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors />
-            <params max_speed="20"/>
+            <params max_speed="15"/>
         </footbot_manualcontrol>
         <footbot_leader_controller id="fgc" library="cmake-build-debug/controllers/footbot_leader/libfootbot_leader.so">
             <actuators>
@@ -128,7 +128,6 @@
             <body position="-0.8,1.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-
         <foot-bot id="fb6">
             <body position="-0.8,2.3,0" orientation="0,0,0" />
             <controller config="ffc" />

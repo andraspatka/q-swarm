@@ -58,11 +58,11 @@ public:
     virtual void Destroy();
 
 private:
-    constexpr int static NUM_STATES = 4;
+    constexpr int static NUM_STATES = 5;
 
     constexpr int static NUM_ACTIONS = 4;
 
-    constexpr int static STATE_THRESHOLD = 40;
+    constexpr int static STATE_THRESHOLD = 20;
 
     constexpr int static PROX_READING_PER_SIDE = 5;
 
@@ -114,9 +114,6 @@ private:
 
     // If true then learning phase, if false, then exploit phase.
     StageHelper::Stage parStage;
-
-    // Threshold value for IDLE state
-    double parThreshold;
 
     // Learning rate. Close to 0: nothing new will be learnt, close to 1: the old value will be completely discarded.
     double parLearnRate;

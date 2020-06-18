@@ -26,6 +26,7 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "threshold", parThreshold);
     GetNodeAttribute(t_node, "stage", parStageString);
     GetNodeAttribute(t_node, "logging", parShouldLog);
+    GetNodeAttribute(t_node, "ignore_goal", parIgnoreGoal);
 
     parStage = StageHelper::ParseStageFromString(parStageString);
 
@@ -100,11 +101,13 @@ void FootbotLeader::ControlStep() {
     }
 
     // max light reading around the footbot
-    for (int i = 0; i < 23; ++i) {
-        if (!MathUtils::closeToZero(lightReadings.at(i).Value)) {
-            fpullVector += MathUtils::readingToVector(lightReadings.at(i).Value, lightReadings.at(i).Angle,
-                                                      A, B_PULL, C_PULL, MathUtils::lightToDistance);
-            maxLight = std::max(maxLight, lightReadings.at(i).Value);
+    if (!parIgnoreGoal) {
+        for (int i = 0; i < 23; ++i) {
+            if (!MathUtils::closeToZero(lightReadings.at(i).Value)) {
+                fpullVector += MathUtils::readingToVector(lightReadings.at(i).Value, lightReadings.at(i).Angle,
+                                                          A, B_PULL, C_PULL, MathUtils::lightToDistance);
+                maxLight = std::max(maxLight, lightReadings.at(i).Value);
+            }
         }
     }
 

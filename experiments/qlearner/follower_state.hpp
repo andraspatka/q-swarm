@@ -14,8 +14,7 @@ namespace ql {
         static FollowerState TARGET_FOLLOW;
         static FollowerState TARGET_REACHED;
         static FollowerState OBSTACLE_DETECTED;
-        static FollowerState OBSTACLE_DETECTED_TARGET_FRONT;
-        static FollowerState OBSTACLE_DETECTED_TARGET_BACK;
+        static FollowerState OBSTACLE_AND_TARGET_DETECTED;
 
 
         FollowerState(string stateName, CColor ledColor, unsigned short index) : State(stateName, ledColor, index) {}
@@ -25,7 +24,6 @@ namespace ql {
     FollowerState FollowerState::TARGET_FOLLOW("TARGET_FOLLOW", CColor::YELLOW, 1);
     FollowerState FollowerState::TARGET_REACHED("TARGET_REACHED", CColor::PURPLE, 2);
     FollowerState FollowerState::OBSTACLE_DETECTED("OBSTACLE_DETECTED", CColor::WHITE, 3);
-    FollowerState FollowerState::OBSTACLE_DETECTED_TARGET_FRONT("OBSTACLE_DETECTED_TARGET_FRONT", CColor::YELLOW, 4);
-    FollowerState FollowerState::OBSTACLE_DETECTED_TARGET_BACK("OBSTACLE_DETECTED_TARGET_BACK", CColor::WHITE, 5);
+    FollowerState FollowerState::OBSTACLE_AND_TARGET_DETECTED("OBSTACLE_AND_TARGET_DETECTED", CColor::YELLOW, 4);
 }
 #endif
