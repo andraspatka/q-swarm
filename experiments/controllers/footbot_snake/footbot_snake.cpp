@@ -9,11 +9,11 @@ FootbotSnake::FootbotSnake() :
 
 /**
 *                                   FOLLOW  WANDER STAY AVOID
-* 0 NO_TARGET_TO_FOLLOW             0      0.2     -1    0
-* 1 TARGET_FOLLOW                   1      0       -1    0
+* 0 NO_TARGET_TO_FOLLOW             -1      1     -1    -1
+* 1 TARGET_FOLLOW                   1      0       -1    -1
 * 2 TARGET_REACHED                  0      0        2    0
-* 3 OBSTACLE_DETECTED               0      0       -1    0
-* 4 OBSTACLE_AND_TARGET_DETECTED    0      0       -1    0
+* 3 OBSTACLE_DETECTED               -1      0       0    1
+* 4 OBSTACLE_AND_TARGET_DETECTED    0      -1       -1    1
 */
 void FootbotSnake::Init(TConfigurationNode &t_node) {
 
@@ -37,17 +37,21 @@ void FootbotSnake::Init(TConfigurationNode &t_node) {
     if (parStage == StageHelper::TRAIN) {
         mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
         std::vector<std::tuple<State, Action>> impossibleStates = {
-                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::STAY),
                 std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::STAY),
-                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::STAY),
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::AVOID),
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::FOLLOW),
+                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::AVOID),
+                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::STAY),
+                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::FOLLOW),
                 std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, FollowerAction::STAY),
+                std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, FollowerAction::WANDER),
         };
         std::vector<std::tuple<State, Action, double>> rewards = {
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::WANDER, 1),
                 std::make_tuple(FollowerState::TARGET_REACHED, FollowerAction::STAY, 2),
-                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::WANDER, 0.1),
-                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::FOLLOW, 1),
                 std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, FollowerAction::AVOID, 1),
                 std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::AVOID, 1),
+                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::FOLLOW, 1),
         };
         mQLearner->initR(impossibleStates, rewards, FollowerState::TARGET_REACHED);
         mStateStats.fill(0);
