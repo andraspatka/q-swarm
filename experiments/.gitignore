@@ -4,7 +4,6 @@ build
 .idea/shelf
 cmake-build-debug
 captures
-*.qlmat
 *.iml
 experiments.iml
 misc.xml
