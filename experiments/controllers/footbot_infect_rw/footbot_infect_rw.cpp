@@ -6,7 +6,14 @@ InfectRandomWalk::InfectRandomWalk() :
         mDiffSteering(NULL),
         mProximitySensor(NULL),
         epoch(0) {}
-
+/**
+*            STOP    TURN_LEFT   TURN_RIGHT  FORWARD
+* 0 WANDER     -1      0           0           0.2
+* 1 FOLLOW     -1      0           0           1
+* 2 DIR_LEFT   -1      0           0           0
+* 3 DIR_RIGHT  -1      0           0           0
+* 4 IDLE        2      0           0           0
+*/
 void InfectRandomWalk::Init(TConfigurationNode &t_node) {
 
     mDiffSteering = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
@@ -25,14 +32,37 @@ void InfectRandomWalk::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "sick_for", parSickFor);
     GetNodeAttribute(t_node, "mortality", parMortality);
     GetNodeAttribute(t_node, "social_distancing", parShouldSocialDistance);
+    GetNodeAttribute(t_node, "stage", parStageString);
+
+    parStage = StageHelper::ParseStageFromString(parStageString);
 
     if (parShouldSocialDistance) {
         GetNodeAttribute(t_node, "social_distance_conform", parSocialDistancingConformity);
     }
     srand48(time(nullptr));
 
-    mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
-    mQExploiter->readQ("qmats/flock-train.qlmat");
+    if (parStage == StageHelper::Stage::TRAIN) {
+        srand48(5);
+        GetNodeAttribute(t_node, "learning_rate", parLearnRate);
+        GetNodeAttribute(t_node, "discount_factor", parDiscountFactor);
+        mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.2);
+        std::vector<std::tuple<State, Action>> impossibleStates = {
+                std::make_tuple(State::WANDER, Action::STOP),
+                std::make_tuple(State::FOLLOW, Action::STOP),
+                std::make_tuple(State::DIR_LEFT, Action::STOP),
+                std::make_tuple(State::DIR_RIGHT, Action::STOP)
+        };
+        std::vector<std::tuple<State, Action, double>> rewards = {
+                std::make_tuple(State::WANDER, Action::FORWARD, 1),
+                std::make_tuple(State::FOLLOW, Action::FORWARD, 1),
+                std::make_tuple(State::IDLE, Action::STOP, 2)
+        };
+        mQLearner->initR(impossibleStates, rewards, State::IDLE);
+    }
+    if (parStage == StageHelper::Stage::EXPLOIT) {
+        mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
+        mQExploiter->readQ("qmats/covid-train.qlmat");
+    }
     mId = this->GetId();
     InitInfectious();
 }
@@ -43,6 +73,10 @@ void InfectRandomWalk::Reset() {
 
 void InfectRandomWalk::InitInfectious() {
     ql::Logger::clearMyLogs(mId, true);
+    if (parStage == StageHelper::Stage::TRAIN) {
+        agentType = AgentTypeHelper::AgentType::SUSCEPTIBLE;
+        return;
+    }
     int idNumber = std::stoi(mId);
     mInfectedForEpochs = 0;
     if (idNumber < parNoOfInfectious) {
@@ -179,7 +213,30 @@ void InfectRandomWalk::ControlStep() {
         agentType = AgentTypeHelper::AgentType::DECEASED;
     }
 
-    Action action = mQExploiter->exploit<State, Action>(state);
+    if (parStage == StageHelper::Stage::TRAIN) {
+        mStateStats[state.getIndex()] += 1;
+        bool isLearned = true;
+        for (auto a : mStateStats) {
+            if (a < STATE_THRESHOLD) {
+                isLearned = false;
+                break;
+            }
+        }
+        if (isLearned && epoch < mLearnedEpoch) {
+            mQLearner->setLearningRate(0);
+            mLearnedEpoch = epoch;
+        }
+        if (mQLearner->getLearningRate() > 0.05f && epoch % 200 == 0) {
+            mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
+        }
+        LOG << "Learned epoch: " << mLearnedEpoch << std::endl;
+        LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
+    }
+
+    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit<State, Action>(state) :
+                    mQLearner->doubleQ<State, Action>(mPrevState, state);
+
+    mPrevState = state;
 
     switch (agentType) {
         case AgentTypeHelper::AgentType::INFECTIOUS:
@@ -204,7 +261,8 @@ void InfectRandomWalk::ControlStep() {
             }
             break;
     }
-    if (state == State::WANDER) {
+
+    if (state == State::WANDER && parStage == StageHelper::Stage::EXPLOIT) {
         if (drand48() > 0.85f) {
             if (drand48() < 0.5f) {
                 action = Action::TURN_RIGHT;
@@ -215,7 +273,6 @@ void InfectRandomWalk::ControlStep() {
             action = Action::FORWARD;
         }
     }
-
     std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
     if (action == Action::TURN_RIGHT) {
         wheelSpeeds[0] = 1.0f;
@@ -241,13 +298,22 @@ void InfectRandomWalk::ControlStep() {
     };
     ql::Logger::log(mId, toLog, true);
 
-//    LOG << "---------------------------------------------" << std::endl;
-//    LOG << "Id: " << mId << std::endl;
-//    LOG << "Type: " << AgentTypeHelper::GetAgentTypeAsString(this->agentType) << std::endl;
+    LOG << "Id: " << mId << std::endl;
+    LOG << "Type: " << AgentTypeHelper::GetAgentTypeAsString(this->agentType) << std::endl;
+    LOG << "State: " << state.getName() << std::endl;
+    LOG << "Action: " << action.getName() << std::endl;
+    LOG << "max light: " << maxLight << std::endl;
+    LOG << "---------------------------------------------" << std::endl;
 }
 
 void InfectRandomWalk::Destroy() {
-    delete mQExploiter;
+    if (parStage == StageHelper::Stage::TRAIN) {
+        mQLearner->printQ("qmats/" + this->m_strId + ".qlmat", true);
+        delete mQLearner;
+    }
+    if (parStage == StageHelper::EXPLOIT) {
+        delete mQExploiter;
+    }
 }
 /**
  * Register the controller.

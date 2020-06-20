@@ -19,6 +19,7 @@
 #include <monitoring/logger.hpp>
 #include <qlearner/qexploiter.hpp>
 #include <qlearner/agent_type.hpp>
+#include <qlearner/stage.hpp>
 
 using namespace argos;
 using namespace ql;
@@ -82,14 +83,23 @@ private:
     constexpr double static LIGHT_READING_THRESHOLD = 0.77;
     constexpr double static EXTENDED_LIGHT_READING_THRESHOLD = 0.7;
 
+    constexpr int static STATE_THRESHOLD = 40;
+
     double const FORWARD_ANGLE = 20.0f;
     double const SIDE_ANGLE = 180.0f;
 
     ql::QExploiter * mQExploiter;
+    QLearner * mQLearner;
+
+    State mPrevState = State::WANDER;
 
     std::string mId;
 
     int epoch = 0;
+
+    int mLearnedEpoch = 10000;
+
+    std::array<int, NUM_STATES> mStateStats = {0};
 
     int mInfectedForEpochs = 0;
 
@@ -124,6 +134,8 @@ private:
     /* Wheel speed. */
     Real parWheelVelocity;
 
+    StageHelper::Stage parStage;
+
 //    COVID
     double parInfectionProb;
     int parNoOfInfectious;
@@ -131,4 +143,6 @@ private:
     double parMortality;
     bool parShouldSocialDistance;
     double parSocialDistancingConformity;
+    double parDiscountFactor;
+    double parLearnRate;
 };

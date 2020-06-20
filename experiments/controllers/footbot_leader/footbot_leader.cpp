@@ -50,7 +50,11 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
         mQExploiter->readQ("qmats/leader-train.qlmat");
     }
 
-    mLed->SetSingleColor(12, CColor::RED);
+    if (parIgnoreGoal) {
+        mLed->SetSingleColor(12, CColor::ORANGE);
+    } else {
+        mLed->SetSingleColor(12, CColor::RED);
+    }
     Logger::clearMyLogs(this->m_strId);
 }
 
