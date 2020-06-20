@@ -91,7 +91,7 @@ private:
     ql::QExploiter * mQExploiter;
     QLearner * mQLearner;
 
-    State mPrevState = State::WANDER;
+    SimpleState mPrevState = SimpleState::WANDER;
 
     std::string mId;
 

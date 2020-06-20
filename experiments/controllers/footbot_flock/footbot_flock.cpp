@@ -1,5 +1,7 @@
 #include <potnavi/polar_vector.hpp>
 #include <potnavi/math_utils.hpp>
+#include <qlearner/action/low_level_action.hpp>
+#include <qlearner/state/simple_state.hpp>
 #include "footbot_flock.h"
 
 FootbotFlock::FootbotFlock() :
@@ -37,17 +39,17 @@ void FootbotFlock::Init(TConfigurationNode &t_node) {
     if (parStage == StageHelper::TRAIN) {
         mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
         std::vector<std::tuple<State, Action>> impossibleStates = {
-                std::make_tuple(State::WANDER, Action::STOP),
-                std::make_tuple(State::FOLLOW, Action::STOP),
-                std::make_tuple(State::DIR_LEFT, Action::STOP),
-                std::make_tuple(State::DIR_RIGHT, Action::STOP)
+                std::make_tuple(SimpleState::WANDER, LowLevelAction::STOP),
+                std::make_tuple(SimpleState::FOLLOW, LowLevelAction::STOP),
+                std::make_tuple(SimpleState::DIR_LEFT, LowLevelAction::STOP),
+                std::make_tuple(SimpleState::DIR_RIGHT, LowLevelAction::STOP)
         };
         std::vector<std::tuple<State, Action, double>> rewards = {
-                std::make_tuple(State::WANDER, Action::FORWARD, 0.2),
-                std::make_tuple(State::FOLLOW, Action::FORWARD, 1),
-                std::make_tuple(State::IDLE, Action::STOP, 2)
+                std::make_tuple(SimpleState::WANDER, LowLevelAction::FORWARD, 0.2),
+                std::make_tuple(SimpleState::FOLLOW, LowLevelAction::FORWARD, 1),
+                std::make_tuple(SimpleState::IDLE, LowLevelAction::STOP, 2)
         };
-        mQLearner->initR(impossibleStates, rewards, State::IDLE);
+        mQLearner->initR(impossibleStates, rewards, SimpleState::IDLE);
         mStateStats.fill(0);
     }
     if (parStage == StageHelper::Stage::EXPLOIT) {
@@ -78,7 +80,7 @@ void FootbotFlock::Init(TConfigurationNode &t_node) {
 void FootbotFlock::ControlStep() {
     ql::PolarVector fpushVector;
     ql::PolarVector fpullVector;
-    State state;
+    SimpleState state;
 
     auto proxReadings = mProximitySensor->GetReadings();
     auto cameraReadings = mCamera->GetReadings().BlobList;
@@ -121,23 +123,23 @@ void FootbotFlock::ControlStep() {
 
     CColor ledColor = CColor::WHITE;
     if (isWander) {
-        state = State::WANDER;
+        state = SimpleState::WANDER;
         ledColor = state.getLedColor();
     } else if (isFollow) {
-        state = State::FOLLOW;
+        state = SimpleState::FOLLOW;
         if (isTargetSeen) {
             ledColor = CColor::YELLOW;
         } else {
             ledColor = CColor::WHITE;
         }
     } else if (isDirLeft) {
-        state = State::DIR_LEFT;
+        state = SimpleState::DIR_LEFT;
         ledColor = state.getLedColor();
     } else if (isDirRight) {
-        state = State::DIR_RIGHT;
+        state = SimpleState::DIR_RIGHT;
         ledColor = state.getLedColor();
     } else if (isIdle) {
-        state = State::IDLE;
+        state = SimpleState::IDLE;
         if (isAtGoal) {
             ledColor = CColor::YELLOW;
         } else {
@@ -165,19 +167,20 @@ void FootbotFlock::ControlStep() {
 
     }
 
-    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit<State,Action>(state) : mQLearner->doubleQ<State,Action>(mPrevState, state);
+    LowLevelAction action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit<SimpleState, LowLevelAction>(state) :
+            mQLearner->doubleQ<SimpleState, LowLevelAction>(mPrevState, state);
     mPrevState = state;
 
-    std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
-
-//    if (action == Action::TURN_RIGHT) {
-//        wheelSpeeds[0] = 1.0f;
-//        wheelSpeeds[1] = 0.0f;
-//    }
-//    if (action == Action::TURN_LEFT) {
-//        wheelSpeeds[0] = 0.0f;
-//        wheelSpeeds[1] = 1.0f;
-//    }
+    std::array<double, 2> wheelSpeeds = {0.0, 0.0};
+    if (action == LowLevelAction::FORWARD) {
+        wheelSpeeds = {1.0, 1.0};
+    } else if (action == LowLevelAction::TURN_LEFT) {
+        wheelSpeeds = {-0.5, 0.5};
+    } else if (action == LowLevelAction::TURN_RIGHT) {
+        wheelSpeeds = {0.5, -0.5};
+    } else if (action == LowLevelAction::STOP) {
+        wheelSpeeds = {0.0, 0.0};
+    }
 
     wheelSpeeds[0] = wheelSpeeds[0] * parWheelVelocity;
     wheelSpeeds[1] = wheelSpeeds[1] * parWheelVelocity;

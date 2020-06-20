@@ -1,5 +1,7 @@
 #include <potnavi/polar_vector.hpp>
 #include <potnavi/math_utils.hpp>
+#include <qlearner/state/simple_state.hpp>
+#include <qlearner/action/low_level_action.hpp>
 #include "footbot_infect_rw.h"
 
 InfectRandomWalk::InfectRandomWalk() :
@@ -47,17 +49,17 @@ void InfectRandomWalk::Init(TConfigurationNode &t_node) {
         GetNodeAttribute(t_node, "discount_factor", parDiscountFactor);
         mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.2);
         std::vector<std::tuple<State, Action>> impossibleStates = {
-                std::make_tuple(State::WANDER, Action::STOP),
-                std::make_tuple(State::FOLLOW, Action::STOP),
-                std::make_tuple(State::DIR_LEFT, Action::STOP),
-                std::make_tuple(State::DIR_RIGHT, Action::STOP)
+                std::make_tuple(SimpleState::WANDER, LowLevelAction::STOP),
+                std::make_tuple(SimpleState::FOLLOW, LowLevelAction::STOP),
+                std::make_tuple(SimpleState::DIR_LEFT, LowLevelAction::STOP),
+                std::make_tuple(SimpleState::DIR_RIGHT, LowLevelAction::STOP)
         };
         std::vector<std::tuple<State, Action, double>> rewards = {
-                std::make_tuple(State::WANDER, Action::FORWARD, 1),
-                std::make_tuple(State::FOLLOW, Action::FORWARD, 1),
-                std::make_tuple(State::IDLE, Action::STOP, 2)
+                std::make_tuple(SimpleState::WANDER, LowLevelAction::FORWARD, 1),
+                std::make_tuple(SimpleState::FOLLOW, LowLevelAction::FORWARD, 1),
+                std::make_tuple(SimpleState::IDLE, LowLevelAction::STOP, 2)
         };
-        mQLearner->initR(impossibleStates, rewards, State::IDLE);
+        mQLearner->initR(impossibleStates, rewards, SimpleState::IDLE);
     }
     if (parStage == StageHelper::Stage::EXPLOIT) {
         mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
@@ -115,7 +117,7 @@ void InfectRandomWalk::ControlStep() {
     PolarVector socialDistancingVector;
 
     double maxLight = 0.0f;
-    State state;
+    SimpleState state;
     epoch++;
 
     auto proxReadings = mProximitySensor->GetReadings();
@@ -188,15 +190,15 @@ void InfectRandomWalk::ControlStep() {
                       directionVector.getAngle() >= -SIDE_ANGLE && !isDirZero && !isIdle;
 
     if (isWander) {
-        state = State::WANDER;
+        state = SimpleState::WANDER;
     } else if (isFollow) {
-        state = State::FOLLOW;
+        state = SimpleState::FOLLOW;
     } else if (isDirLeft) {
-        state = State::DIR_LEFT;
+        state = SimpleState::DIR_LEFT;
     } else if (isDirRight) {
-        state = State::DIR_RIGHT;
+        state = SimpleState::DIR_RIGHT;
     } else if (isIdle) {
-        state = State::IDLE;
+        state = SimpleState::IDLE;
     }
 
     if (mInfectedForEpochs == 0 && agentType == AgentTypeHelper::AgentType::INFECTIOUS) {
@@ -233,8 +235,8 @@ void InfectRandomWalk::ControlStep() {
         LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
     }
 
-    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit<State, Action>(state) :
-                    mQLearner->doubleQ<State, Action>(mPrevState, state);
+    LowLevelAction action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit<SimpleState, LowLevelAction>(state) :
+                    mQLearner->doubleQ<SimpleState, LowLevelAction>(mPrevState, state);
 
     mPrevState = state;
 
@@ -262,25 +264,26 @@ void InfectRandomWalk::ControlStep() {
             break;
     }
 
-    if (state == State::WANDER && parStage == StageHelper::Stage::EXPLOIT) {
+    if (state == SimpleState::WANDER && parStage == StageHelper::Stage::EXPLOIT) {
         if (drand48() > 0.85f) {
             if (drand48() < 0.5f) {
-                action = Action::TURN_RIGHT;
+                action = LowLevelAction::TURN_RIGHT;
             } else {
-                action = Action::TURN_LEFT;
+                action = LowLevelAction::TURN_LEFT;
             }
         } else {
-            action = Action::FORWARD;
+            action = LowLevelAction::FORWARD;
         }
     }
-    std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
-    if (action == Action::TURN_RIGHT) {
-        wheelSpeeds[0] = 1.0f;
-        wheelSpeeds[1] = 0.0f;
-    }
-    if (action == Action::TURN_LEFT) {
-        wheelSpeeds[0] = 0.0f;
-        wheelSpeeds[1] = 1.0f;
+    std::array<double, 2> wheelSpeeds = {0, 0};
+    if (action == LowLevelAction::FORWARD) {
+        wheelSpeeds = {1.0, 1.0};
+    } else if (action == LowLevelAction::TURN_LEFT) {
+        wheelSpeeds = {0, 1.0};
+    } else if (action == LowLevelAction::TURN_RIGHT) {
+        wheelSpeeds = {1.0, 0};
+    } else if (action == LowLevelAction::STOP) {
+        wheelSpeeds = {0.0, 0.0};
     }
 
     wheelSpeeds[0] *= parWheelVelocity;

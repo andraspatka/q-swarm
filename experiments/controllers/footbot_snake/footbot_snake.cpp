@@ -37,21 +37,21 @@ void FootbotSnake::Init(TConfigurationNode &t_node) {
     if (parStage == StageHelper::TRAIN) {
         mQLearner = new QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
         std::vector<std::tuple<State, Action>> impossibleStates = {
-                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::STAY),
-                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::AVOID),
-                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::FOLLOW),
-                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::AVOID),
-                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::STAY),
-                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::FOLLOW),
-                std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, FollowerAction::STAY),
-                std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, FollowerAction::WANDER),
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, HighLevelAction::STAY),
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, HighLevelAction::AVOID),
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, HighLevelAction::FOLLOW),
+                std::make_tuple(FollowerState::TARGET_FOLLOW, HighLevelAction::AVOID),
+                std::make_tuple(FollowerState::TARGET_FOLLOW, HighLevelAction::STAY),
+                std::make_tuple(FollowerState::OBSTACLE_DETECTED, HighLevelAction::FOLLOW),
+                std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, HighLevelAction::STAY),
+                std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, HighLevelAction::WANDER),
         };
         std::vector<std::tuple<State, Action, double>> rewards = {
-                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, FollowerAction::WANDER, 1),
-                std::make_tuple(FollowerState::TARGET_REACHED, FollowerAction::STAY, 2),
-                std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, FollowerAction::AVOID, 1),
-                std::make_tuple(FollowerState::OBSTACLE_DETECTED, FollowerAction::AVOID, 1),
-                std::make_tuple(FollowerState::TARGET_FOLLOW, FollowerAction::FOLLOW, 1),
+                std::make_tuple(FollowerState::NO_TARGET_TO_FOLLOW, HighLevelAction::WANDER, 1),
+                std::make_tuple(FollowerState::TARGET_REACHED, HighLevelAction::STAY, 2),
+                std::make_tuple(FollowerState::OBSTACLE_AND_TARGET_DETECTED, HighLevelAction::AVOID, 1),
+                std::make_tuple(FollowerState::OBSTACLE_DETECTED, HighLevelAction::AVOID, 1),
+                std::make_tuple(FollowerState::TARGET_FOLLOW, HighLevelAction::FOLLOW, 1),
         };
         mQLearner->initR(impossibleStates, rewards, FollowerState::TARGET_REACHED);
         mStateStats.fill(0);
@@ -204,19 +204,19 @@ void FootbotSnake::ControlStep() {
         LOG << "Learning rate: " << mQLearner->getLearningRate() << std::endl;
 
     }
-    FollowerAction action = (parStage == StageHelper::Stage::EXPLOIT) ?
-                            mQExploiter->exploit<FollowerState, FollowerAction>(state) :
-                            mQLearner->doubleQ<FollowerState, FollowerAction>(mPrevState, state);
+    HighLevelAction action = (parStage == StageHelper::Stage::EXPLOIT) ?
+                             mQExploiter->exploit<FollowerState, HighLevelAction>(state) :
+                             mQLearner->doubleQ<FollowerState, HighLevelAction>(mPrevState, state);
 
     mPrevState = state;
 
     std::array<double, 2> wheelSpeeds = {0.0f, 0.0f};
 
-    if (action == FollowerAction::FOLLOW) {
+    if (action == HighLevelAction::FOLLOW) {
         wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(pullVector);
-    } else if (action == FollowerAction::AVOID) {
+    } else if (action == HighLevelAction::AVOID) {
         wheelSpeeds = ql::MathUtils::vectorToLinearVelocity(pushVector);
-    } else if (action == FollowerAction::WANDER) {
+    } else if (action == HighLevelAction::WANDER) {
         wheelSpeeds = {parWheelVelocity, parWheelVelocity};
         if (drand48() > 0.8) {
             if (drand48() > 0.5) {
@@ -227,7 +227,7 @@ void FootbotSnake::ControlStep() {
         } else {
             wheelSpeeds = {parWheelVelocity, parWheelVelocity};
         }
-    } else if (action == FollowerAction::STAY) {
+    } else if (action == HighLevelAction::STAY) {
         wheelSpeeds = {0.0, 0.0f};
     }
 

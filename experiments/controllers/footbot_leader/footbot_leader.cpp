@@ -1,5 +1,7 @@
 #include <argos3/core/utility/math/vector3.h>
 #include <monitoring/logger.hpp>
+#include <qlearner/state/simple_state.hpp>
+#include <qlearner/action/low_level_action.hpp>
 #include "footbot_leader.h"
 
 FootbotLeader::FootbotLeader() : mGlobalMaxLightReading(0){}
@@ -33,17 +35,17 @@ void FootbotLeader::Init(TConfigurationNode &t_node) {
     if (parStage == StageHelper::Stage::TRAIN) {
         mQLearner = new ql::QLearner(NUM_STATES, NUM_ACTIONS, parDiscountFactor, parLearnRate, 0.15);
         std::vector<std::tuple<State, Action>> impossibleStates = {
-                std::make_tuple(State::WANDER, Action::STOP),
-                std::make_tuple(State::FOLLOW, Action::STOP),
-                std::make_tuple(State::DIR_LEFT, Action::STOP),
-                std::make_tuple(State::DIR_RIGHT, Action::STOP)
+                std::make_tuple(SimpleState::WANDER, LowLevelAction::STOP),
+                std::make_tuple(SimpleState::FOLLOW, LowLevelAction::STOP),
+                std::make_tuple(SimpleState::DIR_LEFT, LowLevelAction::STOP),
+                std::make_tuple(SimpleState::DIR_RIGHT, LowLevelAction::STOP)
         };
         std::vector<std::tuple<State, Action, double>> rewards = {
-                std::make_tuple(State::WANDER, Action::FORWARD, 0.2),
-                std::make_tuple(State::FOLLOW, Action::FORWARD, 1),
-                std::make_tuple(State::IDLE, Action::STOP, 2)
+                std::make_tuple(SimpleState::WANDER, LowLevelAction::FORWARD, 0.2),
+                std::make_tuple(SimpleState::FOLLOW, LowLevelAction::FORWARD, 1),
+                std::make_tuple(SimpleState::IDLE, LowLevelAction::STOP, 2)
         };
-        mQLearner->initR(impossibleStates, rewards, State::IDLE);
+        mQLearner->initR(impossibleStates, rewards, SimpleState::IDLE);
     }
     if (parStage == StageHelper::Stage::EXPLOIT) {
         mQExploiter = new QExploiter(NUM_STATES, NUM_ACTIONS);
@@ -88,7 +90,7 @@ void FootbotLeader::ControlStep() {
     ql::PolarVector fpushVector;
     ql::PolarVector fpullVector;
 
-    State state;
+    SimpleState state;
 
     auto lightReadings = mLightSensor->GetReadings();
     auto proxReadings = mProximitySensor->GetReadings();
@@ -133,15 +135,15 @@ void FootbotLeader::ControlStep() {
     bool isIdle = (isDirZero && isTargetSeen) || maxLight > parThreshold;
 
     if (isWander) {
-        state = State::WANDER;
+        state = SimpleState::WANDER;
     } else if (isFollow) {
-        state = State::FOLLOW;
+        state = SimpleState::FOLLOW;
     } else if (isDirLeft) {
-        state = State::DIR_LEFT;
+        state = SimpleState::DIR_LEFT;
     } else if (isDirRight) {
-        state = State::DIR_RIGHT;
+        state = SimpleState::DIR_RIGHT;
     } else if (isIdle) {
-        state = State::IDLE;
+        state = SimpleState::IDLE;
         mLed->SetSingleColor(12, CColor::PURPLE);
     }
 
@@ -162,11 +164,23 @@ void FootbotLeader::ControlStep() {
             mQLearner->setLearningRate(mQLearner->getLearningRate() - 0.05f);
         }
     }
-    Action action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit<State, Action>(state) : mQLearner->doubleQ<State, Action>(mPrevState, state);
+    LowLevelAction action = (parStage == StageHelper::Stage::EXPLOIT) ? mQExploiter->exploit<SimpleState, LowLevelAction>(state) :
+            mQLearner->doubleQ<SimpleState, LowLevelAction>(mPrevState, state);
     mPrevState = state;
-    std::array<double, 2> wheelSpeeds = action.getWheelSpeed();
-    wheelSpeeds[0] *= parWheelVelocity;
-    wheelSpeeds[1] *= parWheelVelocity;
+    std::array<double, 2> wheelSpeeds = {0, 0};
+    if (action == LowLevelAction::FORWARD) {
+        wheelSpeeds = {1.0, 1.0};
+    } else if (action == LowLevelAction::TURN_LEFT) {
+        wheelSpeeds = {-1.0, 1.0};
+    } else if (action == LowLevelAction::TURN_RIGHT) {
+        wheelSpeeds = {1.0, -1.0};
+    } else if (action == LowLevelAction::STOP) {
+        wheelSpeeds = {0.0, 0.0};
+    }
+
+    wheelSpeeds[0] = wheelSpeeds[0] * parWheelVelocity;
+    wheelSpeeds[1] = wheelSpeeds[1] * parWheelVelocity;
+
     mGlobalMaxLightReading = std::max(mGlobalMaxLightReading, maxLight);
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);

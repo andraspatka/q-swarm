@@ -16,8 +16,8 @@
 #include <potnavi/math_utils.hpp>
 #include <potnavi/polar_vector.hpp>
 #include <qlearner/stage.hpp>
-#include <qlearner/action.hpp>
-#include <qlearner/state.hpp>
+#include <qlearner/action/action.hpp>
+#include <qlearner/state/state.hpp>
 
 #include <monitoring/logger.hpp>
 #include <qlearner/qexploiter.hpp>
@@ -84,7 +84,7 @@ private:
 
     QExploiter * mQExploiter;
 
-    State mPrevState = State::WANDER;
+    SimpleState mPrevState = SimpleState::WANDER;
 
     int epoch = 0;
 

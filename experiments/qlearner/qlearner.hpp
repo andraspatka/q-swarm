@@ -7,8 +7,8 @@
 #include <tuple>
 #include <cassert>
 #include "thread_safe_random.hpp"
-#include "state.hpp"
-#include "action.hpp"
+#include "qlearner/state/state.hpp"
+#include "qlearner/action/action.hpp"
 
 #define assertm(exp, msg) assert(((void)msg, exp))
 

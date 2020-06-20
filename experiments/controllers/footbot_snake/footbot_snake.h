@@ -16,8 +16,8 @@
 #include <potnavi/math_utils.hpp>
 #include <potnavi/polar_vector.hpp>
 #include <qlearner/stage.hpp>
-#include <qlearner/follower_action.hpp>
-#include <qlearner/follower_state.hpp>
+#include <qlearner/action/high_level_action.hpp>
+#include <qlearner/state/follower_state.hpp>
 
 #include <monitoring/logger.hpp>
 #include <qlearner/qexploiter.hpp>

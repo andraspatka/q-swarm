@@ -75,7 +75,7 @@ private:
     ql::QLearner * mQLearner;
     ql::QExploiter * mQExploiter;
 
-    State mPrevState = State::WANDER;
+    SimpleState mPrevState = SimpleState::WANDER;
 
     int epoch = 0;
 
