@@ -15,18 +15,18 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors>
-                <footbot_light implementation="rot_z_only" show_rays="true" />
-                <footbot_proximity implementation="default" show_rays="true" />
+                <footbot_light implementation="rot_z_only" show_rays="false" />
+                <footbot_proximity implementation="default" show_rays="false" />
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
-            <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="25" learning_rate="1" discount_factor="0.4" threshold="0.24" stage="train" logging="true" ignore_goal="false"/>
+            <!-- Stage can be: train or exploit -->
+            <params velocity="25" learning_rate="1" discount_factor="0.6" threshold="0.24" stage="train" logging="true" ignore_goal="false"/>
         </footbot_leader_controller>
     </controllers>
 
     <!-- Arena configuration -->
-    <arena size="5, 5, 4" center="0,0,0.5">
+    <arena size="20, 20, 4" center="0,0,0.5">
 
         <!-- Arena walls -->
         <box id="wall_north" size="5,0.1,0.5" movable="false">
@@ -76,10 +76,10 @@
         <qt-opengl>
             <!-- Camera position, bird-eye view. -->
             <camera>
-                <placement idx="0" position="0,1,4.34" look_at="0,0,0" lens_focal_length="20" />
+                <placement idx="0" position="0,0,8.2" look_at="0,0,0" lens_focal_length="50" />
             </camera>
-            <user_functions library="cmake-build-debug/loop_functions/id/libid_loop_functions"
-                            label="id_qtuser_functions" />
+<!--            <user_functions library="cmake-build-debug/loop_functions/id/libid_loop_functions"-->
+<!--                            label="id_qtuser_functions" />-->
         </qt-opengl>
     </visualization>
 

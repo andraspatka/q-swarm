@@ -21,7 +21,7 @@
             </sensors>
             <!-- Parameters -->
             <!-- Stage can be: train or exploit (exploit needs a learning rate which is less than 0.1 to work) -->
-            <params velocity="20" learning_rate="1" discount_factor="0.8" threshold="30" stage="train" logging="true"/>
+            <params velocity="20" learning_rate="1" discount_factor="0.9" stage="train" logging="true"/>
         </footbot_flock_controller>
         <footbot_manualcontrol id="fmc" library="cmake-build-debug/controllers/footbot_manual/libfootbot_manual.so">
             <actuators>
@@ -108,28 +108,28 @@
         <light id="light" position="-1.5,-2,2" orientation="0,0,0" color="yellow" intensity="3" medium="leds" />
 
         <!-- The footbot which can go to the goal. -->
-        <foot-bot id="follow-leader1">
+        <foot-bot id="leader1">
             <body position="-1.5,-1.8,0" orientation="0,0,0" />
             <controller config="fgc" />
         </foot-bot>
 
-        <foot-bot id="follow-leader2">
+        <foot-bot id="leader2">
             <body position="1,-1.8,0" orientation="0,0,0" />
             <controller config="fgcn" />
         </foot-bot>
 
-        <foot-bot id="follow-leader3">
+        <foot-bot id="leader3">
             <body position="-1.6,1.7,0" orientation="270,0,0" />
             <controller config="fgcn" />
         </foot-bot>
 
-        <foot-bot id="follow-leader4">
+        <foot-bot id="leader4">
             <body position="1.7,-1.7,0" orientation="270,0,0" />
             <controller config="fgcn" />
         </foot-bot>
 
         <foot-bot id="flock-train">
-            <body position="1.3,1.8,0" orientation="270,0,0" />
+            <body position="1,1.8,0" orientation="270,0,0" />
             <controller config="ffc" />
         </foot-bot>
 

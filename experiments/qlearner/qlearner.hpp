@@ -155,8 +155,8 @@ namespace ql {
          * Uses the epsilon-Greedy policy, the rate of exploration and exploitation determined by the epsilon hyperparameter.
          *
          * Formula for updating the Q matrix:
-         *  Q1[state][action] = Q1[state][action] + learningRate * (R[state][action] + discountFactor * Max(Q2[state]) - Q1[state][action]
-         *  Q2[state][action] = Q2[state][action] + learningRate * (R[state][action] + discountFactor * Max(Q1[state]) - Q2[state][action]
+         *  Q1[state][action] = Q1[state][action] + learningRate * (R[state][action] + discountFactor * Max(Q2[state]) - Q1[state][action])
+         *  Q2[state][action] = Q2[state][action] + learningRate * (R[state][action] + discountFactor * Max(Q1[state]) - Q2[state][action])
          *
          * @param state the current state
          * @param nextState the next state, the state to which taking the action in @param state leads to.

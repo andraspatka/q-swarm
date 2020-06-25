@@ -233,6 +233,9 @@ void FootbotSnake::ControlStep() {
 
     mDiffSteering->SetLinearVelocity(wheelSpeeds[0], wheelSpeeds[1]);
 
+    auto position = mPosition->GetReading().Position;
+    ql::Logger::logPositionStateAndAction(position.GetX(), position.GetY(), state.getName(), action.getName(), this->m_strId);
+
     LOG << this->m_strId << std::endl;
     LOG << "state: " << state.getName() << std::endl;
     LOG << "action: " << action.getName() << std::endl;

@@ -3,6 +3,8 @@
 /* Function definitions for XML parsing */
 #include <argos3/core/utility/configuration/argos_configuration.h>
 #include <argos3/core/utility/logging/argos_log.h>
+#include <monitoring/logger.hpp>
+#include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 
 CFootBotManualControl::CFootBotManualControl() :
    m_pcWheels(NULL),
@@ -10,9 +12,11 @@ CFootBotManualControl::CFootBotManualControl() :
 
 void CFootBotManualControl::Init(TConfigurationNode& t_node) {
    m_pcWheels = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
+   mPosition = GetSensor<CCI_PositioningSensor>("positioning");
    m_pcLEDs   = GetActuator<CCI_LEDsActuator>("leds");
    m_pcLEDs->SetSingleColor(12, CColor::WHITE);
    GetNodeAttribute(t_node, "max_speed", this->parMaxSpeed);
+   ql::Logger::clearMyLogs(this->m_strId);
 }
 
 void CFootBotManualControl::ControlStep() {
@@ -20,6 +24,8 @@ void CFootBotManualControl::ControlStep() {
    if(m_bSelected) {
        this->m_pcWheels->SetLinearVelocity(this->diffSteeringVals[0], this->diffSteeringVals[1]);
    }
+   auto position = mPosition->GetReading().Position;
+   ql::Logger::log(this->m_strId, {std::to_string(position.GetX()), std::to_string(position.GetY())});
 }
 
 void CFootBotManualControl::Select() {

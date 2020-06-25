@@ -24,6 +24,9 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_leds_actuator.h>
 /* Vector2 definitions */
 #include <argos3/core/utility/math/vector2.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
+
+#include <string>
 
 /*
  * All the ARGoS stuff in the 'argos' namespace.
@@ -107,6 +110,7 @@ private:
 
    /* The control vector */
    double diffSteeringVals[2];
+   CCI_PositioningSensor *mPosition;
 };
 
 #endif

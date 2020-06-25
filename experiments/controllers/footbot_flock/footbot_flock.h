@@ -116,9 +116,6 @@ private:
     // If true then learning phase, if false, then exploit phase.
     StageHelper::Stage parStage;
 
-    // Threshold value for IDLE state
-    double parThreshold;
-
     // Learning rate. Close to 0: nothing new will be learnt, close to 1: the old value will be completely discarded.
     double parLearnRate;
 

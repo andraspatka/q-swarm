@@ -15,8 +15,8 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors>
-                <footbot_proximity implementation="default" show_rays="true" />
-                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
+                <footbot_proximity implementation="default" show_rays="false" />
+                <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="false" />
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
@@ -28,8 +28,10 @@
                 <differential_steering implementation="default" />
                 <leds implementation="default" medium="leds" />
             </actuators>
-            <sensors />
-            <params max_speed="15"/>
+            <sensors>
+                <positioning implementation="default" />
+            </sensors>
+            <params max_speed="10"/>
         </footbot_manualcontrol>
         <footbot_leader_controller id="fgc" library="cmake-build-debug/controllers/footbot_leader/libfootbot_leader.so">
             <actuators>
@@ -37,8 +39,8 @@
                 <leds implementation="default" medium="leds" />
             </actuators>
             <sensors>
-                <footbot_light implementation="rot_z_only" show_rays="true" />
-                <footbot_proximity implementation="default" show_rays="true" />
+                <footbot_light implementation="rot_z_only" show_rays="false" />
+                <footbot_proximity implementation="default" show_rays="false" />
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
@@ -104,46 +106,42 @@
             </entity>
         </distribute>
 
-        <box id="obst" size="0.2,0.2,0.1" movable="false">
-            <body position="-1,2,0" orientation="0,0,0" />
-        </box>
-
-        <foot-bot id="fb1">
+        <foot-bot id="1">
             <body position="0.4,2.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-        <foot-bot id="fb2">
+        <foot-bot id="2">
             <body position="0.4,1.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-        <foot-bot id="fb3">
+        <foot-bot id="3">
             <body position="0.0,2.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-        <foot-bot id="fb4">
+        <foot-bot id="4">
             <body position="0.0,1.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-        <foot-bot id="fb5">
+        <foot-bot id="5">
             <body position="-0.8,1.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-        <foot-bot id="fb6">
+        <foot-bot id="6">
             <body position="-0.8,2.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-        <foot-bot id="fb7">
-            <body position="-0.4,2.3,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fb8">
-            <body position="-0.4,1.8,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
-        <foot-bot id="fb9">
-            <body position="-0.4,1.3,0" orientation="0,0,0" />
-            <controller config="ffc" />
-        </foot-bot>
+<!--        <foot-bot id="7">-->
+<!--            <body position="-0.4,2.3,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="8">-->
+<!--            <body position="-0.4,1.8,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
+<!--        <foot-bot id="9">-->
+<!--            <body position="-0.4,1.3,0" orientation="0,0,0" />-->
+<!--            <controller config="ffc" />-->
+<!--        </foot-bot>-->
 
 
 
@@ -197,7 +195,7 @@
         <qt-opengl>
             <!-- Camera position, bird-eye view. -->
             <camera>
-                <placement idx="0" position="0,1,4.34" look_at="0,0,0" lens_focal_length="20" />
+                <placement idx="0" position="0,0,17" look_at="0,0,0" lens_focal_length="50" />
                 <placement idx="2" position="0,1.5,0.2" look_at="0,0,0" lens_focal_length="40" />
 
             </camera>

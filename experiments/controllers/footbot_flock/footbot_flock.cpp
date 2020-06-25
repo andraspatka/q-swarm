@@ -31,7 +31,6 @@ void FootbotFlock::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "velocity", parWheelVelocity);
     GetNodeAttribute(t_node, "learning_rate", parLearnRate);
     GetNodeAttribute(t_node, "discount_factor", parDiscountFactor);
-    GetNodeAttribute(t_node, "threshold", parThreshold);
     GetNodeAttribute(t_node, "stage", parStageString);
     GetNodeAttribute(t_node, "logging", parShouldLog);
 
