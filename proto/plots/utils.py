@@ -5,6 +5,9 @@ def readAndClean(filePath):
     npmat = np.delete(npmat, np.s_[2::], 1) # delete states and actions
     return npmat
 
+def removeStateAndAction(npmat):
+    return np.delete(npmat, np.s_[2::], 1)
+
 def createPathToLogs(fileName):
     return '../../measurements/' + fileName
 
