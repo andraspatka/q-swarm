@@ -35,24 +35,37 @@ def draw_labyrinth():
 for (root, name) in FOLDER_ROOTS:
     plt.figure()
     draw_labyrinth()
-    leader = removeStateAndAction(np.loadtxt(root + 'leader.csv', delimiter=','))
-    xl, yl = leader.T
-    plt.scatter(xl[1], yl[1], c=leaderStartColor, s=area * 10)
-    plt.scatter(xl, yl, s=area, c=leaderColor, label="Leader")
+    name_no_space = name.replace(' ', '_')
+    plot_for_legend = True
+    for i in range(1, NUM_FOLLOWERS + 1):
+        follower = removeStateAndAction(np.genfromtxt(root + str(i) + '.csv', delimiter=','))
+        xf, yf = follower.T
+        if plot_for_legend:
+            plt.scatter(xf, yf, s=area, c=followersColor, label='follower 1-30')
+            plot_for_legend = False
+        else:
+            plt.scatter(xf, yf, s=area, c=followersColor)
+    for i in range(1, NUM_FOLLOWERS + 1):
+        follower = removeStateAndAction(np.genfromtxt(root + str(i) + '.csv', delimiter=','))
+        xf, yf = follower.T
+        plt.scatter(xf[-1], yf[-1], c=followerEndColor, s=area * 20)
     for i in range(1, NUM_FOLLOWERS + 1):
         follower = removeStateAndAction(np.genfromtxt(root + str(i) + '.csv', delimiter=','))
         xf, yf = follower.T
         plt.scatter(xf[1], yf[1], c=followerStartColor, s=area * 10)
-        plt.scatter(xf, yf, s=area, c=followersColor, label="follower " + str(i))
-        plt.scatter(xf[-1], yf[-1], c=followerEndColor, s=area * 10)
+
+    leader = removeStateAndAction(np.genfromtxt(root + 'leader.csv', delimiter=','))
+    xl, yl = leader.T
+    plt.scatter(xl[1], yl[1], c=leaderStartColor, s=area)
+    plt.scatter(xl, yl, s=area / 20, c=leaderColor, label="Leader")
     plt.xlim(xmin=-3, xmax=6)
     plt.ylim(ymin=-6, ymax=4)
     plt.xlabel("x")
     plt.ylabel("y")
-    plt.title('Labyrinth, ' + name)
+    plt.title('Labyrinth, 1 leader 6 followers: ' + name)
     # plt.grid()
     plt.legend()
-    plt.savefig('png/labyrinth_' + name + '.png', transparent=False, dpi=300)
+    plt.savefig('png/labyrinth_' + name_no_space + '.png', transparent=False, dpi=300, bbox_inches="tight")
     plt.show()
 
 
