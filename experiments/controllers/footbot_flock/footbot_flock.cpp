@@ -86,7 +86,7 @@ void FootbotFlock::ControlStep() {
     bool isAtGoal = false;
     bool isTargetSeen = false;
     for (auto r : cameraReadings) {
-        if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE) {
+        if (r->Color == CColor::RED || r->Color == CColor::YELLOW || r->Color == CColor::PURPLE || r->Color == CColor::ORANGE) {
             fpullVector += MathUtils::readingToVector(r->Distance, r->Angle, A, B_PULL, C_PULL,
                                                       MathUtils::cameraToDistance);
             isTargetSeen = true;

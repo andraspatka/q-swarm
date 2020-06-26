@@ -130,18 +130,18 @@
             <body position="-0.8,2.3,0" orientation="0,0,0" />
             <controller config="ffc" />
         </foot-bot>
-<!--        <foot-bot id="7">-->
-<!--            <body position="-0.4,2.3,0" orientation="0,0,0" />-->
-<!--            <controller config="ffc" />-->
-<!--        </foot-bot>-->
-<!--        <foot-bot id="8">-->
-<!--            <body position="-0.4,1.8,0" orientation="0,0,0" />-->
-<!--            <controller config="ffc" />-->
-<!--        </foot-bot>-->
-<!--        <foot-bot id="9">-->
-<!--            <body position="-0.4,1.3,0" orientation="0,0,0" />-->
-<!--            <controller config="ffc" />-->
-<!--        </foot-bot>-->
+        <foot-bot id="7">
+            <body position="-0.4,2.3,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+        <foot-bot id="8">
+            <body position="-0.4,1.8,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
+        <foot-bot id="9">
+            <body position="-0.4,1.3,0" orientation="0,0,0" />
+            <controller config="ffc" />
+        </foot-bot>
 
 
 

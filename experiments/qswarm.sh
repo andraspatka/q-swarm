@@ -83,7 +83,7 @@ cap_output=$2
 if [[ "$job" != "build" && "$job" != "capture" && "$job" != "clean"  && "$job" != "build-debug" ]]; then
     scene_name="scenes/$2.argos"
     if ! [[ -a ${scene_name} ]]; then
-        echo "Could not find the scene: $scene_name"
+        echo "Could not find the scene: $scene_name in the scenes directory"
         exit 1;
     fi
 fi
