@@ -41,7 +41,7 @@ for (root, name) in FOLDER_ROOTS:
         follower = removeStateAndAction(np.genfromtxt(root + str(i) + '.csv', delimiter=','))
         xf, yf = follower.T
         if plot_for_legend:
-            plt.scatter(xf, yf, s=area, c=followersColor, label='follower 1-30')
+            plt.scatter(xf, yf, s=area, c=followersColor, label='follower 1-6')
             plot_for_legend = False
         else:
             plt.scatter(xf, yf, s=area, c=followersColor)
