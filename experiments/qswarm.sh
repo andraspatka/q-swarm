@@ -25,12 +25,17 @@ build_dir="cmake-build-debug"
 
 # Clean subtask
 function f_clean {
-	rm -r ${build_dir}
+	if [ -d ${build_dir} ]; then
+		rm -r ${build_dir}
+	fi
 	mkdir ${build_dir}
 }
 
 # Build subtask
 function f_build {
+	if ! [ -d ${build_dir} ]; then
+		mkdir ${build_dir}
+	fi
 	cd ${build_dir}
 	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
