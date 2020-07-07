@@ -7,7 +7,7 @@ from utils import AGENT_TYPE
 NUMBER_OF_AGENTS = 100
 
 infected_chance_to_infect = [
-    (25, 1)
+    (25, 1, 60)
 ]
 
 for rk in infected_chance_to_infect:
@@ -15,8 +15,9 @@ for rk in infected_chance_to_infect:
     INFECTED = rk[1]
     PERCENTAGE = rk[1]
     CHANCE_TO_INFECT = rk[0]
-    FOLDER_ROOT = '../../../experiments/results/covid/presi/free_for_all/'
-    EXPERIMENT = f"r_{CHANCE_TO_INFECT}_k_{PERCENTAGE}"
+    CONFORM_TO_POLICY = rk[2]
+    FOLDER_ROOT = '../../../experiments/results/covid/presi/social_distancing/'
+    EXPERIMENT = f"r_{CHANCE_TO_INFECT}_k_{PERCENTAGE}_c_{CONFORM_TO_POLICY}"
 
     PATH = FOLDER_ROOT + EXPERIMENT + '/logs/'
 
@@ -49,7 +50,7 @@ for rk in infected_chance_to_infect:
 
     for f in range(0, n):
         plt.figure()
-        plt.title(f"Free for all: {NUMBER_OF_AGENTS} agents, {INFECTED} infected, {CHANCE_TO_INFECT}% chance of infection")
+        plt.title(f"Social distancing: {NUMBER_OF_AGENTS} agents, {INFECTED} infected \n{CHANCE_TO_INFECT}% chance of infection, {CONFORM_TO_POLICY}% conforms to social distancing")
         plt.plot(epochs[0:f], infected[0:f], c='red', label='Infectious')
         plt.plot(epochs[0:f], susceptible[0:f], c='cyan', label='Susceptible')
         plt.plot(epochs[0:f], deceased[0:f], c='grey', label='Deceased')
