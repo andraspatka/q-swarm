@@ -35,6 +35,7 @@ void InfectRandomWalk::Init(TConfigurationNode &t_node) {
     GetNodeAttribute(t_node, "mortality", parMortality);
     GetNodeAttribute(t_node, "social_distancing", parShouldSocialDistance);
     GetNodeAttribute(t_node, "stage", parStageString);
+    GetNodeAttribute(t_node, "asymptomatic", parAsymptomaticRate);
 
     parStage = StageHelper::ParseStageFromString(parStageString);
 
@@ -89,6 +90,9 @@ void InfectRandomWalk::InitInfectious() {
 
     if (parShouldSocialDistance) {
         mConformsToSocialDistancing = idNumber < parSocialDistancingConformity;
+    }
+    if (drand48() < parAsymptomaticRate) {
+        mIsAsymptomatic = true;
     }
 }
 
@@ -150,7 +154,7 @@ void InfectRandomWalk::ControlStep() {
 
     for (auto r : lightReadings) {
         if (!MathUtils::closeToZero(r.Value)) {
-            if (agentType == AgentTypeHelper::AgentType::INFECTIOUS) {
+            if (agentType == AgentTypeHelper::AgentType::INFECTIOUS && !mIsAsymptomatic) {
                 fpullVector += MathUtils::readingToVector(r.Value, r.Angle,
                                                           A, B_PULL, C_PULL, MathUtils::lightToDistance);
             } else if (agentType != AgentTypeHelper::AgentType::DECEASED) {

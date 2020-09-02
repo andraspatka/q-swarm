@@ -108,6 +108,7 @@ private:
     bool mIsGoingToDie = false;
     unsigned short mDiesAfterEpochs = 0;
     bool mConformsToSocialDistancing = false;
+    bool mIsAsymptomatic = false;
 
     /** ACTUATORS AND SENSORS */
     /* Pointer to the differential steering actuator. */
@@ -145,4 +146,5 @@ private:
     double parSocialDistancingConformity;
     double parDiscountFactor;
     double parLearnRate;
+    double parAsymptomaticRate;
 };

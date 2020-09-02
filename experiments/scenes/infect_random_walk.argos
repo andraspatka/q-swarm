@@ -21,7 +21,8 @@
                 <positioning implementation="default" />
             </sensors>
             <!-- Parameters -->
-            <params velocity="40" infectious="10" infect_prob="0.5" mortality="0.065" social_distancing="false" sick_for="200" stage="exploit" />
+            <params velocity="40" infectious="10" infect_prob="0.5" mortality="0.065" social_distancing="false" sick_for="200" stage="exploit"
+            asymptomatic="0.05"/>
         </infect_random_walk>
     </controllers>
 
